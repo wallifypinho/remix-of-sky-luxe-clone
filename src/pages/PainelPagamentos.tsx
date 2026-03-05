@@ -1,89 +1,137 @@
 import { useState } from "react";
-import { Plane, Plus, Search, ArrowLeft } from "lucide-react";
+import { Settings, Plane, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import LinksCadastro from "@/components/painel/LinksCadastro";
+import WhatsAppConfig from "@/components/painel/WhatsAppConfig";
+import NotificacoesPush from "@/components/painel/NotificacoesPush";
+import GatewaysSection from "@/components/painel/GatewaysSection";
+import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
+import PagamentosList from "@/components/painel/PagamentosList";
+
+type Tab = "pagamentos" | "pedidos" | "operadores" | "gateways";
 
 const PainelPagamentos = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<Tab>("pagamentos");
+  const [whatsappAdmin, setWhatsappAdmin] = useState("5521982592219");
+
+  const tabs: { id: Tab; label: string; count?: number }[] = [
+    { id: "pagamentos", label: "Pagamentos", count: 8 },
+    { id: "pedidos", label: "Pedidos", count: 24 },
+    { id: "operadores", label: "Operadores", count: 4 },
+    { id: "gateways", label: "Gateways", count: 1 },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card px-4 py-4">
-        <div className="mx-auto flex max-w-4xl items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Plane className="h-4 w-4 text-primary-foreground" />
+      <header className="border-b border-border bg-card px-4 py-5">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex items-center gap-3 mb-1">
+            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+              <Settings className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Painel Principal</h1>
+              <p className="text-xs text-muted-foreground">Gerencie pagamentos, operadores e gateways</p>
+            </div>
           </div>
-          <h1 className="text-lg font-semibold text-foreground">Painel de Pagamentos</h1>
         </div>
       </header>
 
+      {/* Tabs */}
+      <div className="border-b border-border bg-card px-4">
+        <div className="mx-auto max-w-6xl flex gap-1 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+              {tab.count !== undefined && (
+                <span className={`text-xs ${activeTab === tab.id ? "opacity-80" : ""}`}>
+                  ({tab.count})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Content */}
-      <main className="mx-auto max-w-4xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.2 }}
         >
-          {/* Actions Bar */}
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar cobranças..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button className="gap-2 shrink-0">
-              <Plus className="h-4 w-4" />
-              Nova Cobrança
-            </Button>
-          </div>
-
-          {/* Stats */}
-          <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground">Total Cobranças</div>
-                <div className="text-2xl font-bold text-foreground">0</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground">Pendentes</div>
-                <div className="text-2xl font-bold text-warning">0</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground">Confirmados</div>
-                <div className="text-2xl font-bold text-success">0</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Empty State */}
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <Plane className="h-6 w-6 text-muted-foreground" />
+          {activeTab === "pagamentos" && (
+            <div className="space-y-6">
+              {/* WhatsApp Admin */}
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="text-xs font-medium text-muted-foreground mb-2">Meu WhatsApp (Admin)</div>
+                <div className="flex gap-2">
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-muted-foreground">💬</span>
+                    <Input
+                      value={whatsappAdmin}
+                      onChange={(e) => setWhatsappAdmin(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0">
+                    Salvar
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Usado como WhatsApp padrão para coleta de dados e pagamentos do admin.
+                </p>
               </div>
-              <h3 className="mb-1 text-lg font-semibold text-foreground">Nenhuma cobrança ainda</h3>
-              <p className="mb-4 text-sm text-muted-foreground">Crie sua primeira cobrança para começar</p>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Nova Cobrança
-              </Button>
-            </CardContent>
-          </Card>
+
+              {/* Main content: Form + List */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <NovoPagamentoForm />
+                <PagamentosList />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "pedidos" && (
+            <div className="space-y-6">
+              <LinksCadastro />
+              <WhatsAppConfig />
+              <NotificacoesPush />
+              <div className="rounded-xl border border-border bg-card p-8 text-center">
+                <Plane className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                <h3 className="text-base font-semibold text-foreground mb-1">Pedidos</h3>
+                <p className="text-sm text-muted-foreground">Lista de pedidos dos clientes aparecerá aqui</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "operadores" && (
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
+              <Settings className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+              <h3 className="text-base font-semibold text-foreground mb-1">Operadores (4/20)</h3>
+              <p className="text-sm text-muted-foreground">Gerencie seus operadores aqui</p>
+            </div>
+          )}
+
+          {activeTab === "gateways" && (
+            <GatewaysSection />
+          )}
         </motion.div>
       </main>
     </div>
