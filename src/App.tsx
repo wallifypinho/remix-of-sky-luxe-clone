@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PainelPagamentos from "./pages/PainelPagamentos";
 import ColetaDados from "./pages/ColetaDados";
+import BoardingPass from "./pages/BoardingPass";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/painel" element={<PainelPagamentos />} />
           <Route path="/coleta-dados" element={<ColetaDados />} />
+          <Route path="/boarding-pass" element={<BoardingPass />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
