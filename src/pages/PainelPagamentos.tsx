@@ -101,10 +101,7 @@ const PainelPagamentos = () => {
               </div>
 
               {/* Main content: Form + List */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <NovoPagamentoForm />
-                <PagamentosList />
-              </div>
+              <NovoPagamentoForm />
             </div>
           )}
 
