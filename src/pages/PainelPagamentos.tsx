@@ -10,7 +10,7 @@ import WhatsAppConfig from "@/components/painel/WhatsAppConfig";
 import NotificacoesPush from "@/components/painel/NotificacoesPush";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
-import PagamentosList from "@/components/painel/PagamentosList";
+
 
 type Tab = "pagamentos" | "pedidos" | "operadores" | "gateways";
 
@@ -101,10 +101,7 @@ const PainelPagamentos = () => {
               </div>
 
               {/* Main content: Form + List */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <NovoPagamentoForm />
-                <PagamentosList />
-              </div>
+              <NovoPagamentoForm />
             </div>
           )}
 
