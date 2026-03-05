@@ -10,7 +10,7 @@ import WhatsAppConfig from "@/components/painel/WhatsAppConfig";
 import NotificacoesPush from "@/components/painel/NotificacoesPush";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
-import PagamentosList from "@/components/painel/PagamentosList";
+
 
 type Tab = "pagamentos" | "pedidos" | "operadores" | "gateways";
 
