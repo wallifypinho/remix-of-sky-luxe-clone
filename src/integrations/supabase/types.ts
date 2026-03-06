@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      reservas: {
+        Row: {
+          adultos: number
+          assentos: Json | null
+          bebes: number
+          codigo_reserva: string
+          created_at: string
+          criancas: number
+          id: string
+          metodo_pagamento: string
+          passageiros: Json
+          status: string
+          whatsapp_operador: string | null
+        }
+        Insert: {
+          adultos?: number
+          assentos?: Json | null
+          bebes?: number
+          codigo_reserva?: string
+          created_at?: string
+          criancas?: number
+          id?: string
+          metodo_pagamento?: string
+          passageiros?: Json
+          status?: string
+          whatsapp_operador?: string | null
+        }
+        Update: {
+          adultos?: number
+          assentos?: Json | null
+          bebes?: number
+          codigo_reserva?: string
+          created_at?: string
+          criancas?: number
+          id?: string
+          metodo_pagamento?: string
+          passageiros?: Json
+          status?: string
+          whatsapp_operador?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

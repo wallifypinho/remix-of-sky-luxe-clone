@@ -1,161 +1,167 @@
 import { useState } from "react";
-import { Plane, ArrowLeft, User, Mail, Phone, MapPin, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import StepWelcome from "@/components/reserva/StepWelcome";
+import StepPassageiros from "@/components/reserva/StepPassageiros";
+import StepDados, { type PassageiroData } from "@/components/reserva/StepDados";
+import StepAssentos from "@/components/reserva/StepAssentos";
+import StepPagamento from "@/components/reserva/StepPagamento";
+import StepResumo from "@/components/reserva/StepResumo";
+import StepSucesso from "@/components/reserva/StepSucesso";
+import StepProgress from "@/components/reserva/StepProgress";
+
+const emptyPassageiro = (): PassageiroData => ({
+  nomeCompleto: "",
+  dataNascimento: "",
+  cpf: "",
+  telefone: "",
+  email: "",
+});
 
 const ColetaDados = () => {
-  const [formData, setFormData] = useState({
-    nome: "",
-    email: "",
-    telefone: "",
-    cpf: "",
-    endereco: "",
-    observacoes: "",
-  });
+  const [step, setStep] = useState(0); // 0=welcome, 1=passageiros, 2=dados, 3=assentos, 4=pagamento, 5=resumo, 6=sucesso
+  const [counts, setCounts] = useState({ adultos: 1, criancas: 0, bebes: 0 });
+  const [passageiros, setPassageiros] = useState<PassageiroData[]>([emptyPassageiro()]);
+  const [currentPassageiroIndex, setCurrentPassageiroIndex] = useState(0);
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [metodoPagamento, setMetodoPagamento] = useState("pix");
+  const [codigoReserva, setCodigoReserva] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const totalPassageiros = counts.adultos + counts.criancas + counts.bebes;
+
+  const handleCountsChange = (newCounts: typeof counts) => {
+    const newTotal = newCounts.adultos + newCounts.criancas + newCounts.bebes;
+    setCounts(newCounts);
+    // Adjust passageiros array
+    setPassageiros((prev) => {
+      if (newTotal > prev.length) {
+        return [...prev, ...Array.from({ length: newTotal - prev.length }, emptyPassageiro)];
+      }
+      return prev.slice(0, newTotal);
+    });
+    // Reset seats if total changed
+    setSelectedSeats((prev) => (prev.length > newTotal ? prev.slice(0, newTotal) : prev));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Dados do passageiro salvos com sucesso!");
-    setFormData({ nome: "", email: "", telefone: "", cpf: "", endereco: "", observacoes: "" });
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("reservas")
+        .insert({
+          adultos: counts.adultos,
+          criancas: counts.criancas,
+          bebes: counts.bebes,
+          passageiros: passageiros as any,
+          assentos: selectedSeats as any,
+          metodo_pagamento: metodoPagamento,
+          status: "pendente",
+        })
+        .select("codigo_reserva")
+        .single();
+
+      if (error) throw error;
+
+      const codigo = data.codigo_reserva;
+      setCodigoReserva(codigo);
+      setStep(6);
+      toast.success("Cadastro enviado com sucesso!");
+
+      // Redirect to WhatsApp after 3s
+      const firstPhone = passageiros[0]?.telefone?.replace(/\D/g, "");
+      if (firstPhone) {
+        const msg = encodeURIComponent(
+          `Olá! Acabei de realizar meu cadastro de reserva. Meu código é: ${codigo}`
+        );
+        setTimeout(() => {
+          window.open(`https://wa.me/55${firstPhone}?text=${msg}`, "_blank");
+        }, 3000);
+      }
+    } catch (err: any) {
+      toast.error("Erro ao enviar cadastro: " + (err.message || "Tente novamente"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card px-4 py-4">
-        <div className="mx-auto flex max-w-2xl items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Plane className="h-4 w-4 text-primary-foreground" />
+      <div className="mx-auto max-w-lg px-4 py-6">
+        {/* Progress bar - show for steps 1-5 */}
+        {step >= 1 && step <= 5 && (
+          <div className="mb-6">
+            <StepProgress current={step - 1} />
           </div>
-          <h1 className="text-lg font-semibold text-foreground">Coleta de Dados</h1>
-        </div>
-      </header>
+        )}
 
-      {/* Content */}
-      <main className="mx-auto max-w-2xl px-4 py-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5 text-primary" />
-                Dados do Passageiro
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome Completo</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="nome"
-                        placeholder="Nome do passageiro"
-                        value={formData.nome}
-                        onChange={(e) => handleChange("nome", e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
+        {step === 0 && <StepWelcome onNext={() => setStep(1)} />}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="email@exemplo.com"
-                        value={formData.email}
-                        onChange={(e) => handleChange("email", e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
+        {step === 1 && (
+          <StepPassageiros
+            counts={counts}
+            onChange={handleCountsChange}
+            onNext={() => {
+              setCurrentPassageiroIndex(0);
+              setStep(2);
+            }}
+            onBack={() => setStep(0)}
+          />
+        )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="telefone"
-                        placeholder="(00) 00000-0000"
-                        value={formData.telefone}
-                        onChange={(e) => handleChange("telefone", e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
+        {step === 2 && (
+          <StepDados
+            passageiros={passageiros}
+            currentIndex={currentPassageiroIndex}
+            onChangeIndex={setCurrentPassageiroIndex}
+            onChange={(i, data) => {
+              setPassageiros((prev) => prev.map((p, idx) => (idx === i ? data : p)));
+            }}
+            onNext={() => setStep(3)}
+            onBack={() => setStep(1)}
+            total={totalPassageiros}
+          />
+        )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <div className="relative">
-                      <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="cpf"
-                        placeholder="000.000.000-00"
-                        value={formData.cpf}
-                        onChange={(e) => handleChange("cpf", e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
+        {step === 3 && (
+          <StepAssentos
+            totalPassageiros={totalPassageiros}
+            selectedSeats={selectedSeats}
+            onChange={setSelectedSeats}
+            onNext={() => setStep(4)}
+            onBack={() => setStep(2)}
+          />
+        )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="endereco">Endereço</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="endereco"
-                      placeholder="Endereço completo"
-                      value={formData.endereco}
-                      onChange={(e) => handleChange("endereco", e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
+        {step === 4 && (
+          <StepPagamento
+            selected={metodoPagamento}
+            onChange={setMetodoPagamento}
+            onNext={() => setStep(5)}
+            onBack={() => setStep(3)}
+          />
+        )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
-                  <Textarea
-                    id="observacoes"
-                    placeholder="Informações adicionais..."
-                    value={formData.observacoes}
-                    onChange={(e) => handleChange("observacoes", e.target.value)}
-                    rows={3}
-                  />
-                </div>
+        {step === 5 && (
+          <StepResumo
+            passageiros={passageiros}
+            assentos={selectedSeats}
+            metodoPagamento={metodoPagamento}
+            onSubmit={handleSubmit}
+            onBack={() => setStep(4)}
+            loading={loading}
+          />
+        )}
 
-                <Button type="submit" className="w-full">
-                  Salvar Dados
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </main>
+        {step === 6 && (
+          <StepSucesso
+            codigo={codigoReserva}
+            passageiros={passageiros}
+            assentos={selectedSeats}
+            metodoPagamento={metodoPagamento}
+          />
+        )}
+      </div>
     </div>
   );
 };
