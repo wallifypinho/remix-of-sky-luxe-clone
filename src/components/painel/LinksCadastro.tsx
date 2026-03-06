@@ -2,10 +2,15 @@ import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import type { LinkCadastro } from "@/types/pagamento";
 
+const getBaseUrl = () => {
+  if (typeof window !== "undefined") return window.location.origin;
+  return "";
+};
+
 const linksDefault: LinkCadastro[] = [
-  { companhia: "Azul", url: "https://seusite.com/cadastro/1?airline=azul", cor: "border-blue-400 bg-blue-50" },
-  { companhia: "GOL", url: "https://seusite.com/cadastro/1?airline=gol", cor: "border-orange-300 bg-orange-50" },
-  { companhia: "LATAM", url: "https://seusite.com/cadastro/1?airline=latam", cor: "border-red-300 bg-red-50" },
+  { companhia: "Azul", url: `${getBaseUrl()}/coleta-dados?airline=azul`, cor: "border-blue-400 bg-blue-50" },
+  { companhia: "GOL", url: `${getBaseUrl()}/coleta-dados?airline=gol`, cor: "border-orange-300 bg-orange-50" },
+  { companhia: "LATAM", url: `${getBaseUrl()}/coleta-dados?airline=latam`, cor: "border-red-300 bg-red-50" },
 ];
 
 const LinksCadastro = () => {

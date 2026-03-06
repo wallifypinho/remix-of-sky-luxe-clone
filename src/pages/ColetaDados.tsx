@@ -68,16 +68,15 @@ const ColetaDados = () => {
       setStep(6);
       toast.success("Cadastro enviado com sucesso!");
 
-      // Redirect to WhatsApp after 3s
-      const firstPhone = passageiros[0]?.telefone?.replace(/\D/g, "");
-      if (firstPhone) {
-        const msg = encodeURIComponent(
-          `Olá! Acabei de realizar meu cadastro de reserva. Meu código é: ${codigo}`
-        );
-        setTimeout(() => {
-          window.open(`https://wa.me/55${firstPhone}?text=${msg}`, "_blank");
-        }, 3000);
-      }
+      // Redirect to operator WhatsApp after 3s
+      // Uses the whatsapp_operador from the reserva or fallback
+      const operadorWhatsApp = "5521982592219"; // TODO: fetch from config
+      const msg = encodeURIComponent(
+        `Olá! Acabei de realizar meu cadastro de reserva. Meu código é: ${codigo}`
+      );
+      setTimeout(() => {
+        window.open(`https://wa.me/${operadorWhatsApp}?text=${msg}`, "_blank");
+      }, 3000);
     } catch (err: any) {
       toast.error("Erro ao enviar cadastro: " + (err.message || "Tente novamente"));
     } finally {
