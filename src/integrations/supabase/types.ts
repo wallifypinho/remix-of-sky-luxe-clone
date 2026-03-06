@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      pagamentos: {
+        Row: {
+          classe: string
+          codigo_pix: string | null
+          codigo_reserva: string
+          companhia: string
+          created_at: string
+          descricao: string | null
+          destino: string
+          id: string
+          ida_chegada: string
+          ida_data: string
+          ida_partida: string
+          metodo_pagamento: string
+          numero_voo: string
+          origem: string
+          passageiros: Json
+          status: string
+          token: string
+          valor: string
+          volta_chegada: string | null
+          volta_data: string | null
+          volta_partida: string | null
+          whatsapp_cliente: string | null
+          whatsapp_operador: string | null
+        }
+        Insert: {
+          classe?: string
+          codigo_pix?: string | null
+          codigo_reserva?: string
+          companhia?: string
+          created_at?: string
+          descricao?: string | null
+          destino?: string
+          id?: string
+          ida_chegada?: string
+          ida_data?: string
+          ida_partida?: string
+          metodo_pagamento?: string
+          numero_voo?: string
+          origem?: string
+          passageiros?: Json
+          status?: string
+          token?: string
+          valor?: string
+          volta_chegada?: string | null
+          volta_data?: string | null
+          volta_partida?: string | null
+          whatsapp_cliente?: string | null
+          whatsapp_operador?: string | null
+        }
+        Update: {
+          classe?: string
+          codigo_pix?: string | null
+          codigo_reserva?: string
+          companhia?: string
+          created_at?: string
+          descricao?: string | null
+          destino?: string
+          id?: string
+          ida_chegada?: string
+          ida_data?: string
+          ida_partida?: string
+          metodo_pagamento?: string
+          numero_voo?: string
+          origem?: string
+          passageiros?: Json
+          status?: string
+          token?: string
+          valor?: string
+          volta_chegada?: string | null
+          volta_data?: string | null
+          volta_partida?: string | null
+          whatsapp_cliente?: string | null
+          whatsapp_operador?: string | null
+        }
+        Relationships: []
+      }
       reservas: {
         Row: {
           adultos: number
