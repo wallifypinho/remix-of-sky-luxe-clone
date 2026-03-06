@@ -433,8 +433,8 @@ const BoardingPass = () => {
             )}
 
             {data.status === "pago" && (
-              <div className="rounded-xl bg-green-50 border border-green-200 p-4 text-center mb-4">
-                <span className="text-green-700 font-semibold">✅ Pagamento confirmado!</span>
+              <div className="rounded-xl border border-border p-4 text-center mb-4 bg-primary/5">
+                <span className="text-primary font-semibold">✅ Pagamento confirmado!</span>
               </div>
             )}
           </div>
