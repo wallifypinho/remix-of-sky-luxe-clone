@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
