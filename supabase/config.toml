@@ -1,0 +1,4 @@
+project_id = "ifywvzlisduigqohvseu"
+
+[functions.extract-flight-data]
+verify_jwt = false
