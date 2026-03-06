@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
-import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Passageiro } from "@/types/pagamento";
@@ -255,54 +255,46 @@ const NovoPagamentoForm = () => {
         )}
       </div>
 
-      {/* Colar texto de reserva */}
-      <button
-        onClick={() => setPasteModalOpen(true)}
-        className="mb-5 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full justify-center py-2 rounded-lg border border-border"
-      >
-        <ClipboardPaste className="h-4 w-4" /> Colar texto de reserva
-      </button>
+      {/* Colar texto de reserva - inline collapsible */}
+      <div className="mb-5 rounded-lg border-2 border-dashed border-border overflow-hidden">
+        <button
+          onClick={() => setPasteModalOpen(!pasteModalOpen)}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full justify-center py-3"
+        >
+          <ClipboardPaste className="h-4 w-4" />
+          {pasteModalOpen ? "Fechar campo de colagem" : "Colar texto de reserva"}
+        </button>
 
-      {/* Paste Text Modal */}
-      <Dialog open={pasteModalOpen} onOpenChange={setPasteModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardPaste className="h-4 w-4" /> Colar texto de reserva
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Cole abaixo os dados da reserva coletados na aba Pedidos. A IA irá extrair automaticamente todos os dados do voo.
-            </p>
+        {pasteModalOpen && (
+          <div className="px-4 pb-4 space-y-3">
             <Textarea
               value={textoReserva}
               onChange={(e) => setTextoReserva(e.target.value)}
-              placeholder="Cole aqui o texto da reserva com dados do voo, passageiros, horários..."
-              rows={8}
-              className="resize-none"
+              placeholder="Cole aqui o texto da reserva..."
+              rows={5}
+              className="resize-none border-border bg-background"
             />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setPasteModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handlePasteTextExtract} disabled={isPastingExtract || !textoReserva.trim()}>
-                {isPastingExtract ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Extraindo...
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="h-4 w-4" />
-                    Extrair dados
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handlePasteTextExtract}
+              disabled={isPastingExtract || !textoReserva.trim()}
+              className="w-full"
+              variant="outline"
+            >
+              {isPastingExtract ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Extraindo...
+                </>
+              ) : (
+                <>
+                  <ClipboardPaste className="h-4 w-4" />
+                  Interpretar Texto
+                </>
+              )}
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
 
       {/* Método de Pagamento */}
       <div className="mb-4">
