@@ -186,7 +186,7 @@ const NovoPagamentoForm = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!valor) {
       toast.error("Informe o valor do pagamento");
       return;
@@ -195,7 +195,42 @@ const NovoPagamentoForm = () => {
       toast.error("Informe o código PIX");
       return;
     }
-    toast.success(`Pagamento gerado para ${numPassageiros} passageiro(s)!`);
+
+    try {
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .insert({
+          passageiros: passageiros as any,
+          origem,
+          destino,
+          companhia,
+          numero_voo: numeroVoo,
+          classe,
+          ida_data: idaData,
+          ida_partida: idaPartida,
+          ida_chegada: idaChegada,
+          volta_data: voltaData || null,
+          volta_partida: voltaPartida || null,
+          volta_chegada: voltaChegada || null,
+          descricao,
+          codigo_reserva: codReserva,
+          valor,
+          whatsapp_cliente: whatsappCliente,
+          codigo_pix: codigoPix,
+          metodo_pagamento: metodoPagamento,
+          status: "pendente",
+        })
+        .select("token")
+        .single();
+
+      if (error) throw error;
+
+      const link = `${window.location.origin}/boarding-pass?token=${data.token}`;
+      await navigator.clipboard.writeText(link);
+      toast.success("Pagamento gerado! Link copiado para a área de transferência.");
+    } catch (err: any) {
+      toast.error("Erro ao gerar pagamento: " + (err.message || "Tente novamente"));
+    }
   };
 
   return (
