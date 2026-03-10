@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import PainelPagamentos from "./pages/PainelPagamentos";
 import ColetaDados from "./pages/ColetaDados";
 import BoardingPass from "./pages/BoardingPass";
+import LoginOperador from "./pages/LoginOperador";
 
 const queryClient = new QueryClient();
 
