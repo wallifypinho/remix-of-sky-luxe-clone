@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Settings, Plane, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Settings, Plane, ArrowLeft, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,18 +10,42 @@ import WhatsAppConfig from "@/components/painel/WhatsAppConfig";
 import NotificacoesPush from "@/components/painel/NotificacoesPush";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
-
+import OperadoresSection from "@/components/painel/OperadoresSection";
+import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
 type Tab = "pagamentos" | "pedidos" | "operadores" | "gateways";
 
 const PainelPagamentos = () => {
+  const { operador, loading, logout, isAdmin } = useOperadorAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("pagamentos");
   const [whatsappAdmin, setWhatsappAdmin] = useState("5521982592219");
+
+  useEffect(() => {
+    if (!loading && !operador) {
+      navigate("/login");
+    }
+  }, [loading, operador, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!operador) return null;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: "pagamentos", label: "Pagamentos", count: 8 },
     { id: "pedidos", label: "Pedidos", count: 24 },
-    { id: "operadores", label: "Operadores", count: 4 },
+    { id: "operadores", label: "Operadores" },
     { id: "gateways", label: "Gateways", count: 1 },
   ];
 
@@ -30,17 +54,24 @@ const PainelPagamentos = () => {
       {/* Header */}
       <header className="border-b border-border bg-card px-4 py-5">
         <div className="mx-auto max-w-6xl">
-          <div className="flex items-center gap-3 mb-1">
-            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <Settings className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-3">
+              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                <Settings className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Painel Principal</h1>
+                <p className="text-xs text-muted-foreground">
+                  Olá, {operador.nome} • {operador.perfil === "admin" ? "Administrador" : "Operador"}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Painel Principal</h1>
-              <p className="text-xs text-muted-foreground">Gerencie pagamentos, operadores e gateways</p>
-            </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
+              <LogOut className="h-4 w-4 mr-1" /> Sair
+            </Button>
           </div>
         </div>
       </header>
@@ -119,11 +150,7 @@ const PainelPagamentos = () => {
           )}
 
           {activeTab === "operadores" && (
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
-              <Settings className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-              <h3 className="text-base font-semibold text-foreground mb-1">Operadores (4/20)</h3>
-              <p className="text-sm text-muted-foreground">Gerencie seus operadores aqui</p>
-            </div>
+            <OperadoresSection />
           )}
 
           {activeTab === "gateways" && (

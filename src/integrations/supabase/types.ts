@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      operadores: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          perfil: string
+          senha_hash: string
+          sessao_ativa: boolean
+          status: string
+          ultimo_acesso: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          perfil?: string
+          senha_hash: string
+          sessao_ativa?: boolean
+          status?: string
+          ultimo_acesso?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          perfil?: string
+          senha_hash?: string
+          sessao_ativa?: boolean
+          status?: string
+          ultimo_acesso?: string | null
+        }
+        Relationships: []
+      }
       pagamentos: {
         Row: {
           classe: string

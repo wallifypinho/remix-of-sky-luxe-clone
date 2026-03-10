@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import PainelPagamentos from "./pages/PainelPagamentos";
 import ColetaDados from "./pages/ColetaDados";
 import BoardingPass from "./pages/BoardingPass";
+import LoginOperador from "./pages/LoginOperador";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<LoginOperador />} />
           <Route path="/painel" element={<PainelPagamentos />} />
           <Route path="/coleta-dados" element={<ColetaDados />} />
           <Route path="/boarding-pass" element={<BoardingPass />} />
