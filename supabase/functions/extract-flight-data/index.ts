@@ -14,10 +14,14 @@ serve(async (req) => {
   try {
     const { imageBase64, textReserva } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    // Configuração flexível: tenta LOVABLE_API_KEY primeiro, depois AI_API_KEY
+    const AI_API_KEY = Deno.env.get("AI_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
+    const AI_PROVIDER_URL = Deno.env.get("AI_PROVIDER_URL") || "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const AI_MODEL = Deno.env.get("AI_MODEL") || "google/gemini-2.5-flash";
+
+    if (!AI_API_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: "LOVABLE_API_KEY não configurada" }),
+        JSON.stringify({ success: false, error: "Chave de API de IA não configurada (AI_API_KEY)" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -32,6 +36,7 @@ REGRAS IMPORTANTES:
 - Extraia código de reserva, companhia aérea, número do voo
 - Extraia dados dos passageiros: nome, documento, telefone/whatsapp
 - Aeroportos devem ser em código IATA (3 letras) quando possível
+- Inclua o nome completo do aeroporto e a cidade quando disponível
 - Se houver múltiplos passageiros, extraia todos
 - O número do voo pode não estar presente, nesse caso deixe vazio`;
 
@@ -51,14 +56,14 @@ REGRAS IMPORTANTES:
       });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(AI_PROVIDER_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
@@ -73,7 +78,11 @@ REGRAS IMPORTANTES:
                 type: "object",
                 properties: {
                   origem: { type: "string", description: "Código IATA do aeroporto de origem (ex: GRU)" },
+                  origemNome: { type: "string", description: "Nome completo do aeroporto de origem (ex: Aeroporto Internacional de Guarulhos)" },
+                  origemCidade: { type: "string", description: "Cidade de origem (ex: São Paulo)" },
                   destino: { type: "string", description: "Código IATA do aeroporto de destino (ex: SDU)" },
+                  destinoNome: { type: "string", description: "Nome completo do aeroporto de destino (ex: Aeroporto Santos Dumont)" },
+                  destinoCidade: { type: "string", description: "Cidade de destino (ex: Rio de Janeiro)" },
                   companhia: { type: "string", description: "Nome da companhia aérea" },
                   numeroVoo: { type: "string", description: "Número do voo (ex: AD5062). Vazio se não encontrado." },
                   classe: { type: "string", enum: ["economica", "executiva", "primeira"], description: "Classe do voo" },
@@ -151,18 +160,12 @@ REGRAS IMPORTANTES:
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+      console.error("AI provider error:", response.status, errText);
 
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ success: false, error: "Muitas requisições. Tente novamente em instantes." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Créditos insuficientes. Adicione créditos ao workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
