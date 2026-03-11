@@ -373,15 +373,6 @@ const PaymentLinksBlock = () => {
                             )}
                           </AnimatePresence>
 
-                          {/* PIX QR Code */}
-                          {l.codigo_pix && (
-                            <div className="flex justify-center py-2">
-                              <div className="bg-card rounded-xl p-3 border border-border/30">
-                                <QRCodeSVG value={l.codigo_pix} size={140} />
-                              </div>
-                            </div>
-                          )}
-
                           {/* Edit PIX inline */}
                           {editPixId === l.id && (
                             <div className="rounded-xl border border-border/40 bg-card p-3 space-y-2.5">
