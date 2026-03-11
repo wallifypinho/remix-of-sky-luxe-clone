@@ -17,11 +17,19 @@ const NovoPagamentoForm = () => {
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
   const [passageiros, setPassageiros] = useState<Partial<Passageiro>[]>([{}]);
 
+  // Auto-generate flight number
+  const generateFlightNumber = () => {
+    const prefixes = ["AD", "G3", "LA", "JJ", "TP", "AV", "CM", "AA", "DL", "UA"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const num = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${num}`;
+  };
+
   // Flight info
   const [origem, setOrigem] = useState("");
   const [destino, setDestino] = useState("");
   const [companhia, setCompanhia] = useState("");
-  const [numeroVoo, setNumeroVoo] = useState("");
+  const [numeroVoo, setNumeroVoo] = useState(() => generateFlightNumber());
   const [classe, setClasse] = useState("economica");
 
   // IDA
