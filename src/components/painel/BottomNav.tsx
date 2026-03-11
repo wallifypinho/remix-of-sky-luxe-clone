@@ -11,17 +11,17 @@ interface BottomNavProps {
 }
 
 const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNavProps) => {
-  const tabs: { id: Tab; icon: any; label: string; adminOnly?: boolean }[] = [
-    { id: "pedidos", icon: ClipboardList, label: "Pedidos" },
-    { id: "pagamentos", icon: CreditCard, label: "Pagamentos" },
-    ...(isAdmin ? [{ id: "operadores" as Tab, icon: Users, label: "Operadores" }] : []),
-    { id: "gateways", icon: Zap, label: "Gateways" },
+  const tabs: { id: Tab; icon: any }[] = [
+    { id: "pedidos", icon: ClipboardList },
+    { id: "pagamentos", icon: CreditCard },
+    ...(isAdmin ? [{ id: "operadores" as Tab, icon: Users }] : []),
+    { id: "gateways", icon: Zap },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <div className="mx-3 mb-3" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-        <div className="flex items-center justify-around rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-lg shadow-foreground/5 px-2 py-1.5">
+      <div className="mx-4 mb-4" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-center justify-around rounded-[28px] bg-[hsl(0_0%_12%)] backdrop-blur-2xl px-3 py-2.5 shadow-2xl shadow-black/40">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -29,26 +29,29 @@ const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNav
               <button
                 key={tab.id}
                 onClick={() => onChange(tab.id)}
-                className="relative flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-colors"
+                className="relative flex items-center justify-center rounded-[20px] transition-all duration-200"
+                style={{ width: isActive ? 56 : 44, height: 44 }}
               >
                 {isActive && (
                   <motion.div
-                    layoutId="bottomNavIndicator"
-                    className="absolute inset-0 rounded-xl bg-primary/10"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    layoutId="bottomNavPill"
+                    className="absolute inset-0 rounded-[20px] bg-[hsl(0_0%_24%)]"
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
-                <div className="relative">
-                  <Icon className={`h-5 w-5 relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="relative z-10">
+                  <Icon
+                    className={`h-[22px] w-[22px] transition-colors duration-200 ${
+                      isActive ? "text-white" : "text-[hsl(0_0%_55%)]"
+                    }`}
+                    strokeWidth={isActive ? 2.2 : 1.8}
+                  />
                   {tab.id === "pedidos" && pedidosCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-1 z-20">
+                    <span className="absolute -top-1.5 -right-2 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground px-0.5">
                       {pedidosCount}
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-semibold relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}>
-                  {tab.label}
-                </span>
               </button>
             );
           })}
