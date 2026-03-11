@@ -33,9 +33,9 @@ export function useOperadorAuth() {
     setLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string, senha: string) => {
+  const login = useCallback(async (senha: string) => {
     const { data, error } = await supabase.functions.invoke("operador-auth", {
-      body: { action: "login", email, senha },
+      body: { action: "login", senha },
     });
 
     if (error) throw new Error("Erro de conexão");
