@@ -121,10 +121,15 @@ const OperadoresSection = () => {
     return new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
   };
 
-  const copyPainelLink = (opId: string) => {
-    const link = `${window.location.origin}/login?op=${opId}`;
+  const getPainelLink = (op: OperadorRow) => {
+    const slug = op.nome.toLowerCase().replace(/\s+/g, "");
+    return `${window.location.origin}/painel/${slug}`;
+  };
+
+  const copyPainelLink = (op: OperadorRow) => {
+    const link = getPainelLink(op);
     navigator.clipboard.writeText(link);
-    setCopiedLinkId(opId);
+    setCopiedLinkId(op.id);
     toast.success("Link do painel copiado!");
     setTimeout(() => setCopiedLinkId(null), 2000);
   };
