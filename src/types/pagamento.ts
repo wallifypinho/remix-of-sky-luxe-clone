@@ -30,7 +30,7 @@ export interface Pagamento {
   whatsapp: string;
   codigoPix: string;
   metodoPagamento: "pix" | "gateway";
-  status: "pendente" | "confirmado" | "cancelado";
+  status: "pendente" | "confirmado" | "cancelado" | "pago";
   criadoEm: string;
   atribuidoA: string;
 }

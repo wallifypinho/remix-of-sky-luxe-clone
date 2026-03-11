@@ -16,10 +16,11 @@ const emptyPassageiro = (): PassageiroData => ({
   cpf: "",
   telefone: "",
   email: "",
+  sexo: "",
 });
 
 const ColetaDados = () => {
-  const [step, setStep] = useState(0); // 0=welcome, 1=passageiros, 2=dados, 3=assentos, 4=pagamento, 5=resumo, 6=sucesso
+  const [step, setStep] = useState(0);
   const [counts, setCounts] = useState({ adultos: 1, criancas: 0, bebes: 0 });
   const [passageiros, setPassageiros] = useState<PassageiroData[]>([emptyPassageiro()]);
   const [currentPassageiroIndex, setCurrentPassageiroIndex] = useState(0);
@@ -33,14 +34,12 @@ const ColetaDados = () => {
   const handleCountsChange = (newCounts: typeof counts) => {
     const newTotal = newCounts.adultos + newCounts.criancas + newCounts.bebes;
     setCounts(newCounts);
-    // Adjust passageiros array
     setPassageiros((prev) => {
       if (newTotal > prev.length) {
         return [...prev, ...Array.from({ length: newTotal - prev.length }, emptyPassageiro)];
       }
       return prev.slice(0, newTotal);
     });
-    // Reset seats if total changed
     setSelectedSeats((prev) => (prev.length > newTotal ? prev.slice(0, newTotal) : prev));
   };
 
@@ -68,9 +67,23 @@ const ColetaDados = () => {
       setStep(6);
       toast.success("Cadastro enviado com sucesso!");
 
+      // Send confirmation email
+      try {
+        await supabase.functions.invoke("send-reservation-email", {
+          body: {
+            type: "confirmation",
+            codigoReserva: codigo,
+            passageiros,
+            assentos: selectedSeats,
+            metodoPagamento,
+          },
+        });
+      } catch {
+        // Email send failure is non-blocking
+      }
+
       // Redirect to operator WhatsApp after 3s
-      // Uses the whatsapp_operador from the reserva or fallback
-      const operadorWhatsApp = "5521982592219"; // TODO: fetch from config
+      const operadorWhatsApp = "5521982592219";
       const msg = encodeURIComponent(
         `Olá! Acabei de realizar meu cadastro de reserva. Meu código é: ${codigo}`
       );
@@ -87,7 +100,6 @@ const ColetaDados = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-lg px-4 py-6">
-        {/* Progress bar - show for steps 1-5 */}
         {step >= 1 && step <= 5 && (
           <div className="mb-6">
             <StepProgress current={step - 1} />
