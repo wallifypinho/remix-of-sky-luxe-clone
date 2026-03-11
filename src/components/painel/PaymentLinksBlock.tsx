@@ -48,6 +48,7 @@ const PaymentLinksBlock = () => {
   const [editPixId, setEditPixId] = useState<string | null>(null);
   const [editPixValue, setEditPixValue] = useState("");
   const [savingPix, setSavingPix] = useState(false);
+  const [viewBoardingPass, setViewBoardingPass] = useState<PagamentoLink | null>(null);
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
