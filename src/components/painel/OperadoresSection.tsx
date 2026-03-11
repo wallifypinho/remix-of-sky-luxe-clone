@@ -121,6 +121,14 @@ const OperadoresSection = () => {
     return new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
   };
 
+  const copyPainelLink = (opId: string) => {
+    const link = `${window.location.origin}/login?op=${opId}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLinkId(opId);
+    toast.success("Link do painel copiado!");
+    setTimeout(() => setCopiedLinkId(null), 2000);
+  };
+
   const onlineCount = operadores.filter(o => o.sessao_ativa).length;
 
   return (
