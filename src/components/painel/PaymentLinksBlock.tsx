@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2 } from "lucide-react";
+import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PagamentoLink {
   id: string;
@@ -17,6 +20,7 @@ interface PagamentoLink {
   destino: string;
   created_at: string;
   passageiros: any[];
+  codigo_pix: string | null;
 }
 
 const PaymentLinksBlock = () => {
@@ -25,13 +29,18 @@ const PaymentLinksBlock = () => {
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
+  const [taxaOpenId, setTaxaOpenId] = useState<string | null>(null);
+  const [taxaValor, setTaxaValor] = useState("");
+  const [taxaPix, setTaxaPix] = useState("");
+  const [taxaMotivo, setTaxaMotivo] = useState("");
+  const [taxaSaving, setTaxaSaving] = useState(false);
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("pagamentos")
-        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros")
+        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -45,7 +54,6 @@ const PaymentLinksBlock = () => {
 
   useEffect(() => { fetchLinks(); }, [fetchLinks]);
 
-  // Realtime for pagamentos updates
   useEffect(() => {
     const channel = supabase
       .channel("pagamentos-links-rt")
@@ -54,7 +62,6 @@ const PaymentLinksBlock = () => {
     return () => { supabase.removeChannel(channel); };
   }, [fetchLinks]);
 
-  // Track presence for each link
   useEffect(() => {
     if (links.length === 0) return;
     const channels = links.map((link) => {
@@ -77,11 +84,52 @@ const PaymentLinksBlock = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const copyPix = (pix: string, id: string) => {
+    navigator.clipboard.writeText(pix);
+    setCopiedId(`pix-${id}`);
+    toast.success("PIX copiado!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleAddTaxa = async (pagamentoId: string) => {
+    if (!taxaValor) {
+      toast.error("Informe o valor da taxa");
+      return;
+    }
+    setTaxaSaving(true);
+    try {
+      // Update the pagamento with taxa info in descricao field (taxa data stored as structured text)
+      const taxaInfo = `\n---TAXA---\nValor: R$ ${taxaValor}\nPIX: ${taxaPix}\nMotivo: ${taxaMotivo}\nData: ${new Date().toLocaleString("pt-BR")}`;
+      
+      const { error } = await supabase
+        .from("pagamentos")
+        .update({
+          descricao: supabase.rpc ? taxaInfo : taxaInfo,
+          status: "taxa_pendente",
+        })
+        .eq("id", pagamentoId);
+      
+      if (error) throw error;
+      toast.success("Taxa adicionada com sucesso!");
+      setTaxaOpenId(null);
+      setTaxaValor("");
+      setTaxaPix("");
+      setTaxaMotivo("");
+      fetchLinks();
+    } catch (err: any) {
+      toast.error("Erro ao adicionar taxa: " + (err.message || "Tente novamente"));
+    } finally {
+      setTaxaSaving(false);
+    }
+  };
+
   const statusBadge = (status: string) => {
     switch (status) {
       case "pendente": return <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/10 text-[10px]">Pendente</Badge>;
       case "pago": return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10 text-[10px]">Pago</Badge>;
       case "confirmado": return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10 text-[10px]">Confirmado</Badge>;
+      case "taxa_pendente": return <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/10 text-[10px]">Taxa Pendente</Badge>;
+      case "taxa_paga": return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10 text-[10px]">Taxa Paga</Badge>;
       default: return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
     }
   };
@@ -120,55 +168,134 @@ const PaymentLinksBlock = () => {
           <p className="text-sm text-muted-foreground">Nenhum link gerado</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[500px] overflow-y-auto">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto">
           {filtered.map((l) => {
             const mainName = (l.passageiros?.[0] as any)?.nomeCompleto || (l.passageiros?.[0] as any)?.nome || "—";
             const viewers = viewerCounts[l.token] || 0;
+            const isTaxaOpen = taxaOpenId === l.id;
+
             return (
-              <div key={l.id} className="rounded-lg border border-border p-3 hover:bg-muted/20 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground truncate">{mainName}</span>
-                      {statusBadge(l.status)}
-                      {viewers > 0 && (
-                        <span className="flex items-center gap-1 text-[10px] font-medium text-primary">
-                          <Eye className="h-3 w-3" /> {viewers}
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+              <div key={l.id} className="rounded-lg border border-border overflow-hidden">
+                <div className="p-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-foreground truncate">{mainName}</span>
+                        {statusBadge(l.status)}
+                        {viewers > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] font-medium text-primary">
+                            <Eye className="h-3 w-3" /> {viewers}
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                            </span>
                           </span>
-                        </span>
-                      )}
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                        <span className="font-mono">{l.codigo_reserva || "—"}</span>
+                        <span>•</span>
+                        <span>{l.origem} → {l.destino}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-primary">R$ {l.valor}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                      <span className="font-mono">{l.codigo_reserva || "—"}</span>
-                      <span>•</span>
-                      <span>{l.origem} → {l.destino}</span>
-                      <span>•</span>
-                      <span className="font-semibold text-primary">R$ {l.valor}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button variant="outline" size="sm" onClick={() => copyLink(l.token, l.id)} className="h-8 gap-1 text-xs">
+                        {copiedId === l.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                        {copiedId === l.id ? "Copiado" : "Copiar"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+
+                  {/* PIX copy + Taxa button row */}
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
+                    {l.codigo_pix && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyPix(l.codigo_pix!, `pix-${l.id}`)}
+                        className="h-7 gap-1 text-[10px]"
+                      >
+                        {copiedId === `pix-${l.id}` ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                        {copiedId === `pix-${l.id}` ? "PIX Copiado" : "Copiar PIX"}
+                      </Button>
+                    )}
                     <Button
-                      variant="outline"
+                      variant={isTaxaOpen ? "secondary" : "outline"}
                       size="sm"
-                      onClick={() => copyLink(l.token, l.id)}
-                      className="h-8 gap-1 text-xs"
+                      onClick={() => setTaxaOpenId(isTaxaOpen ? null : l.id)}
+                      className="h-7 gap-1 text-[10px] ml-auto"
                     >
-                      {copiedId === l.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-                      {copiedId === l.id ? "Copiado" : "Copiar"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <DollarSign className="h-3 w-3" />
+                      Adicionar Taxa
+                      {isTaxaOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                     </Button>
                   </div>
                 </div>
+
+                {/* Taxa Form */}
+                <AnimatePresence>
+                  {isTaxaOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-border"
+                    >
+                      <div className="p-4 bg-muted/10 space-y-3">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                          <DollarSign className="h-3.5 w-3.5" /> Taxa Adicional
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Valor da Taxa (R$) *</Label>
+                            <Input
+                              placeholder="Ex: 150,00"
+                              value={taxaValor}
+                              onChange={(e) => setTaxaValor(e.target.value)}
+                              className="h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Motivo da Taxa</Label>
+                            <Input
+                              placeholder="Ex: Taxa de embarque"
+                              value={taxaMotivo}
+                              onChange={(e) => setTaxaMotivo(e.target.value)}
+                              className="h-9"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">PIX da Taxa</Label>
+                          <Textarea
+                            placeholder="Cole o código PIX para a taxa"
+                            value={taxaPix}
+                            onChange={(e) => setTaxaPix(e.target.value)}
+                            rows={2}
+                            className="resize-none"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => handleAddTaxa(l.id)}
+                          disabled={taxaSaving || !taxaValor}
+                          size="sm"
+                          className="w-full h-9"
+                        >
+                          {taxaSaving ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Salvando...</>
+                          ) : (
+                            <><Plus className="h-3.5 w-3.5 mr-1" /> Gerar Taxa</>
+                          )}
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}

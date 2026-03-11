@@ -199,7 +199,7 @@ const NovoPagamentoForm = () => {
 
       try {
         const { data, error } = await supabase.functions.invoke("extract-flight-data", {
-          body: { imageBase64: base64 },
+          body: { imageBase64: base64, isConnectionImage: true },
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || "Falha na extração");

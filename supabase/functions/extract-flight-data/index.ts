@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, textReserva } = await req.json();
+    const { imageBase64, textReserva, isConnectionImage } = await req.json();
 
     // Configuração flexível: tenta LOVABLE_API_KEY primeiro, depois AI_API_KEY
     const AI_API_KEY = Deno.env.get("AI_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
@@ -26,7 +26,21 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `Você é um assistente especializado em extrair dados de cotações de voos aéreos.
+    const connectionPrompt = `Você é um assistente especializado em extrair dados de CONEXÕES e ESCALAS de voos aéreos.
+Analise a imagem fornecida e extraia os dados da CONEXÃO do voo.
+
+REGRAS IMPORTANTES:
+- Esta imagem contém detalhes de uma CONEXÃO ou ESCALA de voo de uma cotação
+- Identifique TODOS os trechos de conexão (aeroportos intermediários)
+- Extraia horários de chegada e partida de cada trecho
+- Identifique a companhia aérea pela LOGO, NOME, CORES ou qualquer indicação visual
+- Extraia números de voo quando visíveis
+- Aeroportos devem ser em código IATA (3 letras)
+- Identifique se é trecho de IDA ou VOLTA
+- Extraia informações de terminal e portão quando disponíveis
+- Se reconhecer a marca da companhia (LATAM, GOL, Azul, TAP, Avianca, etc.), preencha o campo companhia`;
+
+    const generalPrompt = `Você é um assistente especializado em extrair dados de cotações de voos aéreos.
 Analise a imagem ou texto fornecido e extraia TODOS os dados do voo com precisão.
 
 REGRAS IMPORTANTES:
@@ -41,12 +55,16 @@ REGRAS IMPORTANTES:
 - O número do voo pode não estar presente, nesse caso deixe vazio
 - IMPORTANTE: Identifique a COMPANHIA AÉREA pela logo, nome, cores ou qualquer indicação visual na imagem. Se reconhecer a marca (LATAM, GOL, Azul, TAP, Avianca, etc.), preencha o campo companhia com o nome correto.`;
 
+    const systemPrompt = isConnectionImage ? connectionPrompt : generalPrompt;
+
     const userContent: any[] = [
       {
         type: "text",
         text: textReserva
           ? `Extraia os dados de voo do seguinte texto de reserva:\n\n${textReserva}`
-          : "Extraia todos os dados de voo desta imagem de cotação. Identifique ida, volta, escalas, horários, passageiros, código de reserva, companhia, etc.",
+          : isConnectionImage
+            ? "Extraia todos os dados de CONEXÃO/ESCALA deste voo. Identifique aeroportos intermediários, horários, companhia aérea, números de voo e trechos."
+            : "Extraia todos os dados de voo desta imagem de cotação. Identifique ida, volta, escalas, horários, passageiros, código de reserva, companhia, etc.",
       },
     ];
 
