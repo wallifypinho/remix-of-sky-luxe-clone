@@ -31,6 +31,7 @@ interface PagamentoLink {
   volta_partida: string | null;
   volta_chegada: string | null;
   assentos?: string[];
+  whatsapp_operador?: string | null;
 }
 
 const PaymentLinksBlock = () => {
