@@ -424,6 +424,20 @@ const PaymentLinksBlock = () => {
                             </Button>
                           )}
 
+                          {/* Enviar e-mail */}
+                          <Button
+                            variant="outline"
+                            onClick={() => handleSendBoardingPass(l)}
+                            disabled={sendingEmailId === l.id}
+                            className="w-full h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
+                          >
+                            {sendingEmailId === l.id ? (
+                              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando e-mail...</>
+                            ) : (
+                              <><Mail className="h-3.5 w-3.5" /> Enviar por e-mail</>
+                            )}
+                          </Button>
+
                           {/* Copiar link + Remover */}
                           <div className="grid grid-cols-[1fr_auto] gap-2.5">
                             <Button
