@@ -9,6 +9,7 @@ import StepPagamento from "@/components/reserva/StepPagamento";
 import StepResumo from "@/components/reserva/StepResumo";
 import StepSucesso from "@/components/reserva/StepSucesso";
 import StepProgress from "@/components/reserva/StepProgress";
+import { AnimatePresence, motion } from "framer-motion";
 
 const emptyPassageiro = (): PassageiroData => ({
   nomeCompleto: "",
@@ -67,7 +68,6 @@ const ColetaDados = () => {
       setStep(6);
       toast.success("Cadastro enviado com sucesso!");
 
-      // Send confirmation email
       try {
         await supabase.functions.invoke("send-reservation-email", {
           body: {
@@ -78,11 +78,8 @@ const ColetaDados = () => {
             metodoPagamento,
           },
         });
-      } catch {
-        // Email send failure is non-blocking
-      }
+      } catch { }
 
-      // Redirect to operator WhatsApp after 3s
       const operadorWhatsApp = "5521982592219";
       const msg = encodeURIComponent(
         `Olá! Acabei de realizar meu cadastro de reserva. Meu código é: ${codigo}`
@@ -91,87 +88,96 @@ const ColetaDados = () => {
         window.open(`https://wa.me/${operadorWhatsApp}?text=${msg}`, "_blank");
       }, 3000);
     } catch (err: any) {
-      toast.error("Erro ao enviar cadastro: " + (err.message || "Tente novamente"));
+      toast.error("Erro ao enviar: " + (err.message || "Tente novamente"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="min-h-screen bg-background relative">
+      <div className="mx-auto max-w-lg px-4 py-5 sm:py-8">
         {step >= 1 && step <= 5 && (
-          <div className="mb-6">
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <StepProgress current={step - 1} />
-          </div>
+          </motion.div>
         )}
 
-        {step === 0 && <StepWelcome onNext={() => setStep(1)} />}
+        <AnimatePresence mode="wait">
+          {step === 0 && <StepWelcome key="welcome" onNext={() => setStep(1)} />}
 
-        {step === 1 && (
-          <StepPassageiros
-            counts={counts}
-            onChange={handleCountsChange}
-            onNext={() => {
-              setCurrentPassageiroIndex(0);
-              setStep(2);
-            }}
-            onBack={() => setStep(0)}
-          />
-        )}
+          {step === 1 && (
+            <StepPassageiros
+              key="passageiros"
+              counts={counts}
+              onChange={handleCountsChange}
+              onNext={() => { setCurrentPassageiroIndex(0); setStep(2); }}
+              onBack={() => setStep(0)}
+            />
+          )}
 
-        {step === 2 && (
-          <StepDados
-            passageiros={passageiros}
-            currentIndex={currentPassageiroIndex}
-            onChangeIndex={setCurrentPassageiroIndex}
-            onChange={(i, data) => {
-              setPassageiros((prev) => prev.map((p, idx) => (idx === i ? data : p)));
-            }}
-            onNext={() => setStep(3)}
-            onBack={() => setStep(1)}
-            total={totalPassageiros}
-          />
-        )}
+          {step === 2 && (
+            <StepDados
+              key="dados"
+              passageiros={passageiros}
+              currentIndex={currentPassageiroIndex}
+              onChangeIndex={setCurrentPassageiroIndex}
+              onChange={(i, data) => {
+                setPassageiros((prev) => prev.map((p, idx) => (idx === i ? data : p)));
+              }}
+              onNext={() => setStep(3)}
+              onBack={() => setStep(1)}
+              total={totalPassageiros}
+            />
+          )}
 
-        {step === 3 && (
-          <StepAssentos
-            totalPassageiros={totalPassageiros}
-            selectedSeats={selectedSeats}
-            onChange={setSelectedSeats}
-            onNext={() => setStep(4)}
-            onBack={() => setStep(2)}
-          />
-        )}
+          {step === 3 && (
+            <StepAssentos
+              key="assentos"
+              totalPassageiros={totalPassageiros}
+              selectedSeats={selectedSeats}
+              onChange={setSelectedSeats}
+              onNext={() => setStep(4)}
+              onBack={() => setStep(2)}
+            />
+          )}
 
-        {step === 4 && (
-          <StepPagamento
-            selected={metodoPagamento}
-            onChange={setMetodoPagamento}
-            onNext={() => setStep(5)}
-            onBack={() => setStep(3)}
-          />
-        )}
+          {step === 4 && (
+            <StepPagamento
+              key="pagamento"
+              selected={metodoPagamento}
+              onChange={setMetodoPagamento}
+              onNext={() => setStep(5)}
+              onBack={() => setStep(3)}
+            />
+          )}
 
-        {step === 5 && (
-          <StepResumo
-            passageiros={passageiros}
-            assentos={selectedSeats}
-            metodoPagamento={metodoPagamento}
-            onSubmit={handleSubmit}
-            onBack={() => setStep(4)}
-            loading={loading}
-          />
-        )}
+          {step === 5 && (
+            <StepResumo
+              key="resumo"
+              passageiros={passageiros}
+              assentos={selectedSeats}
+              metodoPagamento={metodoPagamento}
+              onSubmit={handleSubmit}
+              onBack={() => setStep(4)}
+              loading={loading}
+            />
+          )}
 
-        {step === 6 && (
-          <StepSucesso
-            codigo={codigoReserva}
-            passageiros={passageiros}
-            assentos={selectedSeats}
-            metodoPagamento={metodoPagamento}
-          />
-        )}
+          {step === 6 && (
+            <StepSucesso
+              key="sucesso"
+              codigo={codigoReserva}
+              passageiros={passageiros}
+              assentos={selectedSeats}
+              metodoPagamento={metodoPagamento}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
