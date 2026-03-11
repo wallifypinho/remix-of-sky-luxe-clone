@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Cog } from "lucide-react";
+import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,10 @@ import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
 import OperadoresSection from "@/components/painel/OperadoresSection";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import PedidosSection from "@/components/painel/PedidosSection";
+import BottomNav from "@/components/painel/BottomNav";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
-type Tab = "pagamentos" | "pedidos" | "operadores" | "gateways";
+type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways";
 
 const PainelPagamentos = () => {
   const { operador, loading, logout, isAdmin } = useOperadorAuth();
@@ -29,7 +30,10 @@ const PainelPagamentos = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin h-7 w-7 border-2 border-primary border-t-transparent rounded-full" />
+          <p className="text-sm text-muted-foreground font-medium">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -45,53 +49,60 @@ const PainelPagamentos = () => {
     { id: "pedidos", label: "Pedidos", icon: ClipboardList },
     { id: "pagamentos", label: "Pagamentos", icon: CreditCard },
     ...(isAdmin ? [{ id: "operadores" as Tab, label: "Operadores", icon: Users }] : []),
-    { id: "gateways", label: "Gateways", icon: Cog },
+    { id: "gateways", label: "Gateways", icon: Zap },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card px-4 py-4">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl px-4 py-3">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/20">
-                <Plane className="h-5 w-5 text-primary-foreground" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
+                <Plane className="h-4.5 w-4.5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">AeroPayments</h1>
-                <p className="text-xs text-muted-foreground">
-                  {operador.nome} • {operador.perfil === "admin" ? "Administrador" : "Operador"}
+                <h1 className="text-base font-bold text-foreground leading-tight">AeroPayments</h1>
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  {operador.nome} • <span className="text-primary font-semibold">{operador.perfil === "admin" ? "Admin" : "Operador"}</span>
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground gap-1.5">
-              <LogOut className="h-4 w-4" /> Sair
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground gap-1.5 h-9">
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Sair</span>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="border-b border-border bg-card px-4">
-        <div className="mx-auto max-w-6xl flex gap-1 overflow-x-auto">
+      {/* Desktop Tabs */}
+      <div className="border-b border-border bg-card/50 px-4 hidden md:block">
+        <div className="mx-auto max-w-6xl flex gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
+                className={`relative flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-colors whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="tabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
               </button>
             );
           })}
@@ -99,34 +110,32 @@ const PainelPagamentos = () => {
       </div>
 
       {/* Content */}
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-5 pb-safe-nav md:pb-6">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
         >
           {activeTab === "pedidos" && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <LinksCadastro />
               <PedidosSection />
             </div>
           )}
 
           {activeTab === "pagamentos" && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-xs font-medium text-muted-foreground mb-2">WhatsApp do Operador</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">WhatsApp do Operador</div>
                 <div className="flex gap-2">
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-muted-foreground">💬</span>
-                    <Input
-                      value={whatsappAdmin}
-                      onChange={(e) => setWhatsappAdmin(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0">
+                  <Input
+                    value={whatsappAdmin}
+                    onChange={(e) => setWhatsappAdmin(e.target.value)}
+                    className="flex-1 h-11"
+                    placeholder="5511999999999"
+                  />
+                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0 h-11">
                     Salvar
                   </Button>
                 </div>
@@ -135,15 +144,13 @@ const PainelPagamentos = () => {
             </div>
           )}
 
-          {activeTab === "operadores" && isAdmin && (
-            <OperadoresSection />
-          )}
-
-          {activeTab === "gateways" && (
-            <GatewaysSection />
-          )}
+          {activeTab === "operadores" && isAdmin && <OperadoresSection />}
+          {activeTab === "gateways" && <GatewaysSection />}
         </motion.div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} isAdmin={isAdmin} />
     </div>
   );
 };

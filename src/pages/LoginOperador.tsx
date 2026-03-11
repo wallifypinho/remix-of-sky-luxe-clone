@@ -1,23 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogIn, Loader2, Plane, Shield } from "lucide-react";
+import { LogIn, Loader2, Plane, Shield, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
-
-const FloatingPlane = ({ delay, x, duration }: { delay: number; x: number; duration: number }) => (
-  <motion.div
-    className="absolute text-primary/5"
-    initial={{ y: "110vh", x, rotate: -45 }}
-    animate={{ y: "-10vh", rotate: -45 }}
-    transition={{ delay, duration, repeat: Infinity, ease: "linear" }}
-  >
-    <Plane className="h-8 w-8" />
-  </motion.div>
-);
 
 const LoginOperador = () => {
   const [email, setEmail] = useState("");
@@ -36,7 +25,6 @@ const LoginOperador = () => {
       toast.error("Preencha email e senha");
       return;
     }
-
     setLoading(true);
     try {
       await login(email, senha);
@@ -52,108 +40,114 @@ const LoginOperador = () => {
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4"
       style={{
-        background: `linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(243 72% 40%) 50%, hsl(230 25% 10%) 100%)`
+        background: "linear-gradient(145deg, hsl(213 94% 44%) 0%, hsl(213 94% 30%) 40%, hsl(215 25% 12%) 100%)"
       }}
     >
-      {/* Animated background planes */}
-      <FloatingPlane delay={0} x={50} duration={18} />
-      <FloatingPlane delay={3} x={200} duration={22} />
-      <FloatingPlane delay={6} x={350} duration={16} />
-      <FloatingPlane delay={1} x={500} duration={20} />
-      <FloatingPlane delay={8} x={700} duration={24} />
-      <FloatingPlane delay={4} x={900} duration={19} />
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+        backgroundSize: "32px 32px"
+      }} />
 
       {/* Glowing orbs */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full blur-[120px]"
-        style={{ background: "hsl(var(--primary) / 0.15)" }}
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 6, repeat: Infinity }}
+        className="absolute top-[15%] left-[10%] w-72 h-72 rounded-full blur-[140px]"
+        style={{ background: "hsl(213 94% 44% / 0.2)" }}
+        animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
+        transition={{ duration: 7, repeat: Infinity }}
       />
       <motion.div
-        className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full blur-[100px]"
-        style={{ background: "hsl(var(--primary) / 0.1)" }}
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 8, repeat: Infinity }}
+        className="absolute bottom-[10%] right-[5%] w-56 h-56 rounded-full blur-[120px]"
+        style={{ background: "hsl(30 95% 55% / 0.12)" }}
+        animate={{ scale: [1.1, 1, 1.1], opacity: [0.15, 0.25, 0.15] }}
+        transition={{ duration: 9, repeat: Infinity }}
       />
+
+      {/* Floating plane decorations */}
+      <motion.div
+        className="absolute top-[20%] right-[15%] text-primary-foreground/[0.04]"
+        animate={{ y: [-10, 10, -10] }}
+        transition={{ duration: 6, repeat: Infinity }}
+      >
+        <Plane className="h-24 w-24 -rotate-12" />
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-sm relative z-10"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-[380px] relative z-10"
       >
         {/* Logo */}
         <motion.div
-          className="flex flex-col items-center mb-8"
-          initial={{ scale: 0.8, opacity: 0 }}
+          className="flex flex-col items-center mb-10"
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
         >
-          <div className="relative mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-card/10 backdrop-blur-xl border border-primary-foreground/10 shadow-2xl">
-              <Plane className="h-8 w-8 text-primary-foreground" />
+          <div className="relative mb-5">
+            <div className="flex h-18 w-18 items-center justify-center rounded-2xl bg-primary-foreground/10 backdrop-blur-xl border border-primary-foreground/10">
+              <Plane className="h-9 w-9 text-primary-foreground" />
             </div>
-            <motion.div
-              className="absolute -inset-2 rounded-2xl"
-              style={{ background: "hsl(var(--primary) / 0.2)" }}
-              animate={{ opacity: [0, 0.5, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
           </div>
-          <h1 className="text-2xl font-bold text-primary-foreground tracking-tight">
-            Aero<span className="opacity-80">Payments</span>
+          <h1 className="text-3xl font-extrabold text-primary-foreground tracking-tight">
+            AeroPayments
           </h1>
-          <p className="text-sm text-primary-foreground/50 mt-1">Painel de Controle</p>
+          <p className="text-sm text-primary-foreground/40 mt-1.5 font-medium">Sistema de Gestão de Reservas</p>
         </motion.div>
 
         {/* Card */}
         <motion.div
-          className="rounded-2xl bg-card/95 backdrop-blur-xl p-7 shadow-2xl border border-border/50"
+          className="rounded-2xl bg-card/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl border border-border/30"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.25 }}
         >
-          <div className="flex items-center gap-2 mb-6">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">Acesso Restrito</span>
+          <div className="flex items-center gap-2.5 mb-7">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Shield className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <span className="text-sm font-bold text-foreground">Acesso Restrito</span>
+              <p className="text-[11px] text-muted-foreground">Somente operadores autorizados</p>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Email</Label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</Label>
               <Input
                 type="email"
                 placeholder="operador@empresa.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                className="h-11 bg-background/50 border-border/50 focus:border-primary transition-colors"
+                className="h-12 bg-secondary/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Senha</Label>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Senha</Label>
               <Input
                 type="password"
                 placeholder="••••••••"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 autoComplete="current-password"
-                className="h-11 bg-background/50 border-border/50 focus:border-primary transition-colors"
+                className="h-12 bg-secondary/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
               />
             </div>
-            <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-semibold mt-2">
+            <Button type="submit" disabled={loading} className="w-full h-12 text-sm font-bold rounded-xl shadow-md shadow-primary/20 mt-1">
               {loading ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Autenticando...</>
               ) : (
-                <><LogIn className="h-4 w-4 mr-2" /> Acessar Painel</>
+                <><Lock className="h-4 w-4 mr-2" /> Acessar Painel</>
               )}
             </Button>
           </form>
         </motion.div>
 
-        <p className="text-center text-xs text-primary-foreground/30 mt-6">
-          Ambiente seguro • Acesso exclusivo para operadores
+        <p className="text-center text-[11px] text-primary-foreground/25 mt-6 font-medium">
+          Ambiente seguro • Dados criptografados
         </p>
       </motion.div>
     </div>

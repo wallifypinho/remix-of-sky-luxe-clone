@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,93 +6,93 @@
 
 @layer base {
   :root {
-    --background: 228 25% 97%;
-    --foreground: 230 25% 10%;
+    --background: 210 20% 98%;
+    --foreground: 215 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 230 25% 10%;
+    --card-foreground: 215 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 230 25% 10%;
+    --popover-foreground: 215 25% 12%;
 
-    --primary: 243 72% 56%;
+    --primary: 213 94% 44%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 230 20% 95%;
-    --secondary-foreground: 230 25% 10%;
+    --secondary: 210 18% 95%;
+    --secondary-foreground: 215 25% 12%;
 
-    --muted: 228 20% 93%;
-    --muted-foreground: 228 10% 50%;
+    --muted: 210 14% 93%;
+    --muted-foreground: 215 10% 48%;
 
-    --accent: 243 72% 56%;
+    --accent: 30 95% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 152 69% 42%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 228 20% 90%;
-    --input: 228 20% 90%;
-    --ring: 243 72% 56%;
+    --border: 210 16% 90%;
+    --input: 210 16% 90%;
+    --ring: 213 94% 44%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-primary: 213 94% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 18% 95%;
+    --sidebar-accent-foreground: 215 25% 12%;
+    --sidebar-border: 210 16% 90%;
+    --sidebar-ring: 213 94% 44%;
 
-    --boarding-header: 243 72% 56%;
-    --boarding-body: 228 25% 97%;
-    --boarding-accent: 243 72% 70%;
+    --boarding-header: 213 94% 44%;
+    --boarding-body: 210 20% 98%;
+    --boarding-accent: 30 95% 55%;
   }
 
   .dark {
-    --background: 230 25% 8%;
+    --background: 215 25% 7%;
     --foreground: 0 0% 95%;
 
-    --card: 230 20% 12%;
+    --card: 215 20% 11%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 230 20% 12%;
+    --popover: 215 20% 11%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 243 72% 60%;
+    --primary: 213 90% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 230 20% 16%;
+    --secondary: 215 18% 16%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 230 15% 18%;
-    --muted-foreground: 228 10% 55%;
+    --muted: 215 14% 18%;
+    --muted-foreground: 210 10% 55%;
 
-    --accent: 243 72% 60%;
+    --accent: 30 95% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 230 15% 20%;
-    --input: 230 15% 20%;
-    --ring: 243 72% 60%;
+    --border: 215 14% 18%;
+    --input: 215 14% 18%;
+    --ring: 213 90% 52%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 215 25% 8%;
+    --sidebar-foreground: 210 10% 85%;
+    --sidebar-primary: 213 90% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 215 14% 16%;
+    --sidebar-accent-foreground: 210 10% 85%;
+    --sidebar-border: 215 14% 18%;
+    --sidebar-ring: 213 90% 52%;
   }
 }
 
@@ -104,4 +104,22 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+  input, select, textarea, button {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area for bottom nav */
+.pb-safe-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
