@@ -10,6 +10,7 @@ import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
 import OperadoresSection from "@/components/painel/OperadoresSection";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import PedidosSection from "@/components/painel/PedidosSection";
+import PaymentLinksBlock from "@/components/painel/PaymentLinksBlock";
 import BottomNav from "@/components/painel/BottomNav";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
@@ -132,6 +133,7 @@ const PainelPagamentos = () => {
 
           {activeTab === "pagamentos" && (
             <div className="space-y-5">
+              <PaymentLinksBlock />
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">WhatsApp do Operador</div>
                 <div className="flex gap-2">

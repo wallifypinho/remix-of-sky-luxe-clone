@@ -38,7 +38,8 @@ REGRAS IMPORTANTES:
 - Aeroportos devem ser em código IATA (3 letras) quando possível
 - Inclua o nome completo do aeroporto e a cidade quando disponível
 - Se houver múltiplos passageiros, extraia todos
-- O número do voo pode não estar presente, nesse caso deixe vazio`;
+- O número do voo pode não estar presente, nesse caso deixe vazio
+- IMPORTANTE: Identifique a COMPANHIA AÉREA pela logo, nome, cores ou qualquer indicação visual na imagem. Se reconhecer a marca (LATAM, GOL, Azul, TAP, Avianca, etc.), preencha o campo companhia com o nome correto.`;
 
     const userContent: any[] = [
       {
