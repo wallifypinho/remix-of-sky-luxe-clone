@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { generateBoardingPassPDF } from "@/lib/generateBoardingPassPDF";
 
 interface PagamentoData {
   id: string;
@@ -57,6 +58,7 @@ const BoardingPass = () => {
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [pixCopiado, setPixCopiado] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -96,8 +98,22 @@ const BoardingPass = () => {
 
   const handleWhatsApp = () => {
     if (data?.whatsapp_operador) {
-      const msg = encodeURIComponent(`Olá! Segue o comprovante do pagamento da reserva ${data.codigo_reserva}.`);
+      const msg = encodeURIComponent(`Olá! Referente à reserva ${data.codigo_reserva} - ${mainPassenger.nomeCompleto || mainPassenger.nome || ""}. Preciso de ajuda.`);
       window.open(`https://wa.me/${data.whatsapp_operador}?text=${msg}`, "_blank");
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!data) return;
+    setGeneratingPdf(true);
+    try {
+      await generateBoardingPassPDF(data, calcBoardingTime);
+      toast.success("Bilhete gerado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF");
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -178,8 +194,38 @@ const BoardingPass = () => {
               {/* White card */}
               <div className="flex-1 rounded-t-[28px] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden">
                 <div className="flex-1 px-6 pt-7 pb-6 space-y-5">
+
+                  {/* Flight info summary */}
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Plane className="h-4 w-4 text-[#0033A0]" />
+                        <span className="text-xs font-bold text-gray-800">Informações do Voo</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-mono">{data.numero_voo}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <div className="text-[10px] text-gray-400 uppercase font-semibold">Rota</div>
+                        <div className="font-bold text-gray-800 mt-0.5">{data.origem} → {data.destino}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-gray-400 uppercase font-semibold">Data</div>
+                        <div className="font-bold text-gray-800 mt-0.5">{data.ida_data || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-gray-400 uppercase font-semibold">Partida</div>
+                        <div className="font-bold text-gray-800 mt-0.5">{data.ida_partida || "--:--"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-gray-400 uppercase font-semibold">Classe</div>
+                        <div className="font-bold text-gray-800 mt-0.5">{classeLabel}</div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Total */}
-                  <div className="text-center py-3">
+                  <div className="text-center py-3 rounded-2xl bg-[#0033A0]/[0.03] border border-[#0033A0]/10">
                     <div className="text-[10px] text-[#0033A0] uppercase tracking-[0.2em] font-bold mb-1.5">Total a pagar</div>
                     <div className="text-4xl font-extrabold text-gray-900">R$ {data.valor}</div>
                   </div>
@@ -203,25 +249,19 @@ const BoardingPass = () => {
                         className="overflow-hidden"
                       >
                         <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-2 text-xs">
-                          <div className="grid grid-cols-2 gap-3">
-                            {[
-                              { label: "Rota", value: `${data.origem} → ${data.destino}` },
-                              { label: "Voo", value: data.numero_voo || "—" },
-                              { label: "Data Ida", value: data.ida_data || "—" },
-                              { label: "Classe", value: classeLabel },
-                            ].map((item, i) => (
-                              <div key={i}>
-                                <div className="text-gray-400 uppercase text-[10px] font-semibold">{item.label}</div>
-                                <div className="font-semibold text-gray-800">{item.value}</div>
+                          {data.passageiros.map((p: any, i: number) => (
+                            <div key={i} className="flex items-center gap-3 py-1.5 border-b border-gray-100 last:border-0">
+                              <div className="w-6 h-6 rounded-full bg-[#0033A0]/10 flex items-center justify-center text-xs font-bold text-[#0033A0]">{i + 1}</div>
+                              <div>
+                                <div className="font-semibold text-gray-800">{p.nomeCompleto || p.nome || "—"}</div>
+                                <div className="text-gray-400 text-[10px]">CPF: {maskCpf(p.cpfDocumento || p.cpf || "")}</div>
                               </div>
-                            ))}
-                          </div>
-                          {data.passageiros.length > 1 && (
-                            <div className="border-t border-gray-200 pt-2">
-                              <div className="text-gray-400 uppercase text-[10px] font-semibold mb-1">Passageiros</div>
-                              {data.passageiros.map((p: any, i: number) => (
-                                <div key={i} className="text-gray-800 font-medium">{i + 1}. {p.nomeCompleto || p.nome || "—"}</div>
-                              ))}
+                            </div>
+                          ))}
+                          {hasVolta && (
+                            <div className="border-t border-gray-200 pt-2 mt-2">
+                              <div className="text-gray-400 uppercase text-[10px] font-semibold mb-1">Volta</div>
+                              <div className="text-gray-800 font-medium">{data.volta_data} · {data.volta_partida} → {data.volta_chegada}</div>
                             </div>
                           )}
                         </div>
@@ -261,28 +301,34 @@ const BoardingPass = () => {
                     </div>
                   )}
 
-                  {data.whatsapp_operador && (
+                  {/* Action buttons - well spaced */}
+                  <div className="space-y-3 pt-1">
                     <Button
-                      onClick={handleWhatsApp}
                       variant="outline"
-                      className="w-full h-12 text-sm font-bold rounded-xl border-green-400 text-green-600 hover:bg-green-50"
+                      onClick={handleDownloadPDF}
+                      disabled={generatingPdf}
+                      className="w-full h-12 text-sm font-bold rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50"
                     >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Enviar comprovante via WhatsApp
+                      {generatingPdf ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando bilhete...</>
+                      ) : (
+                        <><Download className="h-4 w-4 mr-2" /> Baixar Bilhete em PDF</>
+                      )}
                     </Button>
-                  )}
 
-                  <Button
-                    variant="outline"
-                    onClick={() => window.print()}
-                    className="w-full h-12 text-sm font-bold rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar Bilhete em PDF
-                  </Button>
+                    {data.whatsapp_operador && (
+                      <Button
+                        onClick={handleWhatsApp}
+                        className="w-full h-12 text-sm font-bold rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg shadow-[#25D366]/20"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Falar no WhatsApp
+                      </Button>
+                    )}
+                  </div>
 
                   {/* Security */}
-                  <div className="text-center space-y-3 pt-2 pb-2">
+                  <div className="text-center space-y-3 pt-3 pb-2">
                     <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-700">
                       <Lock className="h-3.5 w-3.5" />
                       Pagamento 100% Seguro
@@ -386,7 +432,7 @@ const BoardingPass = () => {
                       <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Embarque</div>
                       <div className="text-2xl font-extrabold text-gray-900 leading-none mt-1">{calcBoardingTime(data.ida_partida)}</div>
                       <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-4">Portão</div>
-                      <div className="text-xl font-extrabold text-gray-900 leading-none mt-1">7A</div>
+                      <div className="text-xl font-extrabold text-gray-900 leading-none mt-1">—</div>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
                       <QRCodeSVG value={data.codigo_reserva || "BOARDING"} size={100} />
@@ -402,7 +448,7 @@ const BoardingPass = () => {
                       </div>
                       <div className="grid grid-cols-3 gap-3 text-xs">
                         <div>
-                          <div className="text-[10px] text-gray-400 uppercase font-semibold">Dados</div>
+                          <div className="text-[10px] text-gray-400 uppercase font-semibold">Data</div>
                           <div className="font-bold text-gray-900 text-sm mt-0.5">{data.volta_data}</div>
                         </div>
                         <div>
@@ -461,7 +507,6 @@ const BoardingPass = () => {
                         className="overflow-hidden mb-5"
                       >
                         <div className="space-y-3">
-                          {/* Passenger data */}
                           <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
                             <h4 className="text-xs font-bold text-gray-800 mb-3 flex items-center gap-1.5">
                               👤 Dados do Passageiro
@@ -483,7 +528,6 @@ const BoardingPass = () => {
                             </div>
                           </div>
 
-                          {/* Return flight */}
                           {hasVolta && (
                             <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
                               <h4 className="text-xs font-bold text-gray-800 mb-3">✈️ Voo de Volta</h4>
@@ -504,7 +548,6 @@ const BoardingPass = () => {
                             </div>
                           )}
 
-                          {/* Extra info */}
                           <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
                             <h4 className="text-xs font-bold text-gray-800 mb-3">ℹ️ Informações Adicionais</h4>
                             <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
@@ -522,7 +565,6 @@ const BoardingPass = () => {
                             </div>
                           </div>
 
-                          {/* Multiple passengers */}
                           {data.passageiros.length > 1 && (
                             <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
                               <h4 className="text-xs font-bold text-gray-800 mb-3">
