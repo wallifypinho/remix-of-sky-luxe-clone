@@ -5,15 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const calcBoardingTime = (partida: string): string => {
-  if (!partida || !partida.includes(":")) return partida;
-  const [h, m] = partida.split(":").map(Number);
-  const totalMin = h * 60 + m - 20;
-  const bh = Math.floor(((totalMin + 1440) % 1440) / 60);
-  const bm = (totalMin + 1440) % 60;
-  return `${String(bh).padStart(2, "0")}:${String(bm).padStart(2, "0")}`;
-};
-
 const maskCpf = (cpf: string): string => {
   if (!cpf) return "—";
   const clean = cpf.replace(/\D/g, "");
@@ -34,132 +25,108 @@ const generateBoardingPassCard = (params: {
   assento: string;
   codigoReserva: string;
   numeroVoo: string;
-  classe: string;
   portao: string;
 }) => {
-  const { trecho, companhia, origem, destino, data, partida, chegada, passageiroNome, cpf, assento, codigoReserva, numeroVoo, classe, portao } = params;
-  const embarque = calcBoardingTime(partida);
-  const trechoBg = trecho === "IDA" ? "#6366f1" : "#0ea5e9";
-  const trechoLabel = trecho === "IDA" ? "✈ IDA" : "✈ VOLTA";
+  const { trecho, companhia, origem, destino, data, partida, chegada, passageiroNome, cpf, assento, codigoReserva, portao } = params;
+  const headerBg = "#6366f1";
+  const embarque = partida || "--:--";
 
   return `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 16px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.12); background: #fff;">
-      <!-- Header -->
-      <div style="background: ${trechoBg}; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
-        <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="color: #fff; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">${trechoLabel}</td>
-          <td style="text-align: right; color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${companhia || "Companhia Aérea"}</td>
-        </tr></table>
-      </div>
-
-      <!-- Route -->
-      <div style="padding: 24px 24px 16px;">
-        <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="width: 35%; vertical-align: top;">
-            <div style="font-size: 36px; font-weight: 900; color: #1a1a2e; letter-spacing: 3px;">${origem || "—"}</div>
-            <div style="font-size: 11px; color: #888; margin-top: 2px;">ORIGEM</div>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 620px; margin: 16px auto; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.12); background: #fff;">
+      <!-- Header azul -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background: ${headerBg};">
+        <tr>
+          <td style="padding: 14px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="color: #fff; font-size: 11px; vertical-align: middle;">✈</td>
+              <td style="color: #fff; font-size: 17px; font-weight: 700; padding-left: 8px; letter-spacing: 1px;">Cartão de Embarque</td>
+              <td style="text-align: right; color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">${companhia || "Companhia Aérea"}</td>
+            </tr></table>
           </td>
-          <td style="width: 30%; text-align: center; vertical-align: middle; padding-top: 4px;">
-            <div style="font-size: 20px; color: ${trechoBg};">✈</div>
-            <div style="font-size: 10px; color: #aaa; margin-top: 2px;">VOO ${numeroVoo || "—"}</div>
+        </tr>
+      </table>
+
+      <!-- Body horizontal -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <!-- Coluna vertical esquerda -->
+          <td width="28" style="background: #f8f9fb; border-right: 1px solid #eee; vertical-align: middle; text-align: center;">
+            <div style="font-size: 9px; font-weight: 700; color: #aaa; letter-spacing: 3px; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); padding: 12px 4px;">${companhia || "AERO"}</div>
           </td>
-          <td style="width: 35%; text-align: right; vertical-align: top;">
-            <div style="font-size: 36px; font-weight: 900; color: #1a1a2e; letter-spacing: 3px;">${destino || "—"}</div>
-            <div style="font-size: 11px; color: #888; margin-top: 2px;">DESTINO</div>
+
+          <!-- Dados do voo -->
+          <td style="padding: 16px 20px; vertical-align: top;">
+            <!-- Rota -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+              <tr>
+                <td style="font-size: 16px; font-weight: 800; color: #1a1a2e;">${origem || "—"}</td>
+                <td style="text-align: center; color: #6366f1; font-size: 14px; padding: 0 8px;">— ✈ —</td>
+                <td style="font-size: 16px; font-weight: 800; color: #1a1a2e;">${destino || "—"}</td>
+                <td style="text-align: right;">
+                  <span style="font-size: 10px; font-weight: 700; color: #6366f1; border: 1px solid #e0e7ff; border-radius: 4px; padding: 2px 8px; text-transform: uppercase;">${trecho}</span>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Passageiro -->
+            <div style="border-top: 1px dashed #e0e0e0; padding-top: 8px; margin-bottom: 10px;">
+              <div style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Passageiro:</div>
+              <div style="font-size: 14px; font-weight: 700; color: #1a1a2e; text-transform: uppercase; margin-top: 2px;">${passageiroNome}</div>
+              <div style="font-size: 11px; color: #888; margin-top: 1px;">CPF: ${maskCpf(cpf)}</div>
+            </div>
+
+            <!-- Grid de dados -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px dashed #e0e0e0; padding-top: 8px;">
+              <tr>
+                <td style="padding: 6px 0; width: 33%;">
+                  <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Horário saída</div>
+                  <div style="font-size: 20px; font-weight: 800; color: #1a1a2e;">${partida || "--:--"}</div>
+                </td>
+                <td style="padding: 6px 0; width: 33%;">
+                  <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Chegada</div>
+                  <div style="font-size: 20px; font-weight: 800; color: #1a1a2e;">${chegada || "--:--"}</div>
+                </td>
+                <td style="padding: 6px 0; width: 33%;">
+                  <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Assento</div>
+                  <div style="font-size: 20px; font-weight: 800; color: #1a1a2e;">${assento || "—"}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0;">
+                  <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Data</div>
+                  <div style="font-size: 14px; font-weight: 700; color: #1a1a2e;">${data || "—"}</div>
+                </td>
+                <td style="padding: 6px 0;">
+                  <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Portão</div>
+                  <div style="font-size: 14px; font-weight: 700; color: #1a1a2e;">${portao || "—"}</div>
+                </td>
+                <td style="padding: 6px 0;">
+                  <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Código de reserva</div>
+                  <div style="font-size: 14px; font-weight: 800; color: #6366f1; font-family: 'Courier New', monospace; letter-spacing: 2px;">${codigoReserva || "—"}</div>
+                </td>
+              </tr>
+            </table>
           </td>
-        </tr></table>
-      </div>
 
-      <!-- Passenger -->
-      <div style="padding: 0 24px 16px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8f9fb; border-radius: 10px; padding: 14px;">
-          <tr>
-            <td style="padding: 14px;">
-              <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">PASSAGEIRO</div>
-              <div style="font-size: 16px; font-weight: 700; color: #1a1a2e; margin-top: 4px; text-transform: uppercase;">${passageiroNome || "—"}</div>
-            </td>
-            <td style="padding: 14px; text-align: right;">
-              <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">CPF</div>
-              <div style="font-size: 13px; font-weight: 600; color: #1a1a2e; margin-top: 4px; font-family: 'Courier New', monospace;">${maskCpf(cpf)}</div>
-            </td>
-          </tr>
-        </table>
-      </div>
+          <!-- Barcode vertical -->
+          <td width="40" style="border-left: 1px dashed #e0e0e0; vertical-align: middle; text-align: center; padding: 12px 4px;">
+            <img src="https://barcodeapi.org/api/128/${encodeURIComponent(codigoReserva || "000000")}" width="32" style="transform: rotate(90deg); transform-origin: center;" alt="Barcode" />
+          </td>
 
-      <!-- Flight details grid -->
-      <div style="padding: 0 24px 16px;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="width: 25%; padding: 8px 0;">
-              <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">DATA</div>
-              <div style="font-size: 15px; font-weight: 700; color: #1a1a2e; margin-top: 4px;">${data || "—"}</div>
-            </td>
-            <td style="width: 25%; padding: 8px 0;">
-              <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">PARTIDA</div>
-              <div style="font-size: 15px; font-weight: 700; color: #1a1a2e; margin-top: 4px;">${partida || "--:--"}</div>
-            </td>
-            <td style="width: 25%; padding: 8px 0;">
-              <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">CHEGADA</div>
-              <div style="font-size: 15px; font-weight: 700; color: #1a1a2e; margin-top: 4px;">${chegada || "--:--"}</div>
-            </td>
-            <td style="width: 25%; padding: 8px 0;">
-              <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">CLASSE</div>
-              <div style="font-size: 15px; font-weight: 700; color: #1a1a2e; margin-top: 4px;">${classe || "ECO"}</div>
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- Dashed divider -->
-      <div style="padding: 0 12px;">
-        <div style="border-top: 2px dashed #e0e0e0; position: relative;">
-          <div style="position: absolute; left: -18px; top: -12px; width: 24px; height: 24px; border-radius: 50%; background: #f4f4f5;"></div>
-          <div style="position: absolute; right: -18px; top: -12px; width: 24px; height: 24px; border-radius: 50%; background: #f4f4f5;"></div>
-        </div>
-      </div>
-
-      <!-- Bottom section: Embarque, Portão, Assento, QR -->
-      <div style="padding: 20px 24px 24px;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="vertical-align: top; width: 60%;">
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding-right: 24px; padding-bottom: 12px;">
-                    <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">EMBARQUE</div>
-                    <div style="font-size: 22px; font-weight: 800; color: ${trechoBg}; margin-top: 2px;">${embarque}</div>
-                  </td>
-                  <td style="padding-bottom: 12px;">
-                    <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">PORTÃO</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #1a1a2e; margin-top: 2px;">${portao || "—"}</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-right: 24px;">
-                    <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">ASSENTO</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #1a1a2e; margin-top: 2px;">${assento || "—"}</div>
-                  </td>
-                  <td>
-                    <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">RESERVA</div>
-                    <div style="font-size: 16px; font-weight: 800; color: ${trechoBg}; margin-top: 2px; letter-spacing: 2px; font-family: 'Courier New', monospace;">${codigoReserva || "—"}</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-            <td style="vertical-align: top; text-align: right; width: 40%;">
-              <div style="background: #f8f9fb; border-radius: 12px; padding: 12px; display: inline-block;">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(codigoReserva || "BOARDING")}" width="120" height="120" alt="QR Code" style="display: block;" />
-              </div>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Barcode -->
-        <div style="margin-top: 16px; text-align: center;">
-          <img src="https://barcodeapi.org/api/128/${encodeURIComponent(codigoReserva || "000000")}" height="45" alt="Barcode" style="max-width: 100%; height: 45px;" />
-          <div style="font-size: 10px; color: #aaa; margin-top: 4px; letter-spacing: 3px; font-family: 'Courier New', monospace;">${codigoReserva || "—"}</div>
-        </div>
-      </div>
+          <!-- QR Code + Embarque -->
+          <td width="170" style="border-left: 1px solid #eee; background: #f8f9fb; vertical-align: middle; text-align: center; padding: 16px 12px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(codigoReserva || "BOARDING")}" width="110" height="110" alt="QR Code" style="display: block; margin: 0 auto;" />
+            <div style="margin-top: 10px;">
+              <div style="font-size: 9px; color: #888; text-transform: uppercase; font-weight: 600;">Horário de embarque</div>
+              <div style="font-size: 16px; font-weight: 800; color: #1a1a2e;">${embarque}</div>
+            </div>
+            <div style="margin-top: 8px; font-size: 9px; color: #aaa; line-height: 1.3;">
+              Emissão oficial<br />
+              <strong>${companhia || "AeroPayments"}</strong>
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
 };
@@ -172,7 +139,6 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { type, codigoReserva, passageiros, assentos, metodoPagamento, valor, linkPagamento } = body;
-    // Flight data for boarding pass email
     const { companhia, origem, destino, numeroVoo, classe, idaData, idaPartida, idaChegada, voltaData, voltaPartida, voltaChegada, portao } = body;
 
     const gmailUser = Deno.env.get("GMAIL_USER");
@@ -198,12 +164,10 @@ serve(async (req) => {
     let subject = "";
     let htmlBody = "";
     const hasVolta = !!voltaData;
-    const classeLabel = classe === "executiva" ? "EXEC" : classe === "primeira" ? "1ª" : "ECO";
 
     if (type === "boarding_pass") {
-      subject = `🎫 Cartão de Embarque - ${codigoReserva} | ${companhia || ""}`;
+      subject = `🎫 Cartão de Embarque - ${codigoReserva} | ${companhia || "AeroPayments"}`;
 
-      // Generate boarding pass cards for each passenger
       let allCards = "";
       const paxList = passageiros || [mainPassenger];
 
@@ -213,7 +177,6 @@ serve(async (req) => {
         const paxCpf = pax?.cpfDocumento || pax?.cpf || "";
         const paxAssento = assentos?.[pi] || pax?.assento || "—";
 
-        // IDA card
         allCards += generateBoardingPassCard({
           trecho: "IDA",
           companhia: companhia || "",
@@ -227,11 +190,9 @@ serve(async (req) => {
           assento: paxAssento,
           codigoReserva: codigoReserva || "",
           numeroVoo: numeroVoo || "",
-          classe: classeLabel,
           portao: portao || "",
         });
 
-        // VOLTA card (if round trip)
         if (hasVolta) {
           allCards += generateBoardingPassCard({
             trecho: "VOLTA",
@@ -246,7 +207,6 @@ serve(async (req) => {
             assento: paxAssento,
             codigoReserva: codigoReserva || "",
             numeroVoo: numeroVoo || "",
-            classe: classeLabel,
             portao: "",
           });
         }
@@ -254,17 +214,13 @@ serve(async (req) => {
 
       htmlBody = `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f5; padding: 32px 16px;">
-          <div style="max-width: 560px; margin: 0 auto;">
-            <!-- Email header -->
+          <div style="max-width: 640px; margin: 0 auto;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <div style="font-size: 24px; font-weight: 800; color: #1a1a2e;">🎫 Cartão de Embarque</div>
+              <div style="font-size: 22px; font-weight: 800; color: #1a1a2e;">🎫 Cartão de Embarque</div>
               <div style="font-size: 13px; color: #888; margin-top: 4px;">Reserva <strong style="color: #6366f1; letter-spacing: 2px;">${codigoReserva}</strong></div>
-              <div style="font-size: 12px; color: #aaa; margin-top: 2px;">${hasVolta ? "Ida e Volta • " : "Somente Ida • "}${paxList.length} passageiro${paxList.length > 1 ? "s" : ""}</div>
+              <div style="font-size: 12px; color: #aaa; margin-top: 2px;">${hasVolta ? "Ida e Volta" : "Somente Ida"} • ${paxList.length} passageiro${paxList.length > 1 ? "s" : ""}</div>
             </div>
-
             ${allCards}
-
-            <!-- Footer -->
             <div style="text-align: center; margin-top: 24px; padding: 16px;">
               ${linkPagamento ? `<a href="${linkPagamento}" style="display: inline-block; background: #6366f1; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 10px; font-weight: 700; font-size: 15px;">Ver Detalhes Completos</a>` : ""}
               <p style="font-size: 11px; color: #999; margin-top: 16px;">Este é um e-mail automático. Em caso de dúvidas, entre em contato pelo WhatsApp.</p>
@@ -309,7 +265,7 @@ serve(async (req) => {
             <p><strong>Forma de Pagamento:</strong> ${metodoPagamento?.toUpperCase() || "—"}</p>
             <p><strong>Status:</strong> ⏳ Aguardando processamento</p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-            <p style="font-size: 12px; color: #999;">Um atendente entrará em contato via WhatsApp para dar continuidade ao processo.</p>
+            <p style="font-size: 12px; color: #999;">Um atendente entrará em contato via WhatsApp.</p>
           </div>
         </div>
       `;
@@ -338,7 +294,6 @@ serve(async (req) => {
       `;
     }
 
-    // Send via MailChannels
     const smtpUrl = "https://api.mailchannels.net/tx/v1/send";
     const mailResponse = await fetch(smtpUrl, {
       method: "POST",

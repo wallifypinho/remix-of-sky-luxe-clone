@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plane, Download, Mail, RefreshCw, Loader2, X, Printer } from "lucide-react";
+import { Plane, Mail, Loader2, X, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
@@ -31,15 +31,6 @@ interface BoardingPassViewerProps {
   onClose: () => void;
 }
 
-const calcBoardingTime = (partida: string): string => {
-  if (!partida || !partida.includes(":")) return partida;
-  const [h, m] = partida.split(":").map(Number);
-  const totalMin = h * 60 + m - 20;
-  const bh = Math.floor(((totalMin + 1440) % 1440) / 60);
-  const bm = (totalMin + 1440) % 60;
-  return `${String(bh).padStart(2, "0")}:${String(bm).padStart(2, "0")}`;
-};
-
 const maskCpf = (cpf: string): string => {
   if (!cpf) return "—";
   const clean = cpf.replace(/\D/g, "");
@@ -47,7 +38,8 @@ const maskCpf = (cpf: string): string => {
   return cpf;
 };
 
-const BoardingCard = ({ trecho, companhia, origem, destino, data, partida, chegada, paxNome, cpf, assento, codigoReserva, numeroVoo, classe }: {
+/** Horizontal boarding pass card matching the Azul reference layout */
+const BoardingCard = ({ trecho, companhia, origem, destino, data, partida, chegada, paxNome, cpf, assento, codigoReserva, portao }: {
   trecho: "IDA" | "VOLTA";
   companhia: string;
   origem: string;
@@ -59,127 +51,117 @@ const BoardingCard = ({ trecho, companhia, origem, destino, data, partida, chega
   cpf: string;
   assento: string;
   codigoReserva: string;
-  numeroVoo: string;
-  classe: string;
+  portao: string;
 }) => {
-  const embarque = calcBoardingTime(partida);
-  const isIda = trecho === "IDA";
+  const embarque = partida || "--:--";
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm print:shadow-none print:border print:border-gray-300"
+      className="rounded-xl overflow-hidden shadow-lg border border-border bg-card print:shadow-none print:border print:border-gray-300"
     >
-      {/* Header */}
-      <div className={`px-5 py-3 flex items-center justify-between ${isIda ? "bg-primary" : "bg-sky-500"}`}>
-        <span className="text-xs font-bold text-white tracking-widest uppercase">
-          ✈ {trecho}
+      {/* Blue Header */}
+      <div className="bg-primary px-5 py-3 flex items-center gap-3">
+        <Plane className="h-5 w-5 text-primary-foreground" />
+        <span className="text-lg font-bold text-primary-foreground tracking-wide">
+          Cartão de Embarque
         </span>
-        <span className="text-xs font-semibold text-white/90 uppercase tracking-wider">
-          {companhia || "Companhia"}
+        <span className="ml-auto text-xs font-bold text-primary-foreground/80 uppercase tracking-widest">
+          {companhia || "Companhia Aérea"}
         </span>
       </div>
 
-      <div className="p-5 space-y-4">
-        {/* Route */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-3xl font-black text-foreground tracking-widest">{origem || "—"}</div>
-            <div className="text-[10px] text-muted-foreground uppercase">Origem</div>
-          </div>
-          <div className="flex flex-col items-center gap-0.5">
-            <Plane className={`h-5 w-5 ${isIda ? "text-primary" : "text-sky-500"}`} />
-            <span className="text-[10px] text-muted-foreground">VOO {numeroVoo || "—"}</span>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-black text-foreground tracking-widest">{destino || "—"}</div>
-            <div className="text-[10px] text-muted-foreground uppercase">Destino</div>
-          </div>
+      {/* Body — horizontal layout */}
+      <div className="flex">
+        {/* Left: vertical company name */}
+        <div className="w-8 bg-muted/20 flex items-center justify-center shrink-0 border-r border-border">
+          <span className="text-[10px] font-bold text-muted-foreground tracking-[3px] uppercase"
+            style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
+            {companhia || "AERO"}
+          </span>
         </div>
 
-        {/* Passenger */}
-        <div className="rounded-xl bg-muted/30 p-3">
-          <div className="flex justify-between items-start">
+        {/* Center: flight details */}
+        <div className="flex-1 p-4 space-y-3 min-w-0">
+          {/* Route */}
+          <div className="flex items-center gap-3">
+            <span className="text-base font-bold text-foreground">{origem || "—"}</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <div className="h-px w-6 bg-border" />
+              <Plane className="h-3.5 w-3.5 text-primary" />
+              <div className="h-px w-6 bg-border" />
+            </div>
+            <span className="text-base font-bold text-foreground">{destino || "—"}</span>
+            <Badge variant="outline" className="ml-auto text-[10px] h-5">
+              {trecho}
+            </Badge>
+          </div>
+
+          {/* Passenger */}
+          <div className="border-t border-dashed border-border pt-2">
+            <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Passageiro:</div>
+            <div className="text-sm font-bold text-foreground uppercase">{paxNome}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">CPF: {maskCpf(cpf)}</div>
+          </div>
+
+          {/* Details grid */}
+          <div className="grid grid-cols-3 gap-x-4 gap-y-2 border-t border-dashed border-border pt-2">
             <div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Passageiro</div>
-              <div className="text-sm font-bold text-foreground uppercase">{paxNome}</div>
+              <div className="text-[10px] text-muted-foreground uppercase font-semibold">Horário saída</div>
+              <div className="text-lg font-extrabold text-foreground">{partida || "--:--"}</div>
             </div>
-            <div className="text-right">
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">CPF</div>
-              <div className="text-xs font-semibold text-foreground font-mono">{maskCpf(cpf)}</div>
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase font-semibold">Chegada</div>
+              <div className="text-lg font-extrabold text-foreground">{chegada || "--:--"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase font-semibold">Assento</div>
+              <div className="text-lg font-extrabold text-foreground">{assento || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase font-semibold">Data</div>
+              <div className="text-sm font-bold text-foreground">{data || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase font-semibold">Portão</div>
+              <div className="text-sm font-bold text-foreground">{portao || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase font-semibold">Código de reserva</div>
+              <div className="text-sm font-extrabold text-primary font-mono tracking-widest">{codigoReserva || "—"}</div>
             </div>
           </div>
         </div>
 
-        {/* Details grid */}
-        <div className="grid grid-cols-4 gap-3">
-          <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Data</div>
-            <div className="text-sm font-bold text-foreground">{data || "—"}</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Partida</div>
-            <div className="text-sm font-bold text-foreground">{partida || "--:--"}</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Chegada</div>
-            <div className="text-sm font-bold text-foreground">{chegada || "--:--"}</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Classe</div>
-            <div className="text-sm font-bold text-foreground">{classe || "ECO"}</div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="relative flex items-center">
-          <div className="absolute -left-5 h-5 w-5 rounded-full bg-background" />
-          <div className="flex-1 border-t-2 border-dashed border-border" />
-          <div className="absolute -right-5 h-5 w-5 rounded-full bg-background" />
-        </div>
-
-        {/* Bottom: embarque, portão, assento, QR */}
-        <div className="flex justify-between items-start">
-          <div className="space-y-3">
-            <div className="flex gap-6">
-              <div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Embarque</div>
-                <div className={`text-xl font-extrabold ${isIda ? "text-primary" : "text-sky-500"}`}>{embarque}</div>
-              </div>
-              <div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Portão</div>
-                <div className="text-xl font-extrabold text-foreground">—</div>
-              </div>
-            </div>
-            <div className="flex gap-6">
-              <div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Assento</div>
-                <div className="text-xl font-extrabold text-foreground">{assento || "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Reserva</div>
-                <div className={`text-base font-extrabold font-mono tracking-widest ${isIda ? "text-primary" : "text-sky-500"}`}>{codigoReserva || "—"}</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-muted/30 p-2.5 rounded-xl">
-            <QRCodeSVG value={codigoReserva || "BOARDING"} size={90} />
-          </div>
-        </div>
-
-        {/* Barcode simulation */}
-        <div className="text-center pt-1">
-          <div className="flex justify-center gap-[1px]">
-            {Array.from({ length: 60 }).map((_, i) => (
+        {/* Barcode separator */}
+        <div className="w-12 border-l border-dashed border-border flex flex-col items-center justify-center py-4 shrink-0">
+          <div className="flex flex-col gap-[1px]">
+            {Array.from({ length: 45 }).map((_, i) => (
               <div
                 key={i}
                 className="bg-foreground"
-                style={{ width: Math.random() > 0.4 ? 2 : 1, height: 32 }}
+                style={{ height: Math.random() > 0.4 ? 2 : 1, width: 28 }}
               />
             ))}
           </div>
-          <div className="text-[10px] text-muted-foreground font-mono tracking-[3px] mt-1">{codigoReserva}</div>
+        </div>
+
+        {/* Right: QR Code + Embarque */}
+        <div className="w-44 border-l border-border bg-muted/10 flex flex-col items-center justify-center p-4 shrink-0">
+          <div className="bg-card p-2 rounded-lg shadow-sm">
+            <QRCodeSVG value={codigoReserva || "BOARDING"} size={100} />
+          </div>
+          <div className="mt-3 text-center">
+            <div className="text-[10px] text-muted-foreground uppercase font-semibold">Horário de embarque</div>
+            <div className="text-base font-extrabold text-foreground">{embarque}</div>
+          </div>
+          <div className="mt-2 text-center">
+            <div className="text-[9px] text-muted-foreground leading-tight">
+              Emissão oficial<br />
+              <span className="font-semibold">{companhia || "AeroPayments"}</span>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -189,7 +171,6 @@ const BoardingCard = ({ trecho, companhia, origem, destino, data, partida, chega
 const BoardingPassViewer = ({ data, onClose }: BoardingPassViewerProps) => {
   const [sendingEmail, setSendingEmail] = useState(false);
   const hasVolta = !!data.voltaData;
-  const classeLabel = data.classe === "executiva" ? "EXEC" : data.classe === "primeira" ? "1ª" : "ECO";
 
   const handleSendEmail = async () => {
     const mainP = data.passageiros?.[0] as any;
@@ -239,15 +220,14 @@ const BoardingPassViewer = ({ data, onClose }: BoardingPassViewerProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center overflow-y-auto py-8 px-4 print:bg-white print:static print:p-0"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-lg space-y-4">
+      <div className="w-full max-w-2xl space-y-4">
         {/* Actions bar */}
         <div className="flex items-center justify-between print:hidden">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs bg-card">
-              {hasVolta ? "Ida e Volta" : "Somente Ida"} • {data.passageiros?.length || 1} pax
-            </Badge>
-          </div>
+          <Badge variant="outline" className="text-xs bg-card">
+            {hasVolta ? "Ida e Volta" : "Somente Ida"} • {data.passageiros?.length || 1} passageiro{(data.passageiros?.length || 1) > 1 ? "s" : ""}
+          </Badge>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleSendEmail} disabled={sendingEmail} className="h-8 gap-1 text-xs bg-card">
               {sendingEmail ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
@@ -262,7 +242,7 @@ const BoardingPassViewer = ({ data, onClose }: BoardingPassViewerProps) => {
           </div>
         </div>
 
-        {/* Boarding pass cards for each passenger */}
+        {/* Cards per passenger */}
         {(data.passageiros || []).map((pax: any, pi: number) => {
           const paxName = pax?.nomeCompleto || pax?.nome || "—";
           const paxCpf = pax?.cpfDocumento || pax?.cpf || "";
@@ -276,7 +256,7 @@ const BoardingPassViewer = ({ data, onClose }: BoardingPassViewerProps) => {
                 </div>
               )}
 
-              {/* IDA card */}
+              {/* IDA */}
               <BoardingCard
                 trecho="IDA"
                 companhia={data.companhia}
@@ -289,11 +269,10 @@ const BoardingPassViewer = ({ data, onClose }: BoardingPassViewerProps) => {
                 cpf={paxCpf}
                 assento={paxAssento}
                 codigoReserva={data.codigoReserva}
-                numeroVoo={data.numeroVoo}
-                classe={classeLabel}
+                portao=""
               />
 
-              {/* VOLTA card */}
+              {/* VOLTA */}
               {hasVolta && (
                 <BoardingCard
                   trecho="VOLTA"
@@ -307,8 +286,7 @@ const BoardingPassViewer = ({ data, onClose }: BoardingPassViewerProps) => {
                   cpf={paxCpf}
                   assento={paxAssento}
                   codigoReserva={data.codigoReserva}
-                  numeroVoo={data.numeroVoo}
-                  classe={classeLabel}
+                  portao=""
                 />
               )}
             </div>
