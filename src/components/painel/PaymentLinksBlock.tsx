@@ -428,6 +428,30 @@ const PaymentLinksBlock = () => {
           })}
         </div>
       )}
+
+      {/* Boarding Pass Viewer Modal */}
+      {viewBoardingPass && (
+        <BoardingPassViewer
+          data={{
+            companhia: viewBoardingPass.companhia,
+            origem: viewBoardingPass.origem,
+            destino: viewBoardingPass.destino,
+            numeroVoo: viewBoardingPass.numero_voo,
+            classe: viewBoardingPass.classe,
+            codigoReserva: viewBoardingPass.codigo_reserva,
+            idaData: viewBoardingPass.ida_data,
+            idaPartida: viewBoardingPass.ida_partida,
+            idaChegada: viewBoardingPass.ida_chegada,
+            voltaData: viewBoardingPass.volta_data,
+            voltaPartida: viewBoardingPass.volta_partida,
+            voltaChegada: viewBoardingPass.volta_chegada,
+            passageiros: viewBoardingPass.passageiros,
+            token: viewBoardingPass.token,
+            valor: viewBoardingPass.valor,
+          }}
+          onClose={() => setViewBoardingPass(null)}
+        />
+      )}
     </div>
   );
 };
