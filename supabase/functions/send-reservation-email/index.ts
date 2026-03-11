@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import nodemailer from "npm:nodemailer@6.9.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const maskCpf = (cpf: string): string => {
@@ -90,17 +91,19 @@ const generateBoardingCard = (p: {
           </td>
         </tr>
       </table>
-      <div style="border-top:1px dashed #e0e0e0;margin-top:12px;padding-top:10px;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-size:9px;color:${gray400};text-transform:uppercase;font-weight:700;">Reserva</div>
-          <div style="font-size:18px;font-weight:900;color:${brandColor};font-family:monospace;letter-spacing:3px;">${p.codigoReserva || "—"}</div>
-          <div style="font-size:9px;color:${gray400};text-transform:uppercase;font-weight:700;margin-top:6px;">Classe</div>
-          <div style="font-size:12px;font-weight:700;color:${gray800};">${p.classe || "Econômica"}</div>
-        </div>
-        <div style="text-align:center;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(p.codigoReserva || "BOARDING")}" width="100" height="100" alt="QR" style="border-radius:8px;" />
-        </div>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px dashed #e0e0e0;margin-top:12px;padding-top:10px;">
+        <tr>
+          <td style="vertical-align:top;">
+            <div style="font-size:9px;color:${gray400};text-transform:uppercase;font-weight:700;">Reserva</div>
+            <div style="font-size:18px;font-weight:900;color:${brandColor};font-family:monospace;letter-spacing:3px;">${p.codigoReserva || "—"}</div>
+            <div style="font-size:9px;color:${gray400};text-transform:uppercase;font-weight:700;margin-top:6px;">Classe</div>
+            <div style="font-size:12px;font-weight:700;color:${gray800};">${p.classe || "Econômica"}</div>
+          </td>
+          <td style="text-align:right;vertical-align:top;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(p.codigoReserva || "BOARDING")}" width="100" height="100" alt="QR" style="border-radius:8px;" />
+          </td>
+        </tr>
+      </table>
     </div>
     <div style="background:${gray100};padding:8px 24px;text-align:center;">
       <span style="font-size:10px;color:${gray400};font-weight:600;">${p.companhia || "AeroPayments"} · Emissão digital</span>
@@ -110,7 +113,7 @@ const generateBoardingCard = (p: {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
@@ -122,15 +125,26 @@ serve(async (req) => {
     const gmailPass = Deno.env.get("GMAIL_APP_PASSWORD");
 
     if (!gmailUser || !gmailPass) {
-      return new Response(JSON.stringify({ success: false, error: "Email not configured" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
+      return new Response(JSON.stringify({ success: false, error: "Email credentials not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const mainPassenger = passageiros?.[0];
     const recipientEmail = mainPassenger?.email;
 
     if (!recipientEmail) {
-      return new Response(JSON.stringify({ success: false, error: "No recipient email" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: false, error: "No recipient email found in passenger data" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
+      },
+    });
 
     let subject = "";
     let htmlBody = "";
@@ -169,22 +183,17 @@ serve(async (req) => {
 
       htmlBody = `
       <div style="font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;margin:0;padding:0;">
-        <!-- Header -->
         <div style="background:linear-gradient(135deg,${brandColor},${brandDark});padding:40px 20px 30px;text-align:center;">
           <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:1px;">✈ ${companhia || "AeroPayments"}</div>
           <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:6px;">Confirmação da sua viagem</div>
         </div>
-
         <div style="max-width:620px;margin:-20px auto 0;padding:0 16px 40px;">
-          <!-- Welcome -->
           <div style="background:#fff;border-radius:16px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:16px;">
             <h2 style="font-size:20px;font-weight:800;color:${gray800};margin:0 0 8px;">Olá, ${paxName}!</h2>
             <p style="font-size:14px;color:${gray600};margin:0;line-height:1.6;">
               Sua reserva foi processada com sucesso. Confira abaixo todos os detalhes da sua viagem e o seu cartão de embarque digital.
             </p>
           </div>
-
-          <!-- Flight Summary -->
           <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:16px;">
             <div style="font-size:12px;color:${brandColor};font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">Resumo da Viagem</div>
             <table width="100%" cellpadding="0" cellspacing="0">
@@ -226,13 +235,9 @@ serve(async (req) => {
               </tr>
             </table>
           </div>
-
-          <!-- Boarding Cards -->
           ${allCards}
-
-          <!-- Passengers -->
           ${paxList.length > 1 ? `
-          <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:16px;margin-top:16px;">
+          <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin:16px 0;">
             <div style="font-size:12px;color:${brandColor};font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Passageiros (${paxList.length})</div>
             ${paxList.map((px: any, i: number) => `
               <div style="padding:10px 0;${i < paxList.length - 1 ? `border-bottom:1px solid ${gray100};` : ""}">
@@ -242,9 +247,7 @@ serve(async (req) => {
               </div>
             `).join("")}
           </div>` : ""}
-
-          <!-- Instructions -->
-          <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:16px;margin-top:16px;">
+          <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin:16px 0;">
             <div style="font-size:12px;color:${brandColor};font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">📋 Instruções Importantes</div>
             <table width="100%" cellpadding="0" cellspacing="0">
               ${[
@@ -255,22 +258,16 @@ serve(async (req) => {
                 "Bagagem de mão: 1 volume de até 10kg. Bagagem despachada conforme regras da tarifa.",
                 "Em caso de dúvidas, entre em contato pelo nosso canal de atendimento."
               ].map((txt) => `
-                <tr>
-                  <td style="padding:6px 0;font-size:13px;color:${gray600};line-height:1.5;">
-                    <span style="color:${brandColor};font-weight:700;margin-right:6px;">•</span>${txt}
-                  </td>
-                </tr>
+                <tr><td style="padding:6px 0;font-size:13px;color:${gray600};line-height:1.5;">
+                  <span style="color:${brandColor};font-weight:700;margin-right:6px;">•</span>${txt}
+                </td></tr>
               `).join("")}
             </table>
           </div>
-
-          <!-- CTA -->
           <div style="text-align:center;margin:24px 0;">
             ${linkPagamento ? `<a href="${linkPagamento}" style="display:inline-block;background:${brandColor};color:#fff;text-decoration:none;padding:16px 48px;border-radius:12px;font-weight:800;font-size:15px;box-shadow:0 4px 16px rgba(0,51,160,0.3);">Ver Detalhes Completos</a><br/><br/>` : ""}
             ${whatsappLink ? `<a href="${whatsappLink}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:14px 40px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(37,211,102,0.3);">💬 Falar no WhatsApp</a>` : ""}
           </div>
-
-          <!-- Footer -->
           <div style="text-align:center;padding:20px 0 0;">
             <div style="font-size:11px;color:${gray400};line-height:1.6;">
               Este é um e-mail automático gerado pelo sistema.<br/>
@@ -344,22 +341,19 @@ serve(async (req) => {
       </div>`;
     }
 
-    const smtpUrl = "https://api.mailchannels.net/tx/v1/send";
-    const mailResponse = await fetch(smtpUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: recipientEmail, name: paxName }] }],
-        from: { email: gmailUser, name: companhia || "AeroPayments" },
-        subject,
-        content: [{ type: "text/html", value: htmlBody }],
-      }),
+    console.log(`Sending email to ${recipientEmail} - type: ${type}`);
+
+    const info = await transporter.sendMail({
+      from: `"${companhia || "AeroPayments"}" <${gmailUser}>`,
+      to: recipientEmail,
+      subject,
+      html: htmlBody,
     });
 
-    const responseOk = mailResponse.ok || mailResponse.status === 202;
+    console.log("Email sent successfully:", info.messageId);
 
     return new Response(
-      JSON.stringify({ success: true, emailSent: responseOk }),
+      JSON.stringify({ success: true, emailSent: true, messageId: info.messageId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
