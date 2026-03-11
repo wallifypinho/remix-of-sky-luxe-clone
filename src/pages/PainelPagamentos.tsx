@@ -128,12 +128,12 @@ const PainelPagamentos = () => {
             <div className="space-y-5">
               <LinksCadastro />
               <PedidosSection onCountChange={setPedidosCount} />
+              <PaymentLinksBlock />
             </div>
           )}
 
           {activeTab === "pagamentos" && (
             <div className="space-y-5">
-              <PaymentLinksBlock />
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">WhatsApp do Operador</div>
                 <div className="flex gap-2">
@@ -149,6 +149,7 @@ const PainelPagamentos = () => {
                 </div>
               </div>
               <NovoPagamentoForm />
+              <PaymentLinksBlock />
             </div>
           )}
 
