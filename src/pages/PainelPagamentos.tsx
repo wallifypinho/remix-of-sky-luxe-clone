@@ -20,6 +20,7 @@ const PainelPagamentos = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("pedidos");
   const [whatsappAdmin, setWhatsappAdmin] = useState("5521982592219");
+  const [pedidosCount, setPedidosCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !operador) {
@@ -45,8 +46,8 @@ const PainelPagamentos = () => {
     navigate("/login");
   };
 
-  const tabs: { id: Tab; label: string; icon: any }[] = [
-    { id: "pedidos", label: "Pedidos", icon: ClipboardList },
+  const tabs: { id: Tab; label: string; icon: any; count?: number }[] = [
+    { id: "pedidos", label: "Pedidos", icon: ClipboardList, count: pedidosCount },
     { id: "pagamentos", label: "Pagamentos", icon: CreditCard },
     ...(isAdmin ? [{ id: "operadores" as Tab, label: "Operadores", icon: Users }] : []),
     { id: "gateways", label: "Gateways", icon: Zap },
@@ -96,6 +97,11 @@ const PainelPagamentos = () => {
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1.5">
+                    {tab.count}
+                  </span>
+                )}
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="tabIndicator"
@@ -120,7 +126,7 @@ const PainelPagamentos = () => {
           {activeTab === "pedidos" && (
             <div className="space-y-5">
               <LinksCadastro />
-              <PedidosSection />
+              <PedidosSection onCountChange={setPedidosCount} />
             </div>
           )}
 
@@ -150,7 +156,7 @@ const PainelPagamentos = () => {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onChange={setActiveTab} isAdmin={isAdmin} />
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} isAdmin={isAdmin} pedidosCount={pedidosCount} />
     </div>
   );
 };
