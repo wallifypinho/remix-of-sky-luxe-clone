@@ -138,6 +138,7 @@ const PaymentLinksBlock = () => {
           voltaChegada: l.volta_chegada,
           valor: l.valor,
           linkPagamento: link,
+          whatsappOperador: l.whatsapp_operador || "",
         },
       });
       if (error) throw error;
