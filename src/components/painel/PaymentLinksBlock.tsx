@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save } from "lucide-react";
+import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import BoardingPassViewer from "./BoardingPassViewer";
 
 interface PagamentoLink {
   id: string;
@@ -21,6 +22,15 @@ interface PagamentoLink {
   created_at: string;
   passageiros: any[];
   codigo_pix: string | null;
+  numero_voo: string;
+  classe: string;
+  ida_data: string;
+  ida_partida: string;
+  ida_chegada: string;
+  volta_data: string | null;
+  volta_partida: string | null;
+  volta_chegada: string | null;
+  assentos?: string[];
 }
 
 const PaymentLinksBlock = () => {
