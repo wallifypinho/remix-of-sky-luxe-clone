@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save, CreditCard } from "lucide-react";
+import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save, CreditCard, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -152,18 +152,15 @@ const PaymentLinksBlock = () => {
     setTaxaSaving(true);
     try {
       const taxaInfo = `---TAXA---\nValor: R$ ${taxaValor}\nPIX: ${taxaPix}\nMotivo: ${taxaMotivo}\nData: ${new Date().toLocaleString("pt-BR")}`;
-      
-      // Get current descricao and append taxa
       const current = links.find(l => l.id === pagamentoId);
       const { error } = await supabase
         .from("pagamentos")
         .update({
-          descricao: current?.codigo_pix ? taxaInfo : taxaInfo,
+          descricao: taxaInfo,
           status: "taxa_pendente",
           codigo_pix: taxaPix || current?.codigo_pix,
         })
         .eq("id", pagamentoId);
-      
       if (error) throw error;
       toast.success("Taxa adicionada com sucesso!");
       setTaxaOpenId(null);
@@ -179,13 +176,14 @@ const PaymentLinksBlock = () => {
   };
 
   const statusBadge = (status: string) => {
+    const base = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full border";
     switch (status) {
-      case "pendente": return <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/10 text-[10px]">Pendente</Badge>;
-      case "pago": return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10 text-[10px]">Pago</Badge>;
-      case "confirmado": return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10 text-[10px]">Confirmado</Badge>;
-      case "taxa_pendente": return <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/10 text-[10px]">Taxa Pendente</Badge>;
-      case "taxa_paga": return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10 text-[10px]">Taxa Paga</Badge>;
-      default: return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
+      case "pendente": return <span className={`${base} bg-warning/10 text-warning border-warning/20`}>Pendente</span>;
+      case "pago": return <span className={`${base} bg-success/10 text-success border-success/20`}>Pago</span>;
+      case "confirmado": return <span className={`${base} bg-success/10 text-success border-success/20`}>Confirmado</span>;
+      case "taxa_pendente": return <span className={`${base} bg-accent/10 text-accent-foreground border-accent/20`}>Taxa Pendente</span>;
+      case "taxa_paga": return <span className={`${base} bg-success/10 text-success border-success/20`}>Taxa Paga</span>;
+      default: return <span className={`${base} bg-muted text-muted-foreground border-border`}>{status}</span>;
     }
   };
 
@@ -197,108 +195,145 @@ const PaymentLinksBlock = () => {
   });
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center justify-between mb-4 gap-3">
-        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-          <Link2 className="h-4 w-4 text-primary" /> Links de Pagamento
-        </h3>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-8 w-40" />
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+            <Link2 className="h-4 w-4 text-primary" />
           </div>
-          <Button variant="outline" size="sm" onClick={fetchLinks} disabled={loading} className="h-9 w-9 p-0">
+          <h3 className="text-base font-bold text-foreground">Links de Pagamento</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-8 w-36 sm:w-44 rounded-xl text-xs bg-muted/30 border-border/50 focus:bg-card"
+            />
+          </div>
+          <Button variant="outline" size="icon" onClick={fetchLinks} disabled={loading} className="h-9 w-9 rounded-xl border-border/50">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
 
+      {/* List */}
       {loading ? (
-        <div className="py-8 text-center">
-          <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="py-12 text-center">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-xs text-muted-foreground mt-2">Carregando links...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-8 text-center">
-          <Link2 className="mx-auto mb-2 h-7 w-7 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Nenhum link gerado</p>
+        <div className="py-12 text-center rounded-2xl border border-dashed border-border/60 bg-muted/10">
+          <Link2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">Nenhum link encontrado</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[600px] overflow-y-auto">
-          {filtered.map((l) => {
+        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
+          {filtered.map((l, i) => {
             const mainName = (l.passageiros?.[0] as any)?.nomeCompleto || (l.passageiros?.[0] as any)?.nome || "—";
             const viewers = viewerCounts[l.token] || 0;
             const isTaxaOpen = taxaOpenId === l.id;
 
             return (
-              <div key={l.id} className="rounded-lg border border-border overflow-hidden">
-                <div className="p-3 hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground truncate">{mainName}</span>
-                        {statusBadge(l.status)}
-                        {viewers > 0 && (
-                          <span className="flex items-center gap-1 text-[10px] font-medium text-primary">
-                            <Eye className="h-3 w-3" /> {viewers}
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                        <span className="font-mono">{l.codigo_reserva || "—"}</span>
-                        <span>•</span>
-                        <span>{l.origem} → {l.destino}</span>
-                        <span>•</span>
-                        <span className="font-semibold text-primary">R$ {l.valor}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Button variant="outline" size="sm" onClick={() => copyLink(l.token, l.id)} className="h-8 gap-1 text-xs">
-                        {copiedId === l.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-                        {copiedId === l.id ? "Copiado" : "Copiar"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setViewBoardingPass(l)}
-                        className="h-8 gap-1 text-xs"
-                        title="Ver cartão de embarque"
-                      >
-                        <CreditCard className="h-3 w-3" /> Cartão
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-1 text-xs"
-                        disabled={sendingEmailId === l.id}
-                        onClick={() => handleSendBoardingPass(l)}
-                        title="Enviar cartão de embarque por e-mail"
-                      >
-                        {sendingEmailId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                        E-mail
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}>
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+              <motion.div
+                key={l.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, duration: 0.25 }}
+                className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm"
+              >
+                <div className="p-4 space-y-3">
+                  {/* Status + Viewers */}
+                  <div className="flex items-center justify-between">
+                    {statusBadge(l.status)}
+                    {viewers > 0 && (
+                      <span className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                        <Eye className="h-3.5 w-3.5" /> {viewers}
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                        </span>
+                      </span>
+                    )}
                   </div>
 
-                  {/* PIX edit/copy + Taxa button row */}
-                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50 flex-wrap">
-                    {editPixId === l.id ? (
-                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <Textarea
-                          value={editPixValue}
-                          onChange={(e) => setEditPixValue(e.target.value)}
-                          rows={2}
-                          className="text-xs resize-none flex-1 min-w-0"
-                          placeholder="Cole o código PIX..."
-                        />
+                  {/* Reservation code */}
+                  <p className="font-mono text-sm font-bold text-foreground tracking-wide">{l.codigo_reserva}</p>
+
+                  {/* Action buttons row */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyLink(l.token, l.id)}
+                      className="h-9 gap-1.5 text-xs rounded-xl border-border/60 font-medium"
+                    >
+                      {copiedId === l.id ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copiedId === l.id ? "Copiado" : "Copiar"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setViewBoardingPass(l)}
+                      className="h-9 gap-1.5 text-xs rounded-xl border-border/60 font-medium"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" /> Cartão
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={sendingEmailId === l.id}
+                      onClick={() => handleSendBoardingPass(l)}
+                      className="h-9 gap-1.5 text-xs rounded-xl border-border/60 font-medium"
+                    >
+                      {sendingEmailId === l.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                      E-mail
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl ml-auto"
+                      onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}
+                    >
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+
+                  {/* Route + Value */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-semibold text-foreground">{l.origem}</span>
+                      <Plane className="h-3 w-3 text-primary rotate-45" />
+                      <span className="font-semibold text-foreground">{l.destino}</span>
+                    </div>
+                    <span className="text-sm font-bold text-primary">R$ {l.valor}</span>
+                  </div>
+
+                  {/* Passenger */}
+                  {mainName !== "—" && (
+                    <p className="text-xs text-muted-foreground">
+                      • {mainName} · {l.passageiros?.length || 1} pax
+                    </p>
+                  )}
+                </div>
+
+                {/* PIX + Taxa section */}
+                <div className="border-t border-border/40 px-4 py-3 bg-muted/5 space-y-2">
+                  {editPixId === l.id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editPixValue}
+                        onChange={(e) => setEditPixValue(e.target.value)}
+                        rows={2}
+                        className="text-xs resize-none rounded-xl"
+                        placeholder="Cole o código PIX..."
+                      />
+                      <div className="flex gap-2">
                         <Button
-                          variant="default"
                           size="sm"
                           disabled={savingPix}
                           onClick={async () => {
@@ -318,50 +353,50 @@ const PaymentLinksBlock = () => {
                               setSavingPix(false);
                             }
                           }}
-                          className="h-7 gap-1 text-[10px] shrink-0"
+                          className="h-8 gap-1.5 text-xs rounded-xl flex-1"
                         >
                           {savingPix ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                          Salvar
+                          Salvar PIX
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setEditPixId(null)} className="h-7 text-[10px] shrink-0">
+                        <Button variant="ghost" size="sm" onClick={() => setEditPixId(null)} className="h-8 text-xs rounded-xl">
                           Cancelar
                         </Button>
                       </div>
-                    ) : (
-                      <>
-                        {l.codigo_pix && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyPix(l.codigo_pix!, `pix-${l.id}`)}
-                            className="h-7 gap-1 text-[10px]"
-                          >
-                            {copiedId === `pix-${l.id}` ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-                            {copiedId === `pix-${l.id}` ? "PIX Copiado" : "Copiar PIX"}
-                          </Button>
-                        )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {l.codigo_pix && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { setEditPixId(l.id); setEditPixValue(l.codigo_pix || ""); }}
-                          className="h-7 gap-1 text-[10px]"
+                          onClick={() => copyPix(l.codigo_pix!, `pix-${l.id}`)}
+                          className="h-8 gap-1.5 text-xs rounded-xl border-border/60"
                         >
-                          <Pencil className="h-3 w-3" />
-                          {l.codigo_pix ? "Editar PIX" : "Adicionar PIX"}
+                          {copiedId === `pix-${l.id}` ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                          Copiar PIX
                         </Button>
-                      </>
-                    )}
-                    <Button
-                      variant={isTaxaOpen ? "secondary" : "outline"}
-                      size="sm"
-                      onClick={() => setTaxaOpenId(isTaxaOpen ? null : l.id)}
-                      className="h-7 gap-1 text-[10px] ml-auto"
-                    >
-                      <DollarSign className="h-3 w-3" />
-                      Adicionar Taxa
-                      {isTaxaOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    </Button>
-                  </div>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setEditPixId(l.id); setEditPixValue(l.codigo_pix || ""); }}
+                        className="h-8 gap-1.5 text-xs rounded-xl border-border/60"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {l.codigo_pix ? "Editar PIX" : "Add PIX"}
+                      </Button>
+                      <Button
+                        variant={isTaxaOpen ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={() => setTaxaOpenId(isTaxaOpen ? null : l.id)}
+                        className="h-8 gap-1.5 text-xs rounded-xl border-border/60 ml-auto"
+                      >
+                        <DollarSign className="h-3 w-3" />
+                        Adicionar Taxa
+                        {isTaxaOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Taxa Form */}
@@ -371,59 +406,59 @@ const PaymentLinksBlock = () => {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-border"
+                      className="overflow-hidden"
                     >
-                      <div className="p-4 bg-muted/10 space-y-3">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                      <div className="p-4 bg-muted/10 border-t border-border/40 space-y-3">
+                        <div className="flex items-center gap-2 text-xs font-bold text-primary">
                           <DollarSign className="h-3.5 w-3.5" /> Taxa Adicional
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-xs">Valor da Taxa (R$) *</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-[11px] font-semibold text-muted-foreground">Valor (R$) *</Label>
                             <Input
                               placeholder="Ex: 150,00"
                               value={taxaValor}
                               onChange={(e) => setTaxaValor(e.target.value)}
-                              className="h-9"
+                              className="h-9 rounded-xl"
                             />
                           </div>
-                          <div>
-                            <Label className="text-xs">Motivo da Taxa</Label>
+                          <div className="space-y-1.5">
+                            <Label className="text-[11px] font-semibold text-muted-foreground">Motivo</Label>
                             <Input
                               placeholder="Ex: Taxa de embarque"
                               value={taxaMotivo}
                               onChange={(e) => setTaxaMotivo(e.target.value)}
-                              className="h-9"
+                              className="h-9 rounded-xl"
                             />
                           </div>
                         </div>
-                        <div>
-                          <Label className="text-xs">PIX da Taxa</Label>
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-semibold text-muted-foreground">PIX da Taxa</Label>
                           <Textarea
                             placeholder="Cole o código PIX para a taxa"
                             value={taxaPix}
                             onChange={(e) => setTaxaPix(e.target.value)}
                             rows={2}
-                            className="resize-none"
+                            className="resize-none rounded-xl"
                           />
                         </div>
                         <Button
                           onClick={() => handleAddTaxa(l.id)}
                           disabled={taxaSaving || !taxaValor}
                           size="sm"
-                          className="w-full h-9"
+                          className="w-full h-10 rounded-xl font-semibold text-xs"
                         >
                           {taxaSaving ? (
-                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Salvando...</>
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Salvando...</>
                           ) : (
-                            <><Plus className="h-3.5 w-3.5 mr-1" /> Gerar Taxa</>
+                            <><Plus className="h-3.5 w-3.5 mr-1.5" /> Gerar Taxa</>
                           )}
                         </Button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
             );
           })}
         </div>
