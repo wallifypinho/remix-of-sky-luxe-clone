@@ -35,6 +35,9 @@ const PaymentLinksBlock = () => {
   const [taxaPix, setTaxaPix] = useState("");
   const [taxaMotivo, setTaxaMotivo] = useState("");
   const [taxaSaving, setTaxaSaving] = useState(false);
+  const [editPixId, setEditPixId] = useState<string | null>(null);
+  const [editPixValue, setEditPixValue] = useState("");
+  const [savingPix, setSavingPix] = useState(false);
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
