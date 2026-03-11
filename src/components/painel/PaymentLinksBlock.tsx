@@ -98,14 +98,16 @@ const PaymentLinksBlock = () => {
     }
     setTaxaSaving(true);
     try {
-      // Update the pagamento with taxa info in descricao field (taxa data stored as structured text)
-      const taxaInfo = `\n---TAXA---\nValor: R$ ${taxaValor}\nPIX: ${taxaPix}\nMotivo: ${taxaMotivo}\nData: ${new Date().toLocaleString("pt-BR")}`;
+      const taxaInfo = `---TAXA---\nValor: R$ ${taxaValor}\nPIX: ${taxaPix}\nMotivo: ${taxaMotivo}\nData: ${new Date().toLocaleString("pt-BR")}`;
       
+      // Get current descricao and append taxa
+      const current = links.find(l => l.id === pagamentoId);
       const { error } = await supabase
         .from("pagamentos")
         .update({
-          descricao: supabase.rpc ? taxaInfo : taxaInfo,
+          descricao: current?.codigo_pix ? taxaInfo : taxaInfo,
           status: "taxa_pendente",
+          codigo_pix: taxaPix || current?.codigo_pix,
         })
         .eq("id", pagamentoId);
       
