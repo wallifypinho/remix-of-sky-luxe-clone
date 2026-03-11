@@ -10,6 +10,7 @@ import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
 import OperadoresSection from "@/components/painel/OperadoresSection";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import PedidosSection from "@/components/painel/PedidosSection";
+import PaymentLinksBlock from "@/components/painel/PaymentLinksBlock";
 import BottomNav from "@/components/painel/BottomNav";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
