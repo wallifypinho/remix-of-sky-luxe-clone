@@ -263,10 +263,19 @@ const PaymentLinksBlock = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => setViewBoardingPass(l)}
+                        className="h-8 gap-1 text-xs"
+                        title="Ver cartão de embarque"
+                      >
+                        <CreditCard className="h-3 w-3" /> Cartão
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="h-8 gap-1 text-xs"
                         disabled={sendingEmailId === l.id}
-                        onClick={() => handleSendEmail(l)}
-                        title="Enviar e-mail com boarding pass"
+                        onClick={() => handleSendBoardingPass(l)}
+                        title="Enviar cartão de embarque por e-mail"
                       >
                         {sendingEmailId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                         E-mail
