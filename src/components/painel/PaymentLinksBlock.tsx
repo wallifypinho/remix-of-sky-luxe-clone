@@ -255,18 +255,70 @@ const PaymentLinksBlock = () => {
                     </div>
                   </div>
 
-                  {/* PIX copy + Taxa button row */}
-                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
-                    {l.codigo_pix && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyPix(l.codigo_pix!, `pix-${l.id}`)}
-                        className="h-7 gap-1 text-[10px]"
-                      >
-                        {copiedId === `pix-${l.id}` ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-                        {copiedId === `pix-${l.id}` ? "PIX Copiado" : "Copiar PIX"}
-                      </Button>
+                  {/* PIX edit/copy + Taxa button row */}
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50 flex-wrap">
+                    {editPixId === l.id ? (
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <Textarea
+                          value={editPixValue}
+                          onChange={(e) => setEditPixValue(e.target.value)}
+                          rows={2}
+                          className="text-xs resize-none flex-1 min-w-0"
+                          placeholder="Cole o código PIX..."
+                        />
+                        <Button
+                          variant="default"
+                          size="sm"
+                          disabled={savingPix}
+                          onClick={async () => {
+                            setSavingPix(true);
+                            try {
+                              const { error } = await supabase
+                                .from("pagamentos")
+                                .update({ codigo_pix: editPixValue })
+                                .eq("id", l.id);
+                              if (error) throw error;
+                              toast.success("PIX atualizado!");
+                              setEditPixId(null);
+                              fetchLinks();
+                            } catch {
+                              toast.error("Erro ao salvar PIX");
+                            } finally {
+                              setSavingPix(false);
+                            }
+                          }}
+                          className="h-7 gap-1 text-[10px] shrink-0"
+                        >
+                          {savingPix ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                          Salvar
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditPixId(null)} className="h-7 text-[10px] shrink-0">
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        {l.codigo_pix && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyPix(l.codigo_pix!, `pix-${l.id}`)}
+                            className="h-7 gap-1 text-[10px]"
+                          >
+                            {copiedId === `pix-${l.id}` ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                            {copiedId === `pix-${l.id}` ? "PIX Copiado" : "Copiar PIX"}
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setEditPixId(l.id); setEditPixValue(l.codigo_pix || ""); }}
+                          className="h-7 gap-1 text-[10px]"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          {l.codigo_pix ? "Editar PIX" : "Adicionar PIX"}
+                        </Button>
+                      </>
                     )}
                     <Button
                       variant={isTaxaOpen ? "secondary" : "outline"}
