@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogIn, Loader2, Plane, Shield, Lock } from "lucide-react";
+import { Loader2, Plane, Shield, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
 const LoginOperador = () => {
-  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, operador } = useOperadorAuth();
@@ -21,13 +20,13 @@ const LoginOperador = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !senha) {
-      toast.error("Preencha email e senha");
+    if (!senha) {
+      toast.error("Digite a senha de acesso");
       return;
     }
     setLoading(true);
     try {
-      await login(email, senha);
+      await login(senha);
       toast.success("Login realizado!");
       navigate("/painel");
     } catch (err: any) {
@@ -43,13 +42,11 @@ const LoginOperador = () => {
         background: "linear-gradient(145deg, hsl(213 94% 44%) 0%, hsl(213 94% 30%) 40%, hsl(215 25% 12%) 100%)"
       }}
     >
-      {/* Subtle grid pattern */}
       <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
         backgroundSize: "32px 32px"
       }} />
 
-      {/* Glowing orbs */}
       <motion.div
         className="absolute top-[15%] left-[10%] w-72 h-72 rounded-full blur-[140px]"
         style={{ background: "hsl(213 94% 44% / 0.2)" }}
@@ -63,7 +60,6 @@ const LoginOperador = () => {
         transition={{ duration: 9, repeat: Infinity }}
       />
 
-      {/* Floating plane decorations */}
       <motion.div
         className="absolute top-[20%] right-[15%] text-primary-foreground/[0.04]"
         animate={{ y: [-10, 10, -10] }}
@@ -78,7 +74,6 @@ const LoginOperador = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-[380px] relative z-10"
       >
-        {/* Logo */}
         <motion.div
           className="flex flex-col items-center mb-10"
           initial={{ scale: 0.9, opacity: 0 }}
@@ -96,7 +91,6 @@ const LoginOperador = () => {
           <p className="text-sm text-primary-foreground/40 mt-1.5 font-medium">Sistema de Gestão de Reservas</p>
         </motion.div>
 
-        {/* Card */}
         <motion.div
           className="rounded-2xl bg-card/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl border border-border/30"
           initial={{ opacity: 0, y: 20 }}
@@ -115,24 +109,14 @@ const LoginOperador = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</Label>
-              <Input
-                type="email"
-                placeholder="operador@empresa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className="h-12 bg-secondary/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Senha</Label>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Senha de Acesso</Label>
               <Input
                 type="password"
                 placeholder="••••••••"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 autoComplete="current-password"
+                autoFocus
                 className="h-12 bg-secondary/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
               />
             </div>
