@@ -7,9 +7,10 @@ interface BottomNavProps {
   activeTab: Tab;
   onChange: (tab: Tab) => void;
   isAdmin: boolean;
+  pedidosCount?: number;
 }
 
-const BottomNav = ({ activeTab, onChange, isAdmin }: BottomNavProps) => {
+const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNavProps) => {
   const tabs: { id: Tab; icon: any; label: string; adminOnly?: boolean }[] = [
     { id: "pedidos", icon: ClipboardList, label: "Pedidos" },
     { id: "pagamentos", icon: CreditCard, label: "Pagamentos" },
@@ -37,7 +38,14 @@ const BottomNav = ({ activeTab, onChange, isAdmin }: BottomNavProps) => {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <Icon className={`h-5 w-5 relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="relative">
+                  <Icon className={`h-5 w-5 relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                  {tab.id === "pedidos" && pedidosCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-1 z-20">
+                      {pedidosCount}
+                    </span>
+                  )}
+                </div>
                 <span className={`text-[10px] font-semibold relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
                 </span>

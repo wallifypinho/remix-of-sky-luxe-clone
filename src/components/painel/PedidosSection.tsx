@@ -30,7 +30,11 @@ const statusBadge = (status: string) => {
   }
 };
 
-const PedidosSection = () => {
+interface PedidosSectionProps {
+  onCountChange?: (count: number) => void;
+}
+
+const PedidosSection = ({ onCountChange }: PedidosSectionProps) => {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -46,15 +50,33 @@ const PedidosSection = () => {
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
-      setReservas((data || []) as Reserva[]);
+      const list = (data || []) as Reserva[];
+      setReservas(list);
+      onCountChange?.(list.length);
     } catch {
       toast.error("Erro ao carregar pedidos");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onCountChange]);
 
   useEffect(() => { fetchReservas(); }, [fetchReservas]);
+
+  // Realtime subscription for new reservas
+  useEffect(() => {
+    const channel = supabase
+      .channel("reservas-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reservas" },
+        () => {
+          fetchReservas();
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchReservas]);
 
   const sexoLabel = (s: string) => {
     if (s === "masculino") return "Masculino";
@@ -107,8 +129,9 @@ const PedidosSection = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-foreground">Pedidos</h3>
-          <Badge variant="outline" className="text-xs">{reservas.length} total</Badge>
+          <h3 className="text-base font-semibold text-foreground">
+            Pedidos <span className="text-primary">({reservas.length})</span>
+          </h3>
         </div>
         <div className="flex gap-2">
           <div className="relative">

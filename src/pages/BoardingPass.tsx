@@ -56,11 +56,10 @@ const BoardingPass = () => {
   const [loading, setLoading] = useState(true);
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [pixCopiado, setPixCopiado] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(600);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: pg, error } = await supabase
         .from("pagamentos")
         .select("*")
@@ -69,16 +68,22 @@ const BoardingPass = () => {
       if (!error && pg) setData(pg as unknown as PagamentoData);
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [token]);
 
+  // Track presence for visitor indicator
   useEffect(() => {
-    if (!data || data.status === "pago") return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => (t <= 0 ? 0 : t - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [data]);
+    if (!token) return;
+    const channel = supabase.channel(`payment-view:${token}`, {
+      config: { presence: { key: crypto.randomUUID() } },
+    });
+    channel.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await channel.track({ online_at: new Date().toISOString() });
+      }
+    });
+    return () => { supabase.removeChannel(channel); };
+  }, [token]);
 
   const handleCopyPix = () => {
     if (data?.codigo_pix) {
@@ -111,8 +116,6 @@ const BoardingPass = () => {
 
   const mainPassenger = data.passageiros?.[0] || {};
   const hasVolta = !!data.volta_data;
-  const timerMin = Math.floor(timeLeft / 60);
-  const timerSec = timeLeft % 60;
   const classeLabel = data.classe === "executiva" ? "Executiva" : data.classe === "primeira" ? "Primeira" : "Econômica";
 
   return (
@@ -349,7 +352,7 @@ const BoardingPass = () => {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-3">
-                      Os detalhes de conexão estarão disponíveis no aplicativo da companhia aérea após o pagamento ou poderão ser informados via atendimento no chat.
+                      Os demais detalhes estarão informados após a emissão. Caso tenha dúvidas, consulte o atendente.
                     </p>
                   </div>
                 )}
@@ -411,21 +414,15 @@ const BoardingPass = () => {
                   <span className="text-sm font-semibold text-warning">🟡 Pendência no pagamento</span>
                 </div>
 
-                {timeLeft > 0 && (
-                  <p className="text-center text-sm font-semibold text-destructive mb-4">
-                    Tempo restante: {String(timerMin).padStart(2, "0")}:{String(timerSec).padStart(2, "0")}
-                  </p>
-                )}
-
-                <p className="text-xs text-center text-muted-foreground mb-6">
-                  ⚠ Em 30 minutos as reservas são arquivadas automaticamente pelo sistema.
+                <p className="text-xs text-center text-muted-foreground mb-5">
+                  Os assentos reservados podem ser disponibilizados a outros viajantes caso exceda o prazo de sua reserva.
                 </p>
 
                 {/* Pay button */}
                 <Button
                   onClick={handleCopyPix}
-                  size="lg"
-                  className="w-full text-base font-bold h-14"
+                  size="default"
+                  className="w-full text-sm font-bold h-12"
                 >
                   💳 Pagar Passagem — R$ {data.valor}
                 </Button>

@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2, Eye, ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -46,15 +46,39 @@ const NovoPagamentoForm = () => {
   const [solicitarOrigem, setSolicitarOrigem] = useState(false);
   const [exigirOrigem, setExigirOrigem] = useState(false);
 
-  // Upload & AI
+  // Upload & AI - main quotation
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Upload & AI - connection details
+  const [connectionPreview, setConnectionPreview] = useState<string | null>(null);
+  const [isExtractingConnection, setIsExtractingConnection] = useState(false);
+  const connectionFileInputRef = useRef<HTMLInputElement>(null);
 
   // Paste text modal
   const [pasteModalOpen, setPasteModalOpen] = useState(false);
   const [textoReserva, setTextoReserva] = useState("");
   const [isPastingExtract, setIsPastingExtract] = useState(false);
+
+  // Generated link + presence
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+  const [viewerCount, setViewerCount] = useState(0);
+
+  // Track viewers via presence when a token is generated
+  useEffect(() => {
+    if (!generatedToken) return;
+    const channel = supabase.channel(`payment-view:${generatedToken}`);
+
+    channel.on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState();
+      const count = Object.keys(state).length;
+      setViewerCount(count);
+    });
+
+    channel.subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [generatedToken]);
 
   const addPassageiro = () => {
     setNumPassageiros((n) => n + 1);
@@ -122,7 +146,6 @@ const NovoPagamentoForm = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       toast.error("Envie apenas imagens (JPG, PNG, etc.)");
       return;
@@ -138,10 +161,8 @@ const NovoPagamentoForm = () => {
         const { data, error } = await supabase.functions.invoke("extract-flight-data", {
           body: { imageBase64: base64 },
         });
-
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || "Falha na extração");
-
         applyExtractedData(data.data);
         toast.success("Dados extraídos com sucesso!");
       } catch (err: any) {
@@ -149,6 +170,53 @@ const NovoPagamentoForm = () => {
         toast.error(err.message || "Erro ao extrair dados da imagem");
       } finally {
         setIsExtracting(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleConnectionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Envie apenas imagens (JPG, PNG, etc.)");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const base64 = ev.target?.result as string;
+      setConnectionPreview(base64);
+      setIsExtractingConnection(true);
+
+      try {
+        const { data, error } = await supabase.functions.invoke("extract-flight-data", {
+          body: { imageBase64: base64 },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "Falha na extração");
+        // Apply connection-specific data (flight details only, not overwrite passengers)
+        if (data.data.origem) setOrigem(data.data.origem);
+        if (data.data.destino) setDestino(data.data.destino);
+        if (data.data.companhia) setCompanhia(data.data.companhia);
+        if (data.data.numeroVoo) setNumeroVoo(data.data.numeroVoo);
+        if (data.data.ida) {
+          if (data.data.ida.data) setIdaData(data.data.ida.data);
+          if (data.data.ida.partida) setIdaPartida(data.data.ida.partida);
+          if (data.data.ida.chegada) setIdaChegada(data.data.ida.chegada);
+        }
+        if (data.data.volta) {
+          if (data.data.volta.data) setVoltaData(data.data.volta.data);
+          if (data.data.volta.partida) setVoltaPartida(data.data.volta.partida);
+          if (data.data.volta.chegada) setVoltaChegada(data.data.volta.chegada);
+        }
+        if (data.data.descricao) setDescricao((prev) => prev ? `${prev}\n${data.data.descricao}` : data.data.descricao);
+        toast.success("Detalhes da conexão extraídos!");
+      } catch (err: any) {
+        console.error("Connection extraction error:", err);
+        toast.error(err.message || "Erro ao extrair dados da imagem");
+      } finally {
+        setIsExtractingConnection(false);
       }
     };
     reader.readAsDataURL(file);
@@ -165,10 +233,8 @@ const NovoPagamentoForm = () => {
       const { data, error } = await supabase.functions.invoke("extract-flight-data", {
         body: { textReserva: textoReserva },
       });
-
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Falha na extração");
-
       applyExtractedData(data.data);
       setPasteModalOpen(false);
       setTextoReserva("");
@@ -184,6 +250,11 @@ const NovoPagamentoForm = () => {
   const removeUpload = () => {
     setUploadPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeConnectionUpload = () => {
+    setConnectionPreview(null);
+    if (connectionFileInputRef.current) connectionFileInputRef.current.value = "";
   };
 
   const handleSubmit = async () => {
@@ -227,11 +298,14 @@ const NovoPagamentoForm = () => {
 
       const link = `${window.location.origin}/boarding-pass?token=${data.token}`;
       await navigator.clipboard.writeText(link);
+      setGeneratedToken(data.token);
       toast.success("Pagamento gerado! Link copiado para a área de transferência.");
     } catch (err: any) {
       toast.error("Erro ao gerar pagamento: " + (err.message || "Tente novamente"));
     }
   };
+
+  const generatedLink = generatedToken ? `${window.location.origin}/boarding-pass?token=${generatedToken}` : null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -239,55 +313,107 @@ const NovoPagamentoForm = () => {
         <Plus className="h-4 w-4" /> Novo Pagamento
       </h3>
 
-      {/* Upload de Cotação */}
-      <div className="mb-4">
-        <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
-          📋 Upload de Cotação (leitura automática)
-        </Label>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
-
-        {!uploadPreview ? (
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-6 cursor-pointer hover:border-primary/50 transition-colors"
-          >
-            {isExtracting ? (
-              <>
-                <Loader2 className="h-6 w-6 text-primary animate-spin mb-2" />
-                <span className="text-xs text-primary font-medium">Extraindo dados com IA...</span>
-              </>
-            ) : (
-              <>
-                <Upload className="h-6 w-6 text-muted-foreground mb-2" />
-                <span className="text-xs text-muted-foreground">Envie a imagem da cotação para preenchimento automático</span>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="relative rounded-lg border border-border overflow-hidden">
-            <img src={uploadPreview} alt="Cotação" className="w-full max-h-48 object-contain bg-muted/30" />
-            {isExtracting && (
-              <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
-                <div className="flex items-center gap-2 text-primary">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-sm font-medium">Extraindo dados...</span>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={removeUpload}
-              className="absolute top-2 right-2 rounded-full bg-background/80 p-1 hover:bg-background transition-colors"
+      {/* Image Upload Blocks - Side by Side */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        {/* Connection Details Image Block (LEFT) */}
+        <div>
+          <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+            ✈️ Detalhes da Conexão (imagem)
+          </Label>
+          <input
+            ref={connectionFileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleConnectionImageUpload}
+          />
+          {!connectionPreview ? (
+            <div
+              onClick={() => connectionFileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-6 cursor-pointer hover:border-primary/50 transition-colors"
             >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </div>
-        )}
+              {isExtractingConnection ? (
+                <>
+                  <Loader2 className="h-6 w-6 text-primary animate-spin mb-2" />
+                  <span className="text-xs text-primary font-medium">Extraindo detalhes...</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
+                  <span className="text-xs text-muted-foreground text-center px-2">Envie imagem com detalhes da conexão</span>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="relative rounded-lg border border-border overflow-hidden">
+              <img src={connectionPreview} alt="Conexão" className="w-full max-h-36 object-contain bg-muted/30" />
+              {isExtractingConnection && (
+                <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm font-medium">Extraindo...</span>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={removeConnectionUpload}
+                className="absolute top-2 right-2 rounded-full bg-background/80 p-1 hover:bg-background transition-colors"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Main Quotation Image Block (RIGHT) */}
+        <div>
+          <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+            📋 Upload de Cotação (leitura automática)
+          </Label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          {!uploadPreview ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-6 cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              {isExtracting ? (
+                <>
+                  <Loader2 className="h-6 w-6 text-primary animate-spin mb-2" />
+                  <span className="text-xs text-primary font-medium">Extraindo dados com IA...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-6 w-6 text-muted-foreground mb-2" />
+                  <span className="text-xs text-muted-foreground text-center px-2">Envie a imagem da cotação para preenchimento automático</span>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="relative rounded-lg border border-border overflow-hidden">
+              <img src={uploadPreview} alt="Cotação" className="w-full max-h-36 object-contain bg-muted/30" />
+              {isExtracting && (
+                <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm font-medium">Extraindo dados...</span>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={removeUpload}
+                className="absolute top-2 right-2 rounded-full bg-background/80 p-1 hover:bg-background transition-colors"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Colar texto de reserva - inline collapsible */}
@@ -572,6 +698,39 @@ const NovoPagamentoForm = () => {
       <Button onClick={handleSubmit} className="w-full h-12 text-sm font-semibold">
         Gerar Pagamento ({numPassageiros} passageiro{numPassageiros > 1 ? "s" : ""})
       </Button>
+
+      {/* Generated Link Section */}
+      {generatedLink && (
+        <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-primary uppercase">Link de Pagamento</span>
+            {viewerCount > 0 && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                <Eye className="h-3.5 w-3.5" />
+                <span>{viewerCount} visitando</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input value={generatedLink} readOnly className="flex-1 text-xs font-mono" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(generatedLink);
+                toast.success("Link copiado!");
+              }}
+              className="shrink-0"
+            >
+              Copiar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
