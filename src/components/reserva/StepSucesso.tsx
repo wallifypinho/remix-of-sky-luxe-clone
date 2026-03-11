@@ -1,7 +1,6 @@
-import { CheckCircle, User, Armchair, CreditCard, Copy, Check } from "lucide-react";
+import { CheckCircle, User, Armchair, CreditCard } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import type { PassageiroData } from "./StepDados";
 
 interface StepSucessoProps {
