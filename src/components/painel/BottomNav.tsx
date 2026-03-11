@@ -7,9 +7,10 @@ interface BottomNavProps {
   activeTab: Tab;
   onChange: (tab: Tab) => void;
   isAdmin: boolean;
+  pedidosCount?: number;
 }
 
-const BottomNav = ({ activeTab, onChange, isAdmin }: BottomNavProps) => {
+const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNavProps) => {
   const tabs: { id: Tab; icon: any; label: string; adminOnly?: boolean }[] = [
     { id: "pedidos", icon: ClipboardList, label: "Pedidos" },
     { id: "pagamentos", icon: CreditCard, label: "Pagamentos" },
