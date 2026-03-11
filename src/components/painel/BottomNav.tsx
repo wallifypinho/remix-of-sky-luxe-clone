@@ -38,7 +38,14 @@ const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNav
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <Icon className={`h-5 w-5 relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="relative">
+                  <Icon className={`h-5 w-5 relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                  {tab.id === "pedidos" && pedidosCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-1 z-20">
+                      {pedidosCount}
+                    </span>
+                  )}
+                </div>
                 <span className={`text-[10px] font-semibold relative z-10 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
                 </span>
