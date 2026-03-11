@@ -21,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<LoginOperador />} />
+          <Route path="/painel/:slug" element={<LoginOperador />} />
           <Route path="/painel" element={<PainelPagamentos />} />
           <Route path="/coleta-dados" element={<ColetaDados />} />
           <Route path="/boarding-pass" element={<BoardingPass />} />
