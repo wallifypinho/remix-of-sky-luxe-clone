@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save } from "lucide-react";
+import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import BoardingPassViewer from "./BoardingPassViewer";
 
 interface PagamentoLink {
   id: string;
@@ -21,6 +22,15 @@ interface PagamentoLink {
   created_at: string;
   passageiros: any[];
   codigo_pix: string | null;
+  numero_voo: string;
+  classe: string;
+  ida_data: string;
+  ida_partida: string;
+  ida_chegada: string;
+  volta_data: string | null;
+  volta_partida: string | null;
+  volta_chegada: string | null;
+  assentos?: string[];
 }
 
 const PaymentLinksBlock = () => {
@@ -38,13 +48,14 @@ const PaymentLinksBlock = () => {
   const [editPixId, setEditPixId] = useState<string | null>(null);
   const [editPixValue, setEditPixValue] = useState("");
   const [savingPix, setSavingPix] = useState(false);
+  const [viewBoardingPass, setViewBoardingPass] = useState<PagamentoLink | null>(null);
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("pagamentos")
-        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix")
+        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix, numero_voo, classe, ida_data, ida_partida, ida_chegada, volta_data, volta_partida, volta_chegada")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -95,7 +106,7 @@ const PaymentLinksBlock = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSendEmail = async (l: PagamentoLink) => {
+  const handleSendBoardingPass = async (l: PagamentoLink) => {
     const mainP = l.passageiros?.[0] as any;
     if (!mainP?.email) {
       toast.error("Passageiro sem e-mail cadastrado");
@@ -104,11 +115,22 @@ const PaymentLinksBlock = () => {
     setSendingEmailId(l.id);
     try {
       const link = `${window.location.origin}/boarding-pass?token=${l.token}`;
-      const { data, error } = await supabase.functions.invoke("send-reservation-email", {
+      const { error } = await supabase.functions.invoke("send-reservation-email", {
         body: {
-          type: "payment",
+          type: "boarding_pass",
           codigoReserva: l.codigo_reserva,
           passageiros: l.passageiros,
+          companhia: l.companhia,
+          origem: l.origem,
+          destino: l.destino,
+          numeroVoo: l.numero_voo,
+          classe: l.classe,
+          idaData: l.ida_data,
+          idaPartida: l.ida_partida,
+          idaChegada: l.ida_chegada,
+          voltaData: l.volta_data,
+          voltaPartida: l.volta_partida,
+          voltaChegada: l.volta_chegada,
           valor: l.valor,
           linkPagamento: link,
         },
@@ -241,10 +263,19 @@ const PaymentLinksBlock = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => setViewBoardingPass(l)}
+                        className="h-8 gap-1 text-xs"
+                        title="Ver cartão de embarque"
+                      >
+                        <CreditCard className="h-3 w-3" /> Cartão
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="h-8 gap-1 text-xs"
                         disabled={sendingEmailId === l.id}
-                        onClick={() => handleSendEmail(l)}
-                        title="Enviar e-mail com boarding pass"
+                        onClick={() => handleSendBoardingPass(l)}
+                        title="Enviar cartão de embarque por e-mail"
                       >
                         {sendingEmailId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                         E-mail
@@ -396,6 +427,30 @@ const PaymentLinksBlock = () => {
             );
           })}
         </div>
+      )}
+
+      {/* Boarding Pass Viewer Modal */}
+      {viewBoardingPass && (
+        <BoardingPassViewer
+          data={{
+            companhia: viewBoardingPass.companhia,
+            origem: viewBoardingPass.origem,
+            destino: viewBoardingPass.destino,
+            numeroVoo: viewBoardingPass.numero_voo,
+            classe: viewBoardingPass.classe,
+            codigoReserva: viewBoardingPass.codigo_reserva,
+            idaData: viewBoardingPass.ida_data,
+            idaPartida: viewBoardingPass.ida_partida,
+            idaChegada: viewBoardingPass.ida_chegada,
+            voltaData: viewBoardingPass.volta_data,
+            voltaPartida: viewBoardingPass.volta_partida,
+            voltaChegada: viewBoardingPass.volta_chegada,
+            passageiros: viewBoardingPass.passageiros,
+            token: viewBoardingPass.token,
+            valor: viewBoardingPass.valor,
+          }}
+          onClose={() => setViewBoardingPass(null)}
+        />
       )}
     </div>
   );
