@@ -311,13 +311,6 @@ const PaymentLinksBlock = () => {
                             <p className="text-xs text-muted-foreground font-mono truncate">{linkUrl}</p>
                           </div>
 
-                          {/* QR Code - Link */}
-                          <div className="flex justify-center py-2">
-                            <div className="bg-card rounded-xl p-3 border border-border/30">
-                              <QRCodeSVG value={linkUrl} size={140} />
-                            </div>
-                          </div>
-
                           {/* Emitir Taxa + Novo Valor buttons */}
                           <div className="grid grid-cols-2 gap-2.5">
                             <Button
