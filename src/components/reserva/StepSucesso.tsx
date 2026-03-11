@@ -1,7 +1,6 @@
-import { CheckCircle, User, Armchair, CreditCard, Copy, Check } from "lucide-react";
+import { CheckCircle, User, Armchair, CreditCard } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import type { PassageiroData } from "./StepDados";
 
 interface StepSucessoProps {
@@ -13,33 +12,10 @@ interface StepSucessoProps {
 }
 
 const StepSucesso = ({ codigo, passageiros, assentos, metodoPagamento, whatsappUrl }: StepSucessoProps) => {
-  const [copied, setCopied] = useState(false);
-
   const sexoLabel = (s: string) => {
     if (s === "masculino") return "M";
     if (s === "feminino") return "F";
     return "—";
-  };
-
-  const handleCopy = () => {
-    const lines = [
-      `Código: ${codigo}`,
-      "",
-      ...passageiros.map((p, i) => [
-        `Passageiro ${i + 1}: ${p.nomeCompleto}`,
-        `  CPF: ${p.cpf}`,
-        `  Nasc: ${p.dataNascimento}`,
-        `  Sexo: ${sexoLabel(p.sexo)}`,
-        `  Tel: ${p.telefone}`,
-        `  Email: ${p.email}`,
-      ].join("\n")),
-      "",
-      `Assentos: ${assentos.join(", ") || "—"}`,
-      `Pagamento: ${metodoPagamento}`,
-    ];
-    navigator.clipboard.writeText(lines.join("\n"));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -64,13 +40,8 @@ const StepSucesso = ({ codigo, passageiros, assentos, metodoPagamento, whatsappU
         <p className="text-2xl font-extrabold font-mono tracking-[0.15em] text-success">{codigo}</p>
       </div>
 
-      {/* Copy button */}
-      <button
-        onClick={handleCopy}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-card text-sm font-bold text-foreground hover:bg-secondary transition-colors active:scale-[0.98]"
-      >
-        {copied ? <><Check className="h-4 w-4 text-success" /> Copiado!</> : <><Copy className="h-4 w-4" /> Copiar todos os dados</>}
-      </button>
+
+
 
       {/* Summary */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
