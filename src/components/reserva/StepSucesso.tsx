@@ -12,33 +12,10 @@ interface StepSucessoProps {
 }
 
 const StepSucesso = ({ codigo, passageiros, assentos, metodoPagamento, whatsappUrl }: StepSucessoProps) => {
-  const [copied, setCopied] = useState(false);
-
   const sexoLabel = (s: string) => {
     if (s === "masculino") return "M";
     if (s === "feminino") return "F";
     return "—";
-  };
-
-  const handleCopy = () => {
-    const lines = [
-      `Código: ${codigo}`,
-      "",
-      ...passageiros.map((p, i) => [
-        `Passageiro ${i + 1}: ${p.nomeCompleto}`,
-        `  CPF: ${p.cpf}`,
-        `  Nasc: ${p.dataNascimento}`,
-        `  Sexo: ${sexoLabel(p.sexo)}`,
-        `  Tel: ${p.telefone}`,
-        `  Email: ${p.email}`,
-      ].join("\n")),
-      "",
-      `Assentos: ${assentos.join(", ") || "—"}`,
-      `Pagamento: ${metodoPagamento}`,
-    ];
-    navigator.clipboard.writeText(lines.join("\n"));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
