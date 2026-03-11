@@ -128,7 +128,6 @@ const PainelPagamentos = () => {
             <div className="space-y-5">
               <LinksCadastro />
               <PedidosSection onCountChange={setPedidosCount} />
-              <PaymentLinksBlock />
             </div>
           )}
 

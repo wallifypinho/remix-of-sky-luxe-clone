@@ -208,6 +208,17 @@ const PaymentLinksBlock = () => {
                         {copiedId === l.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                         {copiedId === l.id ? "Copiado" : "Copiar"}
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs"
+                        disabled={sendingEmailId === l.id}
+                        onClick={() => handleSendEmail(l)}
+                        title="Enviar e-mail com boarding pass"
+                      >
+                        {sendingEmailId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                        E-mail
+                      </Button>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}>
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Button>
