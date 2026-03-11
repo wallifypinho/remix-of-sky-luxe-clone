@@ -121,10 +121,15 @@ const OperadoresSection = () => {
     return new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
   };
 
-  const copyPainelLink = (opId: string) => {
-    const link = `${window.location.origin}/login?op=${opId}`;
+  const getPainelLink = (op: OperadorRow) => {
+    const slug = op.nome.toLowerCase().replace(/\s+/g, "");
+    return `${window.location.origin}/painel/${slug}`;
+  };
+
+  const copyPainelLink = (op: OperadorRow) => {
+    const link = getPainelLink(op);
     navigator.clipboard.writeText(link);
-    setCopiedLinkId(opId);
+    setCopiedLinkId(op.id);
     toast.success("Link do painel copiado!");
     setTimeout(() => setCopiedLinkId(null), 2000);
   };
@@ -233,15 +238,18 @@ const OperadoresSection = () => {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{op.email}</div>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <button
-                        onClick={() => copyPainelLink(op.id)}
-                        className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors"
-                        title="Copiar link do painel"
-                      >
-                        {copiedLinkId === op.id ? <Check className="h-3 w-3 text-success" /> : <Link2 className="h-3 w-3" />}
-                        {copiedLinkId === op.id ? "Copiado!" : "Link do painel"}
-                      </button>
+                    <div className="mt-1.5 rounded-lg bg-primary/5 border border-primary/10 px-3 py-2">
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Link do Painel</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-foreground truncate">{getPainelLink(op)}</span>
+                        <button
+                          onClick={() => copyPainelLink(op)}
+                          className="shrink-0 p-1 rounded hover:bg-primary/10 transition-colors"
+                          title="Copiar link"
+                        >
+                          {copiedLinkId === op.id ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5 text-primary" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       Último acesso: {formatDate(op.ultimo_acesso)}
