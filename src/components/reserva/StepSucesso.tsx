@@ -40,13 +40,8 @@ const StepSucesso = ({ codigo, passageiros, assentos, metodoPagamento, whatsappU
         <p className="text-2xl font-extrabold font-mono tracking-[0.15em] text-success">{codigo}</p>
       </div>
 
-      {/* Copy button */}
-      <button
-        onClick={handleCopy}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-card text-sm font-bold text-foreground hover:bg-secondary transition-colors active:scale-[0.98]"
-      >
-        {copied ? <><Check className="h-4 w-4 text-success" /> Copiado!</> : <><Copy className="h-4 w-4" /> Copiar todos os dados</>}
-      </button>
+
+
 
       {/* Summary */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
