@@ -364,14 +364,14 @@ const BoardingPass = () => {
             /* ═══════ BOARDING PASS VIEW ═══════ */
             <motion.div
               key="boarding"
-              initial={{ opacity: 0, x: -40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 40 }}
-              transition={{ duration: 0.25 }}
-              className="flex-1 flex flex-col"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col pb-6"
             >
               {/* ── Blue header area ── */}
-              <div className="px-5 pt-8 pb-7">
+              <div className="px-5 pt-8 pb-10">
                 <div className="flex items-center justify-between mb-6">
                   <span className="text-sm text-white/80 font-semibold">
                     {data.companhia || "Azul"} ✈
@@ -392,9 +392,9 @@ const BoardingPass = () => {
                 </div>
               </div>
 
-              {/* ── White card ── */}
-              <div className="flex-1 rounded-t-[28px] bg-white shadow-[0_-12px_50px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden">
-                <div className="flex-1 px-6 pt-7 pb-4">
+              {/* ── Floating white card ── */}
+              <div className="mx-4 -mt-3 rounded-[24px] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
+                <div className="px-6 pt-7 pb-5">
 
                   {/* Route */}
                   <div className="flex items-start justify-between mb-6">
@@ -427,28 +427,28 @@ const BoardingPass = () => {
                   </div>
 
                   {/* Boarding + Gate + QR */}
-                  <div className="flex justify-between items-end mb-6">
+                  <div className="flex justify-between items-end mb-5">
                     <div>
                       <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Embarque</div>
                       <div className="text-2xl font-extrabold text-gray-900 leading-none mt-1">{calcBoardingTime(data.ida_partida)}</div>
                       <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-4">Portão</div>
                       <div className="text-xl font-extrabold text-gray-900 leading-none mt-1">—</div>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                      <QRCodeSVG value={data.codigo_reserva || "BOARDING"} size={100} />
+                    <div className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100">
+                      <QRCodeSVG value={data.codigo_reserva || "BOARDING"} size={110} />
                     </div>
                   </div>
 
                   {/* Volta card */}
                   {hasVolta && (
-                    <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 mb-6">
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 mb-5">
                       <div className="flex items-center gap-2 text-sm font-bold text-[#0033A0] mb-3">
                         <ArrowLeftRight className="h-4 w-4" />
                         VOLTA
                       </div>
                       <div className="grid grid-cols-3 gap-3 text-xs">
                         <div>
-                          <div className="text-[10px] text-gray-400 uppercase font-semibold">Data</div>
+                          <div className="text-[10px] text-gray-400 uppercase font-semibold">Dados</div>
                           <div className="font-bold text-gray-900 text-sm mt-0.5">{data.volta_data}</div>
                         </div>
                         <div>
@@ -462,16 +462,19 @@ const BoardingPass = () => {
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Ticket tear divider */}
-                  <div className="relative flex items-center my-5">
-                    <div className="absolute -left-6 w-5 h-5 rounded-full z-10" style={{ background: "linear-gradient(145deg, #003FBF, #0033A0)" }} />
-                    <div className="flex-1 border-t-2 border-dashed border-gray-200 mx-1" />
-                    <div className="absolute -right-6 w-5 h-5 rounded-full z-10" style={{ background: "linear-gradient(145deg, #003FBF, #0033A0)" }} />
-                  </div>
+                {/* Ticket tear divider */}
+                <div className="relative flex items-center px-0">
+                  <div className="absolute -left-3 w-6 h-6 rounded-full z-10" style={{ background: "linear-gradient(145deg, #003FBF, #0033A0)" }} />
+                  <div className="flex-1 border-t-2 border-dashed border-gray-200 mx-4" />
+                  <div className="absolute -right-3 w-6 h-6 rounded-full z-10" style={{ background: "linear-gradient(145deg, #003FBF, #0033A0)" }} />
+                </div>
 
+                {/* Bottom section of card */}
+                <div className="px-6 pt-5 pb-6">
                   {/* Seat + Embarque prioritário */}
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-5">
                     <div className="flex gap-8">
                       <div>
                         <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Assento</div>
@@ -491,7 +494,7 @@ const BoardingPass = () => {
                   {/* More details */}
                   <button
                     onClick={() => setDetalhesAbertos(!detalhesAbertos)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-gray-50/50 py-3 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors mb-5"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-gray-50/50 py-3 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
                   >
                     <Info className="h-4 w-4" />
                     {detalhesAbertos ? "Fechar detalhes" : "Mais"}
@@ -504,7 +507,7 @@ const BoardingPass = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden mb-5"
+                        className="overflow-hidden mt-4"
                       >
                         <div className="space-y-3">
                           <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
@@ -587,51 +590,46 @@ const BoardingPass = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                </div>
+              </div>
 
-                  {/* Notices */}
-                  <div className="space-y-2.5 mb-4">
-                    <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-                      Os assentos reservados podem ser disponibilizados a outros viajantes caso exceda o prazo de sua reserva.
-                    </p>
-                    <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-                      Os demais detalhes estarão informados após a emissão. Caso tenha dúvidas, consulte o atendente.
-                    </p>
-                  </div>
-
-                  {/* Payment pending */}
-                  {isPendente && (
-                    <div className="mb-4">
-                      <button
-                        onClick={() => { setShowPayment(true); setDetalhesAbertos(false); }}
-                        className="w-full rounded-2xl bg-amber-50 border border-amber-200 py-4 flex items-center justify-center gap-2 hover:bg-amber-100/80 transition-colors active:scale-[0.98]"
-                      >
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        <span className="text-sm font-bold text-amber-600">Pendência no pagamento</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {data.status === "pago" && (
-                    <div className="rounded-2xl border border-green-200 p-4 text-center mb-4 bg-green-50">
-                      <span className="text-green-600 font-bold text-sm">✅ Pagamento confirmado!</span>
-                    </div>
-                  )}
-
-                  {data.status === "taxa_paga" && (
-                    <div className="rounded-2xl border border-green-200 p-4 text-center mb-4 bg-green-50">
-                      <span className="text-green-600 font-bold text-sm">✅ Todos os pagamentos confirmados!</span>
-                    </div>
-                  )}
+              {/* Notices + status outside card, on blue bg */}
+              <div className="px-6 pt-5 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-[10px] text-white/50 text-center leading-relaxed">
+                    Os assentos reservados podem ser disponibilizados a outros viajantes caso exceda o prazo de sua reserva.
+                  </p>
+                  <p className="text-[10px] text-white/50 text-center leading-relaxed">
+                    Os demais detalhes estarão informados após a emissão. Caso tenha dúvidas, consulte o atendente.
+                  </p>
                 </div>
 
-                {/* Footer */}
-                <div className="px-6 py-4 text-center mt-auto" style={{ background: "linear-gradient(135deg, #0033A0, #002080)" }}>
-                  <div className="text-xs font-bold text-white tracking-wide">
-                    Pagamento processado com segurança
+                {/* Payment pending */}
+                {isPendente && (
+                  <button
+                    onClick={() => { setShowPayment(true); setDetalhesAbertos(false); }}
+                    className="w-full rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 py-4 flex items-center justify-center gap-2 hover:bg-white/15 transition-colors active:scale-[0.98]"
+                  >
+                    <AlertTriangle className="h-4 w-4 text-amber-300" />
+                    <span className="text-sm font-bold text-white">Pendência no pagamento</span>
+                  </button>
+                )}
+
+                {data.status === "pago" && (
+                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-4 text-center">
+                    <span className="text-white font-bold text-sm">✅ Pagamento confirmado!</span>
                   </div>
-                  <div className="text-[10px] text-white/50 mt-0.5">
-                    Transação protegida · Dados criptografados
+                )}
+
+                {data.status === "taxa_paga" && (
+                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-4 text-center">
+                    <span className="text-white font-bold text-sm">✅ Todos os pagamentos confirmados!</span>
                   </div>
+                )}
+
+                {/* Footer text */}
+                <div className="text-center pt-2 pb-4">
+                  <div className="text-[10px] text-white/40">Transação protegida · Dados criptografados</div>
                 </div>
               </div>
             </motion.div>
