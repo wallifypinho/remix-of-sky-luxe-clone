@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Shield, ShieldOff, Ban, CheckCircle, Loader2, RefreshCw, KeyRound } from "lucide-react";
+import { Users, Plus, Shield, ShieldOff, Ban, CheckCircle, Loader2, RefreshCw, KeyRound, Copy, Check, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,7 @@ const OperadoresSection = () => {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<OperadorRow | null>(null);
   const [novaSenha, setNovaSenha] = useState("");
@@ -118,6 +119,14 @@ const OperadoresSection = () => {
   const formatDate = (d: string | null) => {
     if (!d) return "Nunca";
     return new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+  };
+
+  const copyPainelLink = (opId: string) => {
+    const link = `${window.location.origin}/login?op=${opId}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLinkId(opId);
+    toast.success("Link do painel copiado!");
+    setTimeout(() => setCopiedLinkId(null), 2000);
   };
 
   const onlineCount = operadores.filter(o => o.sessao_ativa).length;
@@ -224,6 +233,16 @@ const OperadoresSection = () => {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{op.email}</div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <button
+                        onClick={() => copyPainelLink(op.id)}
+                        className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors"
+                        title="Copiar link do painel"
+                      >
+                        {copiedLinkId === op.id ? <Check className="h-3 w-3 text-success" /> : <Link2 className="h-3 w-3" />}
+                        {copiedLinkId === op.id ? "Copiado!" : "Link do painel"}
+                      </button>
+                    </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       Último acesso: {formatDate(op.ultimo_acesso)}
                     </div>

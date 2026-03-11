@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
+import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ const PaymentLinksBlock = () => {
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [taxaOpenId, setTaxaOpenId] = useState<string | null>(null);
   const [taxaValor, setTaxaValor] = useState("");
   const [taxaPix, setTaxaPix] = useState("");
@@ -89,6 +90,33 @@ const PaymentLinksBlock = () => {
     setCopiedId(`pix-${id}`);
     toast.success("PIX copiado!");
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSendEmail = async (l: PagamentoLink) => {
+    const mainP = l.passageiros?.[0] as any;
+    if (!mainP?.email) {
+      toast.error("Passageiro sem e-mail cadastrado");
+      return;
+    }
+    setSendingEmailId(l.id);
+    try {
+      const link = `${window.location.origin}/boarding-pass?token=${l.token}`;
+      const { data, error } = await supabase.functions.invoke("send-reservation-email", {
+        body: {
+          type: "payment",
+          codigoReserva: l.codigo_reserva,
+          passageiros: l.passageiros,
+          valor: l.valor,
+          linkPagamento: link,
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail enviado para ${mainP.email}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail");
+    } finally {
+      setSendingEmailId(null);
+    }
   };
 
   const handleAddTaxa = async (pagamentoId: string) => {
@@ -206,6 +234,17 @@ const PaymentLinksBlock = () => {
                       <Button variant="outline" size="sm" onClick={() => copyLink(l.token, l.id)} className="h-8 gap-1 text-xs">
                         {copiedId === l.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                         {copiedId === l.id ? "Copiado" : "Copiar"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs"
+                        disabled={sendingEmailId === l.id}
+                        onClick={() => handleSendEmail(l)}
+                        title="Enviar e-mail com boarding pass"
+                      >
+                        {sendingEmailId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                        E-mail
                       </Button>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}>
                         <ExternalLink className="h-3.5 w-3.5" />
