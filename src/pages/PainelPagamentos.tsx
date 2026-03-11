@@ -81,7 +81,7 @@ const PainelPagamentos = () => {
         </div>
       </header>
 
-      {/* Desktop Tabs */}
+      {/* Desktop Tabs (hidden on mobile — uses BottomNav instead) */}
       <div className="border-b border-border bg-card/50 px-4 hidden md:block">
         <div className="mx-auto max-w-6xl flex gap-1">
           {tabs.map((tab) => {
