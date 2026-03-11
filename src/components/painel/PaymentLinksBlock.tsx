@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save, CreditCard, Plane } from "lucide-react";
+import { Link2, Copy, Check, Eye, ExternalLink, Search, RefreshCw, Loader2, Plus, DollarSign, ChevronDown, ChevronUp, Mail, Pencil, Save, CreditCard, Plane, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import BoardingPassViewer from "./BoardingPassViewer";
 
 interface PagamentoLink {
@@ -40,6 +40,7 @@ const PaymentLinksBlock = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [taxaOpenId, setTaxaOpenId] = useState<string | null>(null);
   const [taxaValor, setTaxaValor] = useState("");
   const [taxaPix, setTaxaPix] = useState("");
@@ -49,6 +50,8 @@ const PaymentLinksBlock = () => {
   const [editPixValue, setEditPixValue] = useState("");
   const [savingPix, setSavingPix] = useState(false);
   const [viewBoardingPass, setViewBoardingPass] = useState<PagamentoLink | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState("todos");
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
@@ -91,9 +94,10 @@ const PaymentLinksBlock = () => {
     return () => { channels.forEach((ch) => supabase.removeChannel(ch)); };
   }, [links]);
 
+  const getLink = (token: string) => `${window.location.origin}/boarding-pass?token=${token}`;
+
   const copyLink = (token: string, id: string) => {
-    const link = `${window.location.origin}/boarding-pass?token=${token}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(getLink(token));
     setCopiedId(id);
     toast.success("Link copiado!");
     setTimeout(() => setCopiedId(null), 2000);
@@ -114,7 +118,7 @@ const PaymentLinksBlock = () => {
     }
     setSendingEmailId(l.id);
     try {
-      const link = `${window.location.origin}/boarding-pass?token=${l.token}`;
+      const link = getLink(l.token);
       const { error } = await supabase.functions.invoke("send-reservation-email", {
         body: {
           type: "boarding_pass",
@@ -175,294 +179,297 @@ const PaymentLinksBlock = () => {
     }
   };
 
-  const statusBadge = (status: string) => {
-    const base = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full border";
-    switch (status) {
-      case "pendente": return <span className={`${base} bg-warning/10 text-warning border-warning/20`}>Pendente</span>;
-      case "pago": return <span className={`${base} bg-success/10 text-success border-success/20`}>Pago</span>;
-      case "confirmado": return <span className={`${base} bg-success/10 text-success border-success/20`}>Confirmado</span>;
-      case "taxa_pendente": return <span className={`${base} bg-accent/10 text-accent-foreground border-accent/20`}>Taxa Pendente</span>;
-      case "taxa_paga": return <span className={`${base} bg-success/10 text-success border-success/20`}>Taxa Paga</span>;
-      default: return <span className={`${base} bg-muted text-muted-foreground border-border`}>{status}</span>;
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase.from("pagamentos").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Link removido!");
+      if (expandedId === id) setExpandedId(null);
+      fetchLinks();
+    } catch {
+      toast.error("Erro ao remover");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const filtered = links.filter((l) => {
+    if (statusFilter !== "todos" && l.status !== statusFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     const mainName = (l.passageiros?.[0] as any)?.nomeCompleto || (l.passageiros?.[0] as any)?.nome || "";
     return l.codigo_reserva.toLowerCase().includes(q) || mainName.toLowerCase().includes(q) || l.companhia.toLowerCase().includes(q);
   });
 
+  const isExpanded = (id: string) => expandedId === id;
+
   return (
-    <div className="space-y-4">
+    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
-            <Link2 className="h-4 w-4 text-primary" />
-          </div>
-          <h3 className="text-base font-bold text-foreground">Links de Pagamento</h3>
-        </div>
+      <div className="flex items-center justify-between gap-3 p-4 pb-3">
+        <h3 className="text-lg font-bold text-foreground">pagamentos</h3>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 pl-8 w-36 sm:w-44 rounded-xl text-xs bg-muted/30 border-border/50 focus:bg-card"
-            />
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-border/60 bg-muted/20 text-xs font-medium text-foreground appearance-none cursor-pointer pr-7 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_8px_center]"
+          >
+            <option value="todos">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="pago">Pago</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="taxa_pendente">Taxa Pendente</option>
+          </select>
           <Button variant="outline" size="icon" onClick={fetchLinks} disabled={loading} className="h-9 w-9 rounded-xl border-border/50">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
 
+      {/* Search */}
+      <div className="px-4 pb-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, reserva ou companhia..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-10 pl-10 rounded-xl text-sm bg-muted/20 border-border/40"
+          />
+        </div>
+      </div>
+
       {/* List */}
-      {loading ? (
-        <div className="py-12 text-center">
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-          <p className="text-xs text-muted-foreground mt-2">Carregando links...</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="py-12 text-center rounded-2xl border border-dashed border-border/60 bg-muted/10">
-          <Link2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">Nenhum link encontrado</p>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
-          {filtered.map((l, i) => {
-            const mainName = (l.passageiros?.[0] as any)?.nomeCompleto || (l.passageiros?.[0] as any)?.nome || "—";
-            const viewers = viewerCounts[l.token] || 0;
-            const isTaxaOpen = taxaOpenId === l.id;
+      <div className="px-4 pb-4">
+        {loading ? (
+          <div className="py-12 text-center">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+            <p className="text-xs text-muted-foreground mt-2">Carregando...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <Link2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">Nenhum pagamento encontrado</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5 max-h-[600px] overflow-y-auto">
+            {filtered.map((l, i) => {
+              const mainName = (l.passageiros?.[0] as any)?.nomeCompleto || (l.passageiros?.[0] as any)?.nome || "—";
+              const viewers = viewerCounts[l.token] || 0;
+              const expanded = isExpanded(l.id);
+              const isTaxaOpen = taxaOpenId === l.id;
+              const linkUrl = getLink(l.token);
 
-            return (
-              <motion.div
-                key={l.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03, duration: 0.25 }}
-                className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm"
-              >
-                <div className="p-4 space-y-3">
-                  {/* Status + Viewers */}
-                  <div className="flex items-center justify-between">
-                    {statusBadge(l.status)}
-                    {viewers > 0 && (
-                      <span className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
-                        <Eye className="h-3.5 w-3.5" /> {viewers}
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-                        </span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Reservation code */}
-                  <p className="font-mono text-sm font-bold text-foreground tracking-wide">{l.codigo_reserva}</p>
-
-                  {/* Action buttons row */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyLink(l.token, l.id)}
-                      className="h-9 gap-1.5 text-xs rounded-xl border-border/60 font-medium"
-                    >
-                      {copiedId === l.id ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
-                      {copiedId === l.id ? "Copiado" : "Copiar"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setViewBoardingPass(l)}
-                      className="h-9 gap-1.5 text-xs rounded-xl border-border/60 font-medium"
-                    >
-                      <CreditCard className="h-3.5 w-3.5" /> Cartão
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={sendingEmailId === l.id}
-                      onClick={() => handleSendBoardingPass(l)}
-                      className="h-9 gap-1.5 text-xs rounded-xl border-border/60 font-medium"
-                    >
-                      {sendingEmailId === l.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-                      E-mail
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 rounded-xl ml-auto"
-                      onClick={() => window.open(`/boarding-pass?token=${l.token}`, "_blank")}
-                    >
-                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-
-                  {/* Route + Value */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground">{l.origem}</span>
-                      <Plane className="h-3 w-3 text-primary rotate-45" />
-                      <span className="font-semibold text-foreground">{l.destino}</span>
+              return (
+                <motion.div
+                  key={l.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.025, duration: 0.2 }}
+                  className="rounded-2xl border border-border/50 bg-muted/10 overflow-hidden"
+                >
+                  {/* Collapsed header - always visible */}
+                  <button
+                    onClick={() => setExpandedId(expanded ? null : l.id)}
+                    className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/20"
+                  >
+                    <Plane className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{mainName}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {l.companhia} – {l.destino} · {l.passageiros?.length || 1}p
+                        {viewers > 0 && (
+                          <span className="inline-flex items-center gap-1 ml-2 text-primary font-medium">
+                            <Eye className="h-3 w-3" />{viewers}
+                          </span>
+                        )}
+                      </p>
                     </div>
-                    <span className="text-sm font-bold text-primary">R$ {l.valor}</span>
-                  </div>
-
-                  {/* Passenger */}
-                  {mainName !== "—" && (
-                    <p className="text-xs text-muted-foreground">
-                      • {mainName} · {l.passageiros?.length || 1} pax
-                    </p>
-                  )}
-                </div>
-
-                {/* PIX + Taxa section */}
-                <div className="border-t border-border/40 px-4 py-3 bg-muted/5 space-y-2">
-                  {editPixId === l.id ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        value={editPixValue}
-                        onChange={(e) => setEditPixValue(e.target.value)}
-                        rows={2}
-                        className="text-xs resize-none rounded-xl"
-                        placeholder="Cole o código PIX..."
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          disabled={savingPix}
-                          onClick={async () => {
-                            setSavingPix(true);
-                            try {
-                              const { error } = await supabase
-                                .from("pagamentos")
-                                .update({ codigo_pix: editPixValue })
-                                .eq("id", l.id);
-                              if (error) throw error;
-                              toast.success("PIX atualizado!");
-                              setEditPixId(null);
-                              fetchLinks();
-                            } catch {
-                              toast.error("Erro ao salvar PIX");
-                            } finally {
-                              setSavingPix(false);
-                            }
-                          }}
-                          className="h-8 gap-1.5 text-xs rounded-xl flex-1"
-                        >
-                          {savingPix ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                          Salvar PIX
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setEditPixId(null)} className="h-8 text-xs rounded-xl">
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {l.codigo_pix && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyPix(l.codigo_pix!, `pix-${l.id}`)}
-                          className="h-8 gap-1.5 text-xs rounded-xl border-border/60"
-                        >
-                          {copiedId === `pix-${l.id}` ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-                          Copiar PIX
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setEditPixId(l.id); setEditPixValue(l.codigo_pix || ""); }}
-                        className="h-8 gap-1.5 text-xs rounded-xl border-border/60"
-                      >
-                        <Pencil className="h-3 w-3" />
-                        {l.codigo_pix ? "Editar PIX" : "Add PIX"}
-                      </Button>
-                      <Button
-                        variant={isTaxaOpen ? "secondary" : "outline"}
-                        size="sm"
-                        onClick={() => setTaxaOpenId(isTaxaOpen ? null : l.id)}
-                        className="h-8 gap-1.5 text-xs rounded-xl border-border/60 ml-auto"
-                      >
-                        <DollarSign className="h-3 w-3" />
-                        Adicionar Taxa
-                        {isTaxaOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Taxa Form */}
-                <AnimatePresence>
-                  {isTaxaOpen && (
+                    <span className="text-base font-bold text-primary whitespace-nowrap">R$ {l.valor}</span>
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
+                      animate={{ rotate: expanded ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
                     >
-                      <div className="p-4 bg-muted/10 border-t border-border/40 space-y-3">
-                        <div className="flex items-center gap-2 text-xs font-bold text-primary">
-                          <DollarSign className="h-3.5 w-3.5" /> Taxa Adicional
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-[11px] font-semibold text-muted-foreground">Valor (R$) *</Label>
-                            <Input
-                              placeholder="Ex: 150,00"
-                              value={taxaValor}
-                              onChange={(e) => setTaxaValor(e.target.value)}
-                              className="h-9 rounded-xl"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-[11px] font-semibold text-muted-foreground">Motivo</Label>
-                            <Input
-                              placeholder="Ex: Taxa de embarque"
-                              value={taxaMotivo}
-                              onChange={(e) => setTaxaMotivo(e.target.value)}
-                              className="h-9 rounded-xl"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">PIX da Taxa</Label>
-                          <Textarea
-                            placeholder="Cole o código PIX para a taxa"
-                            value={taxaPix}
-                            onChange={(e) => setTaxaPix(e.target.value)}
-                            rows={2}
-                            className="resize-none rounded-xl"
-                          />
-                        </div>
-                        <Button
-                          onClick={() => handleAddTaxa(l.id)}
-                          disabled={taxaSaving || !taxaValor}
-                          size="sm"
-                          className="w-full h-10 rounded-xl font-semibold text-xs"
-                        >
-                          {taxaSaving ? (
-                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Salvando...</>
-                          ) : (
-                            <><Plus className="h-3.5 w-3.5 mr-1.5" /> Gerar Taxa</>
-                          )}
-                        </Button>
-                      </div>
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+                  </button>
+
+                  {/* Expanded content */}
+                  <AnimatePresence>
+                    {expanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 space-y-4">
+                          {/* Link URL display */}
+                          <div className="rounded-xl border border-border/40 bg-card px-3 py-2.5">
+                            <p className="text-xs text-muted-foreground font-mono truncate">{linkUrl}</p>
+                          </div>
+
+                          {/* QR Code - Link */}
+                          <div className="flex justify-center py-2">
+                            <div className="bg-card rounded-xl p-3 border border-border/30">
+                              <QRCodeSVG value={linkUrl} size={140} />
+                            </div>
+                          </div>
+
+                          {/* Emitir Taxa + Novo Valor buttons */}
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTaxaOpenId(isTaxaOpen ? null : l.id);
+                              }}
+                              className="h-11 rounded-xl text-xs font-semibold border-warning/30 text-warning hover:bg-warning/5 gap-1.5"
+                            >
+                              <Plus className="h-3.5 w-3.5" /> Emitir Taxa
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditPixId(l.id);
+                                setEditPixValue(l.codigo_pix || "");
+                              }}
+                              className="h-11 rounded-xl text-xs font-semibold border-border/60 gap-1.5"
+                            >
+                              <DollarSign className="h-3.5 w-3.5" /> Novo Valor
+                            </Button>
+                          </div>
+
+                          {/* Taxa form */}
+                          <AnimatePresence>
+                            {isTaxaOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-xl border border-border/40 bg-card p-3 space-y-3">
+                                  <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                                    <DollarSign className="h-3.5 w-3.5" /> Taxa Adicional
+                                  </p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div className="space-y-1">
+                                      <Label className="text-[11px] font-semibold text-muted-foreground">Valor (R$) *</Label>
+                                      <Input placeholder="150,00" value={taxaValor} onChange={(e) => setTaxaValor(e.target.value)} className="h-9 rounded-xl" />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-[11px] font-semibold text-muted-foreground">Motivo</Label>
+                                      <Input placeholder="Taxa de embarque" value={taxaMotivo} onChange={(e) => setTaxaMotivo(e.target.value)} className="h-9 rounded-xl" />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] font-semibold text-muted-foreground">PIX da Taxa</Label>
+                                    <Textarea placeholder="Cole o código PIX" value={taxaPix} onChange={(e) => setTaxaPix(e.target.value)} rows={2} className="resize-none rounded-xl" />
+                                  </div>
+                                  <Button onClick={() => handleAddTaxa(l.id)} disabled={taxaSaving || !taxaValor} size="sm" className="w-full h-10 rounded-xl font-semibold text-xs">
+                                    {taxaSaving ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Salvando...</> : <><Plus className="h-3.5 w-3.5 mr-1.5" /> Gerar Taxa</>}
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* PIX QR Code */}
+                          {l.codigo_pix && (
+                            <div className="flex justify-center py-2">
+                              <div className="bg-card rounded-xl p-3 border border-border/30">
+                                <QRCodeSVG value={l.codigo_pix} size={140} />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Edit PIX inline */}
+                          {editPixId === l.id && (
+                            <div className="rounded-xl border border-border/40 bg-card p-3 space-y-2.5">
+                              <Textarea
+                                value={editPixValue}
+                                onChange={(e) => setEditPixValue(e.target.value)}
+                                rows={2}
+                                className="text-xs resize-none rounded-xl"
+                                placeholder="Cole o código PIX..."
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  disabled={savingPix}
+                                  onClick={async () => {
+                                    setSavingPix(true);
+                                    try {
+                                      const { error } = await supabase.from("pagamentos").update({ codigo_pix: editPixValue }).eq("id", l.id);
+                                      if (error) throw error;
+                                      toast.success("PIX atualizado!");
+                                      setEditPixId(null);
+                                      fetchLinks();
+                                    } catch {
+                                      toast.error("Erro ao salvar PIX");
+                                    } finally {
+                                      setSavingPix(false);
+                                    }
+                                  }}
+                                  className="h-9 gap-1.5 text-xs rounded-xl flex-1"
+                                >
+                                  {savingPix ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                  Salvar
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setEditPixId(null)} className="h-9 text-xs rounded-xl">
+                                  Cancelar
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Alterar Código PIX */}
+                          {editPixId !== l.id && (
+                            <Button
+                              variant="outline"
+                              onClick={() => { setEditPixId(l.id); setEditPixValue(l.codigo_pix || ""); }}
+                              className="w-full h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
+                            >
+                              <Pencil className="h-3.5 w-3.5" /> Alterar Código PIX
+                            </Button>
+                          )}
+
+                          {/* Copiar link + Remover */}
+                          <div className="grid grid-cols-[1fr_auto] gap-2.5">
+                            <Button
+                              variant="outline"
+                              onClick={() => copyLink(l.token, l.id)}
+                              className="h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
+                            >
+                              {copiedId === l.id ? <Check className="h-3.5 w-3.5 text-success" /> : <Link2 className="h-3.5 w-3.5" />}
+                              {copiedId === l.id ? "Copiado!" : "Copiar link"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleDelete(l.id)}
+                              disabled={deletingId === l.id}
+                              className="h-11 rounded-xl text-xs font-semibold border-destructive/30 text-destructive hover:bg-destructive/5 gap-1.5 px-4"
+                            >
+                              {deletingId === l.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                              Remover
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Boarding Pass Viewer Modal */}
       {viewBoardingPass && (
