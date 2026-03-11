@@ -106,7 +106,7 @@ const PaymentLinksBlock = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSendEmail = async (l: PagamentoLink) => {
+  const handleSendBoardingPass = async (l: PagamentoLink) => {
     const mainP = l.passageiros?.[0] as any;
     if (!mainP?.email) {
       toast.error("Passageiro sem e-mail cadastrado");
@@ -115,11 +115,22 @@ const PaymentLinksBlock = () => {
     setSendingEmailId(l.id);
     try {
       const link = `${window.location.origin}/boarding-pass?token=${l.token}`;
-      const { data, error } = await supabase.functions.invoke("send-reservation-email", {
+      const { error } = await supabase.functions.invoke("send-reservation-email", {
         body: {
-          type: "payment",
+          type: "boarding_pass",
           codigoReserva: l.codigo_reserva,
           passageiros: l.passageiros,
+          companhia: l.companhia,
+          origem: l.origem,
+          destino: l.destino,
+          numeroVoo: l.numero_voo,
+          classe: l.classe,
+          idaData: l.ida_data,
+          idaPartida: l.ida_partida,
+          idaChegada: l.ida_chegada,
+          voltaData: l.volta_data,
+          voltaPartida: l.volta_partida,
+          voltaChegada: l.volta_chegada,
           valor: l.valor,
           linkPagamento: link,
         },
