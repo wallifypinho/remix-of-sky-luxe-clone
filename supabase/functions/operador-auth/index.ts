@@ -71,32 +71,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (operador.status === "bloqueado") {
-        return new Response(JSON.stringify({ error: "Conta bloqueada. Contate o administrador." }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (operador.status === "inativo") {
-        return new Response(JSON.stringify({ error: "Conta inativa. Contate o administrador." }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // senha_hash format: "salt:hash"
-      const parts = operador.senha_hash.split(":");
-      if (parts.length !== 2) {
-        return new Response(JSON.stringify({ error: "Erro interno de autenticação" }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const valid = await verifyPassword(senha, parts[1], parts[0]);
-      if (!valid) {
-        return new Response(JSON.stringify({ error: "Email ou senha inválidos" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
 
       // Update session
       await supabase.from("operadores").update({
