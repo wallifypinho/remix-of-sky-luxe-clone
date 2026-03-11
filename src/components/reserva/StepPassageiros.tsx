@@ -37,16 +37,16 @@ const Counter = ({
       <button
         type="button"
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-30"
+        className="w-10 h-10 rounded-xl border-2 border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30"
         disabled={value <= min}
       >
         <Minus className="h-4 w-4" />
       </button>
-      <span className="text-xl font-bold text-primary w-6 text-center">{value}</span>
+      <span className="text-2xl font-bold text-primary w-8 text-center tabular-nums">{value}</span>
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 rounded-full border border-primary text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+        className="w-10 h-10 rounded-xl border-2 border-primary text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
       >
         <Plus className="h-4 w-4" />
       </button>
@@ -58,12 +58,15 @@ const StepPassageiros = ({ counts, onChange, onNext, onBack }: StepPassageirosPr
   const total = counts.adultos + counts.criancas + counts.bebes;
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <Users className="h-5 w-5 text-primary" />
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Users className="h-6 w-6 text-primary" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Quantidade de Passageiros</h2>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Passageiros</h2>
+          <p className="text-sm text-muted-foreground">Quantas pessoas vão viajar?</p>
+        </div>
       </div>
 
       <div className="bg-card rounded-xl border border-border p-4 divide-y divide-border">
@@ -88,15 +91,15 @@ const StepPassageiros = ({ counts, onChange, onNext, onBack }: StepPassageirosPr
         />
       </div>
 
-      <div className="bg-primary/5 rounded-xl p-4 flex items-center justify-between">
+      <div className="bg-primary/5 rounded-xl p-4 flex items-center justify-between border border-primary/10">
         <span className="text-sm font-medium text-foreground">Total de passageiros</span>
         <span className="text-2xl font-bold text-primary">{total}</span>
       </div>
 
-      <Button onClick={onNext} size="lg" className="w-full text-base font-semibold">
+      <Button onClick={onNext} size="lg" className="w-full text-base font-semibold h-12">
         Continuar
       </Button>
-      <button type="button" onClick={onBack} className="w-full text-center text-sm text-muted-foreground hover:text-foreground">
+      <button type="button" onClick={onBack} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
         ← Voltar
       </button>
     </motion.div>
