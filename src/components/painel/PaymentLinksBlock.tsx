@@ -31,6 +31,7 @@ interface PagamentoLink {
   volta_partida: string | null;
   volta_chegada: string | null;
   assentos?: string[];
+  whatsapp_operador?: string | null;
 }
 
 const PaymentLinksBlock = () => {
@@ -58,7 +59,7 @@ const PaymentLinksBlock = () => {
     try {
       const { data, error } = await supabase
         .from("pagamentos")
-        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix, numero_voo, classe, ida_data, ida_partida, ida_chegada, volta_data, volta_partida, volta_chegada")
+        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix, numero_voo, classe, ida_data, ida_partida, ida_chegada, volta_data, volta_partida, volta_chegada, whatsapp_operador")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -137,6 +138,7 @@ const PaymentLinksBlock = () => {
           voltaChegada: l.volta_chegada,
           valor: l.valor,
           linkPagamento: link,
+          whatsappOperador: l.whatsapp_operador || "",
         },
       });
       if (error) throw error;
@@ -311,13 +313,6 @@ const PaymentLinksBlock = () => {
                             <p className="text-xs text-muted-foreground font-mono truncate">{linkUrl}</p>
                           </div>
 
-                          {/* QR Code - Link */}
-                          <div className="flex justify-center py-2">
-                            <div className="bg-card rounded-xl p-3 border border-border/30">
-                              <QRCodeSVG value={linkUrl} size={140} />
-                            </div>
-                          </div>
-
                           {/* Emitir Taxa + Novo Valor buttons */}
                           <div className="grid grid-cols-2 gap-2.5">
                             <Button
@@ -380,15 +375,6 @@ const PaymentLinksBlock = () => {
                             )}
                           </AnimatePresence>
 
-                          {/* PIX QR Code */}
-                          {l.codigo_pix && (
-                            <div className="flex justify-center py-2">
-                              <div className="bg-card rounded-xl p-3 border border-border/30">
-                                <QRCodeSVG value={l.codigo_pix} size={140} />
-                              </div>
-                            </div>
-                          )}
-
                           {/* Edit PIX inline */}
                           {editPixId === l.id && (
                             <div className="rounded-xl border border-border/40 bg-card p-3 space-y-2.5">
@@ -439,6 +425,20 @@ const PaymentLinksBlock = () => {
                               <Pencil className="h-3.5 w-3.5" /> Alterar Código PIX
                             </Button>
                           )}
+
+                          {/* Enviar e-mail */}
+                          <Button
+                            variant="outline"
+                            onClick={() => handleSendBoardingPass(l)}
+                            disabled={sendingEmailId === l.id}
+                            className="w-full h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
+                          >
+                            {sendingEmailId === l.id ? (
+                              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando e-mail...</>
+                            ) : (
+                              <><Mail className="h-3.5 w-3.5" /> Enviar por e-mail</>
+                            )}
+                          </Button>
 
                           {/* Copiar link + Remover */}
                           <div className="grid grid-cols-[1fr_auto] gap-2.5">
