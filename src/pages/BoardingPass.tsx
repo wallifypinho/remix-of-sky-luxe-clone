@@ -593,7 +593,7 @@ const BoardingPass = () => {
                 </div>
               </div>
 
-              {/* Notices + status outside card, on blue bg */}
+              {/* Notices + actions outside card, on blue bg */}
               <div className="px-6 pt-5 space-y-3">
                 <div className="space-y-2">
                   <p className="text-[10px] text-white/50 text-center leading-relaxed">
@@ -626,6 +626,32 @@ const BoardingPass = () => {
                     <span className="text-white font-bold text-sm">✅ Todos os pagamentos confirmados!</span>
                   </div>
                 )}
+
+                {/* Action buttons */}
+                <div className="space-y-3 pt-1">
+                  <Button
+                    variant="outline"
+                    onClick={handleDownloadPDF}
+                    disabled={generatingPdf}
+                    className="w-full h-12 text-sm font-bold rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:text-white"
+                  >
+                    {generatingPdf ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando bilhete...</>
+                    ) : (
+                      <><Download className="h-4 w-4 mr-2" /> Baixar Bilhete em PDF</>
+                    )}
+                  </Button>
+
+                  {data.whatsapp_operador && (
+                    <Button
+                      onClick={handleWhatsApp}
+                      className="w-full h-12 text-sm font-bold rounded-2xl bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg shadow-[#25D366]/20 border-0"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Falar no WhatsApp
+                    </Button>
+                  )}
+                </div>
 
                 {/* Footer text */}
                 <div className="text-center pt-2 pb-4">
