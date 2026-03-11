@@ -16,52 +16,19 @@ interface PagamentoData {
   codigo_reserva: string;
   valor: string;
   codigo_pix: string | null;
+  metodo_pagamento?: string;
+  status?: string;
+  whatsapp_operador?: string | null;
 }
 
-/**
- * Captures QR code from the visible page SVG elements rendered by qrcode.react
- */
-function captureQRFromPage(): string {
-  // Find any QRCodeSVG on the page
-  const svgEls = document.querySelectorAll("svg");
-  for (const svg of svgEls) {
-    // QRCodeSVG from qrcode.react renders with specific structure
-    const rects = svg.querySelectorAll("rect");
-    if (rects.length > 20) {
-      // Likely a QR code SVG
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement("canvas");
-      canvas.width = 400;
-      canvas.height = 400;
-      const ctx = canvas.getContext("2d")!;
-      const img = new Image();
-      const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
+const maskCpfPDF = (cpf: string): string => {
+  if (!cpf) return "—";
+  const clean = cpf.replace(/\D/g, "");
+  if (clean.length < 6) return cpf;
+  return `${clean.slice(0, 3)}.***.***.${clean.slice(-2)}`;
+};
 
-      return new Promise<string>((resolve) => {
-        img.onload = () => {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, 400, 400);
-          ctx.drawImage(img, 0, 0, 400, 400);
-          URL.revokeObjectURL(url);
-          resolve(canvas.toDataURL("image/png"));
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(url);
-          resolve("");
-        };
-        img.src = url;
-      }) as unknown as string;
-    }
-  }
-  return "";
-}
-
-/**
- * Generate QR code as data URL using a hidden canvas
- */
 async function generateQRDataURL(text: string): Promise<string> {
-  // Dynamically import qrcode.react's canvas variant
   const { QRCodeCanvas } = await import("qrcode.react");
   const React = await import("react");
   const ReactDOMClient = await import("react-dom/client");
@@ -81,7 +48,6 @@ async function generateQRDataURL(text: string): Promise<string> {
       })
     );
 
-    // Wait for render
     setTimeout(() => {
       const canvas = container.querySelector("canvas");
       const dataUrl = canvas ? canvas.toDataURL("image/png") : "";
@@ -92,182 +58,418 @@ async function generateQRDataURL(text: string): Promise<string> {
   });
 }
 
-function drawBoardingPassPage(
-  doc: jsPDF,
-  data: PagamentoData,
-  passenger: any,
-  isReturn: boolean,
-  calcBoardingTime: (t: string) => string,
-  qrDataUrl: string
-) {
-  const W = doc.internal.pageSize.getWidth();
-  const mx = 15;
+// ═══ Colors ═══
+const NAVY = [0, 33, 80] as const;
+const DARK_NAVY = [0, 21, 56] as const;
+const GOLD = [180, 140, 40] as const;
+const GRAY_TEXT = [100, 100, 100] as const;
+const GRAY_LIGHT = [150, 150, 150] as const;
+const GRAY_LABEL = [120, 120, 120] as const;
+const BLACK = [30, 30, 30] as const;
+const WHITE = [255, 255, 255] as const;
 
-  // ═══ Blue header band ═══
-  doc.setFillColor(0, 51, 160);
-  doc.rect(0, 0, W, 65, "F");
-  // Darker bottom strip
-  doc.setFillColor(0, 21, 96);
-  doc.rect(0, 50, W, 15, "F");
+function drawSectionHeader(doc: jsPDF, title: string, y: number, W: number, mx: number): number {
+  doc.setFillColor(...DARK_NAVY);
+  doc.roundedRect(mx, y, W - 2 * mx, 10, 1, 1, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...WHITE);
+  doc.text(`  ${title}`, mx + 3, y + 7);
+  return y + 15;
+}
 
-  // Company branding
-  doc.setTextColor(255, 255, 255);
+function drawLabelValue(doc: jsPDF, label: string, value: string, x: number, y: number): void {
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...GRAY_LABEL);
+  doc.text(label, x, y);
+  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLACK);
+  doc.text(value || "—", x, y + 5);
+}
+
+function drawTableRow(doc: jsPDF, label: string, value: string, x: number, y: number, labelW: number): void {
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...GRAY_LABEL);
+  doc.text(label, x, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLACK);
+  doc.text(value || "—", x + labelW, y);
+}
+
+function drawFooter(doc: jsPDF, reserva: string, page: number, totalPages: number, W: number): void {
+  const H = doc.internal.pageSize.getHeight();
+  // Gold line
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.8);
+  doc.line(15, H - 22, W - 15, H - 22);
+  // Footer band
+  doc.setFillColor(...DARK_NAVY);
+  doc.rect(0, H - 18, W, 18, "F");
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("A Z U L", mx, 16);
-  doc.setFontSize(6);
+  doc.setTextColor(...WHITE);
+  doc.text(`Reserva: ${reserva}  |  Página ${page}/${totalPages}`, W / 2, H - 10, { align: "center" });
+  doc.setFontSize(6.5);
   doc.setFont("helvetica", "normal");
-  doc.text("V I A G E N S", mx, 22);
+  doc.setTextColor(180, 180, 180);
+  doc.text("Agência de Viagens - Documento gerado automaticamente", W / 2, H - 5, { align: "center" });
+}
 
-  // Title
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("Cartão de Embarque", W / 2, 38, { align: "center" });
+// ═══════════════════════════════════════════════════
+// PAGE 1 — Flight info, passenger, payment, QR
+// ═══════════════════════════════════════════════════
+function drawPage1(doc: jsPDF, data: PagamentoData, qrDataUrl: string) {
+  const W = doc.internal.pageSize.getWidth();
+  const mx = 18;
+  const totalPages = 3;
 
-  // Route in header
-  const origem = isReturn ? data.destino : data.origem;
-  const destino = isReturn ? data.origem : data.destino;
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(180, 200, 255);
-  doc.text(`${origem}  —  ${destino}`, W / 2, 48, { align: "center" });
-
-  if (isReturn) {
-    doc.setFontSize(7);
-    doc.setTextColor(255, 220, 100);
-    doc.text("VOLTA", W - mx, 16, { align: "right" });
-  }
-
-  // ═══ Content ═══
-  let y = 78;
-
-  // Passenger
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(150, 150, 150);
-  doc.text("Passageiro:", mx, y);
-  y += 6;
-
-  doc.setFontSize(13);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(20, 20, 20);
-  const nome = (passenger.nomeCompleto || passenger.nome || "—").toUpperCase();
-  // Handle long names
-  const nameLines = doc.splitTextToSize(nome, W - 30);
-  doc.text(nameLines, mx, y);
-  y += nameLines.length * 6 + 3;
-
-  // CPF
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(150, 150, 150);
-  doc.text("CPF:", mx, y);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(50, 50, 50);
-  const cpf = passenger.cpfDocumento || passenger.cpf || "—";
-  doc.text(cpf, mx + 13, y);
-  y += 10;
-
-  // ── Separator ──
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.3);
-  doc.line(mx, y, W - mx, y);
-  y += 7;
-
-  // ── 3-column: Assento | Saída | Chegada ──
-  const colW = (W - 2 * mx) / 3;
-  const c1 = mx;
-  const c2 = mx + colW;
-  const c3 = mx + colW * 2;
-
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(150, 150, 150);
-  doc.text("Assento", c1, y);
-  doc.text("Horário saída", c2, y);
-  doc.text("Chegada", c3, y);
-  y += 7;
+  // ── Header band ──
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, W, 38, "F");
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(20, 20, 20);
-  const assento = passenger.assento || "—";
-  const partida = isReturn ? (data.volta_partida || "--:--") : (data.ida_partida || "--:--");
-  const chegada = isReturn ? (data.volta_chegada || "--:--") : (data.ida_chegada || "--:--");
-  doc.text(assento, c1, y);
-  doc.text(partida, c2, y);
-  doc.text(chegada, c3, y);
-  y += 10;
+  doc.setTextColor(...WHITE);
+  doc.text("AGÊNCIA DE VIAGENS", mx, 18);
 
-  // ── Separator ──
-  doc.setDrawColor(220, 220, 220);
-  doc.line(mx, y, W - mx, y);
-  y += 7;
+  doc.setFontSize(9);
+  doc.setTextColor(...GOLD);
+  doc.text("BILHETE ELETRÔNICO", mx, 28);
 
-  // ── 3-column: Data | Portão | Reserva ──
-  doc.setFontSize(7);
+  // Right side
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(150, 150, 150);
-  doc.text("Data", c1, y);
-  doc.text("Portão", c2, y);
-  doc.text("Código de reserva", c3, y);
-  y += 7;
+  doc.setTextColor(...WHITE);
+  doc.text(`Reserva: ${data.codigo_reserva}`, W - mx, 14, { align: "right" });
+  const emissaoDate = new Date().toLocaleDateString("pt-BR");
+  doc.text(`Emissão: ${emissaoDate}`, W - mx, 22, { align: "right" });
+  doc.text(`Cia: ${data.companhia || "Azul"}`, W - mx, 30, { align: "right" });
+
+  // ── Red/gold line ──
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 38, W, 1.5, "F");
+
+  // ── Route banner ──
+  doc.setFillColor(...DARK_NAVY);
+  doc.rect(0, 42, W, 32, "F");
+
+  doc.setFontSize(30);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...WHITE);
+  doc.text(data.origem || "—", mx + 20, 62);
+  doc.text(data.destino || "—", W - mx - 20, 62, { align: "right" });
+
+  // Plane arrow
+  doc.setFontSize(14);
+  doc.setTextColor(180, 200, 255);
+  doc.text(">", W / 2, 60, { align: "center" });
+
+  // Subtext
+  doc.setFontSize(7);
+  doc.setTextColor(150, 170, 220);
+  doc.text(data.origem || "", mx + 20, 68);
+  doc.text(`Voo ${data.numero_voo || "—"}`, W / 2, 68, { align: "center" });
+  doc.text(data.destino || "", W - mx - 20, 68, { align: "right" });
+
+  // ── Passenger name bar ──
+  let y = 82;
+  const passengers = data.passageiros || [];
+  const mainPax = passengers[0] || {};
+  const nome = (mainPax.nomeCompleto || mainPax.nome || "—").toUpperCase();
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(20, 20, 20);
-  const dataVoo = isReturn ? (data.volta_data || "—") : (data.ida_data || "—");
-  doc.text(dataVoo, c1, y);
-  doc.text("—", c2, y);
-  doc.setTextColor(0, 51, 160);
-  doc.text(data.codigo_reserva || "—", c3, y);
-  y += 14;
+  doc.setTextColor(...BLACK);
+  const nameLines = doc.splitTextToSize(nome, W - 2 * mx - 60);
+  doc.text(nameLines, mx, y);
 
-  // ── QR Code ──
-  if (qrDataUrl) {
-    const qrSize = 50;
-    const qrX = (W - qrSize) / 2;
-    try {
-      doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
-    } catch {
-      // skip
-    }
-    y += qrSize + 10;
-  } else {
-    y += 5;
-  }
-
-  // ── Company label ──
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 51, 160);
-  doc.text(data.companhia || "Azul", W / 2, y, { align: "center" });
-  y += 10;
-
-  // ── Boarding time ──
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(150, 150, 150);
-  doc.text("Horário de embarque:", mx, y);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(20, 20, 20);
-  doc.text(calcBoardingTime(partida), mx + 52, y);
-  y += 12;
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text(`${passengers.length} passageiro(s)`, W - mx, y, { align: "right" });
 
-  // ── Footer ──
-  doc.setDrawColor(220, 220, 220);
+  y += nameLines.length * 6 + 5;
+
+  // Separator
+  doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
   doc.line(mx, y, W - mx, y);
-  y += 6;
+  y += 5;
 
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "italic");
-  doc.setTextColor(150, 150, 150);
-  doc.text(`Emissão oficial da companhia ${data.companhia || "Azul"}`, mx, y);
-  y += 4;
-  doc.text("CNPJ (matriz): 09.296.295/0001-60", mx, y);
+  // ═══ INFORMAÇÕES DO VOO ═══
+  y = drawSectionHeader(doc, "INFORMAÇÕES DO VOO", y, W, mx);
+
+  // Bordered box
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  const boxY = y - 2;
+  const boxH = data.volta_data ? 60 : 48;
+  doc.rect(mx, boxY, W - 2 * mx, boxH, "S");
+
+  const col1 = mx + 5;
+  const col2 = mx + (W - 2 * mx) / 3 + 5;
+  const col3 = mx + ((W - 2 * mx) * 2) / 3 + 5;
+
+  // Row 1
+  drawLabelValue(doc, "ORIGEM", data.origem || "—", col1, y + 2);
+  drawLabelValue(doc, "DESTINO", data.destino || "—", col2, y + 2);
+  drawLabelValue(doc, "COMPANHIA", data.companhia || "Azul", col3, y + 2);
+
+  // Row 2
+  const r2y = y + 16;
+  drawLabelValue(doc, "CLASSE", data.classe === "executiva" ? "Executiva" : data.classe === "primeira" ? "Primeira" : "Econômica", col1, r2y);
+  drawLabelValue(doc, "VOO", data.numero_voo || "—", col2, r2y);
+  drawLabelValue(doc, "RESERVA", data.codigo_reserva || "—", col3, r2y);
+
+  // Row 3
+  const r3y = y + 30;
+  drawLabelValue(doc, "DATA IDA", data.ida_data || "—", col1, r3y);
+  drawLabelValue(doc, "HORÁRIO IDA", `${data.ida_partida || "--:--"} - ${data.ida_chegada || "--:--"}`, col2, r3y);
+  drawLabelValue(doc, "DATA VOLTA", data.volta_data || "—", col3, r3y);
+
+  // Row 4 - volta horário
+  if (data.volta_data) {
+    const r4y = y + 44;
+    drawLabelValue(doc, "HORÁRIO VOLTA", `${data.volta_partida || "--:--"} - ${data.volta_chegada || "--:--"}`, col1, r4y);
+  }
+
+  y = boxY + boxH + 8;
+
+  // ═══ DADOS DO PASSAGEIRO ═══
+  y = drawSectionHeader(doc, "DADOS DO PASSAGEIRO", y, W, mx);
+
+  const paxBoxY = y - 2;
+  const paxLines: [string, string][] = [];
+  passengers.forEach((p: any, i: number) => {
+    const pName = (p.nomeCompleto || p.nome || "—").toUpperCase();
+    const pCpf = maskCpfPDF(p.cpfDocumento || p.cpf || "");
+    const pEmail = p.email || "—";
+    if (i > 0) paxLines.push(["", ""]);
+    paxLines.push(["Nome Completo", pName]);
+    paxLines.push(["CPF", pCpf]);
+    paxLines.push(["Email", pEmail]);
+  });
+
+  const paxBoxH = paxLines.length * 7 + 6;
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(mx, paxBoxY, W - 2 * mx, paxBoxH, "S");
+
+  let paxY = y + 2;
+  paxLines.forEach(([label, value]) => {
+    if (label === "") {
+      doc.setDrawColor(220, 220, 220);
+      doc.line(mx + 5, paxY - 1, W - mx - 5, paxY - 1);
+      paxY += 2;
+      return;
+    }
+    drawTableRow(doc, label, value, col1, paxY, 42);
+    paxY += 7;
+  });
+
+  y = paxBoxY + paxBoxH + 8;
+
+  // ═══ INFORMAÇÕES DE PAGAMENTO ═══
+  y = drawSectionHeader(doc, "INFORMAÇÕES DE PAGAMENTO", y, W, mx);
+
+  const payBoxY = y - 2;
+  const payLines: [string, string][] = [
+    ["Valor Total", `R$ ${data.valor}`],
+    ["Forma de Pagamento", (data.metodo_pagamento || "PIX").toUpperCase()],
+    ["Status", data.status === "pago" || data.status === "taxa_paga" ? "Pagamento Confirmado" : "Pagamento Pendente"],
+  ];
+  const payBoxH = payLines.length * 7 + 6;
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(mx, payBoxY, W - 2 * mx, payBoxH, "S");
+
+  let payY = y + 2;
+  payLines.forEach(([label, value]) => {
+    drawTableRow(doc, label, value, col1, payY, 42);
+    payY += 7;
+  });
+
+  y = payBoxY + payBoxH + 8;
+
+  // ═══ QR CODE ═══
+  if (data.codigo_pix) {
+    y = drawSectionHeader(doc, "QR CODE PARA PAGAMENTO PIX", y, W, mx);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text("Escaneie o QR Code abaixo ou copie o código PIX para efetuar o pagamento.", mx, y + 2);
+    y += 8;
+
+    // QR code image
+    if (qrDataUrl) {
+      const qrSize = 45;
+      const qrX = (W - qrSize) / 2;
+      try {
+        doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
+      } catch { /* skip */ }
+      y += qrSize + 6;
+    }
+
+    // PIX code box
+    doc.setFillColor(245, 245, 245);
+    doc.setDrawColor(200, 200, 200);
+    const pixText = data.codigo_pix;
+    const pixLines = doc.splitTextToSize(pixText, W - 2 * mx - 10);
+    const pixBoxH = Math.max(pixLines.length * 3.5 + 6, 12);
+    doc.roundedRect(mx, y, W - 2 * mx, pixBoxH, 2, 2, "FD");
+
+    doc.setFontSize(5.5);
+    doc.setFont("courier", "normal");
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(pixLines, mx + 5, y + 5);
+    y += pixBoxH + 5;
+  }
+
+  drawFooter(doc, data.codigo_reserva, 1, totalPages, W);
+}
+
+// ═══════════════════════════════════════════════════
+// PAGE 2 — Rules, check-in, recommendations, FAQ
+// ═══════════════════════════════════════════════════
+function drawPage2(doc: jsPDF, data: PagamentoData) {
+  const W = doc.internal.pageSize.getWidth();
+  const mx = 18;
+  let y = 18;
+
+  const sections = [
+    {
+      title: "REGRAS TARIFÁRIAS",
+      lines: [
+        "Base tarifária (Domésticos): Promo - Econômica promocional | Flex - Econômica flexível.",
+        "Base tarifária (Internacionais): Economy - Econômica | Business - Executiva.",
+        "Endossos: Não permitidos. Tipo: ida ou ida e volta.",
+        "Cancelamentos: Consultar regras da companhia aérea selecionada.",
+        "Valores pagos devem ser utilizados em até 1 ano da data de reserva original.",
+      ]
+    },
+    {
+      title: "COMO REMARCAR SUA PASSAGEM",
+      lines: [
+        "Entre em contato com seu agente de viagens pelo WhatsApp informando o código de reserva.",
+        "A remarcação está sujeita a disponibilidade e diferença tarifária.",
+        "Taxas de remarcação podem ser aplicadas conforme regras da companhia aérea.",
+        "Solicite a remarcação com pelo menos 24h de antecedência do voo original.",
+      ]
+    },
+    {
+      title: "COMO REALIZAR O CHECK-IN",
+      lines: [
+        "O check-in online abre 72h antes do voo e fecha 1h antes (voos nacionais) ou 2h antes (internacionais).",
+        "Acesse o site ou app da companhia aérea e informe o código de reserva ou e-ticket.",
+        "Após o check-in, salve o cartão de embarque no celular ou imprima.",
+        "Apresente-se no aeroporto com documento de identidade original ou passaporte (internacional).",
+        "Se tiver bagagem para despachar, dirija-se ao balcão da companhia com antecedência.",
+      ]
+    },
+    {
+      title: "RECOMENDAÇÕES PARA A VIAGEM",
+      lines: [
+        "Chegue ao aeroporto com pelo menos 2h de antecedência para voos domésticos e 3h para internacionais.",
+        "Mantenha seus documentos, cartão de embarque e comprovante de pagamento sempre acessíveis.",
+        "Verifique as regras de bagagem de mão e despachada da sua companhia aérea.",
+        "Leve carregadores e adaptadores para dispositivos eletrônicos.",
+        "Em viagens internacionais, verifique a necessidade de visto e vacinas obrigatórias.",
+      ]
+    },
+    {
+      title: "REGRAS DE CANCELAMENTO",
+      lines: [
+        "O cancelamento pode ser solicitado junto ao seu agente de viagens.",
+        "Cancelamentos realizados até 24h após a compra podem ter reembolso integral (conforme ANAC).",
+        "Após o prazo de 24h, aplicam-se as regras tarifárias da companhia aérea.",
+        "Multas e taxas de cancelamento variam conforme a classe tarifária adquirida.",
+        "Créditos podem ser gerados para utilização futura, válidos por 1 ano.",
+      ]
+    },
+  ];
+
+  sections.forEach((section) => {
+    y = drawSectionHeader(doc, section.title, y, W, mx);
+
+    doc.setDrawColor(200, 200, 200);
+    const boxStart = y - 2;
+    const lineH = 5.5;
+    const boxH = section.lines.length * lineH + 6;
+    doc.rect(mx, boxStart, W - 2 * mx, boxH, "S");
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...GRAY_TEXT);
+
+    section.lines.forEach((line, i) => {
+      const wrappedLines = doc.splitTextToSize(line, W - 2 * mx - 10);
+      doc.text(wrappedLines, mx + 5, boxStart + 5 + i * lineH);
+    });
+
+    y = boxStart + boxH + 6;
+  });
+
+  // ═══ FAQ ═══
+  y = drawSectionHeader(doc, "PERGUNTAS FREQUENTES (FAQ)", y, W, mx);
+
+  const faqs = [
+    { q: "Posso alterar o nome do passageiro?", a: "Não. Alteração de nome não é permitida após a emissão. Verifique os dados antes da confirmação." },
+    { q: "Como acompanho meu voo?", a: "Utilize o site ou aplicativo da companhia aérea com seu código de reserva." },
+    { q: "Posso levar bagagem de mão?", a: "Sim, conforme as regras da companhia. Geralmente 1 mala de até 10kg (55x35x25cm)." },
+    { q: "O que fazer se perder o voo?", a: "Entre em contato imediato com seu agente de viagens para verificar opções de reacomodação." },
+    { q: "Como solicito reembolso?", a: "Através do seu agente de viagens, respeitando as regras tarifárias vigentes." },
+  ];
+
+  doc.setDrawColor(200, 200, 200);
+  const faqBoxStart = y - 2;
+  const faqBoxH = faqs.length * 12 + 6;
+  doc.rect(mx, faqBoxStart, W - 2 * mx, faqBoxH, "S");
+
+  let faqY = faqBoxStart + 6;
+  faqs.forEach((faq) => {
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...BLACK);
+    doc.text(`P: ${faq.q}`, mx + 5, faqY);
+    faqY += 5;
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(`R: ${faq.a}`, mx + 8, faqY);
+    faqY += 7;
+  });
+
+  drawFooter(doc, data.codigo_reserva, 2, 3, W);
+}
+
+// ═══════════════════════════════════════════════════
+// PAGE 3 — Important disclaimer
+// ═══════════════════════════════════════════════════
+function drawPage3(doc: jsPDF, data: PagamentoData) {
+  const W = doc.internal.pageSize.getWidth();
+  const mx = 18;
+  let y = 25;
+
+  // Warning box with gold border
+  doc.setFillColor(255, 248, 230);
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(mx, y, W - 2 * mx, 30, 3, 3, "FD");
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(160, 120, 20);
+  doc.text("IMPORTANTE", mx + 8, y + 10);
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...GRAY_TEXT);
+  doc.text("Documento de reserva - emissão sujeita a confirmação de pagamento.", mx + 8, y + 18);
+  doc.text("A emissão oficial ocorre somente após a conclusão de todo o processo com seu agente de viagens.", mx + 8, y + 24);
+
+  drawFooter(doc, data.codigo_reserva, 3, 3, W);
 }
 
 export async function generateBoardingPassPDF(
@@ -276,29 +478,26 @@ export async function generateBoardingPassPDF(
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  // Generate QR code
+  // Generate QR code for PIX
   let qrDataUrl = "";
-  try {
-    qrDataUrl = await generateQRDataURL(data.codigo_reserva || "BOARDING");
-  } catch (err) {
-    console.warn("QR generation failed:", err);
+  if (data.codigo_pix) {
+    try {
+      qrDataUrl = await generateQRDataURL(data.codigo_pix);
+    } catch (err) {
+      console.warn("QR generation failed:", err);
+    }
   }
 
-  const passengers = data.passageiros?.length ? data.passageiros : [{}];
+  // Page 1 — Flight info, passenger data, payment, QR
+  drawPage1(doc, data, qrDataUrl);
 
-  // IDA pages
-  passengers.forEach((passenger: any, i: number) => {
-    if (i > 0) doc.addPage();
-    drawBoardingPassPage(doc, data, passenger, false, calcBoardingTime, qrDataUrl);
-  });
+  // Page 2 — Rules, check-in, recommendations, FAQ
+  doc.addPage();
+  drawPage2(doc, data);
 
-  // VOLTA pages
-  if (data.volta_data) {
-    passengers.forEach((passenger: any) => {
-      doc.addPage();
-      drawBoardingPassPage(doc, data, passenger, true, calcBoardingTime, qrDataUrl);
-    });
-  }
+  // Page 3 — Important disclaimer
+  doc.addPage();
+  drawPage3(doc, data);
 
   doc.save(`bilhete-${data.codigo_reserva || "embarque"}.pdf`);
 }
