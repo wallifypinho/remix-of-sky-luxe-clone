@@ -24,9 +24,7 @@ const PainelPagamentos = () => {
   const [pedidosCount, setPedidosCount] = useState(0);
 
   useEffect(() => {
-    if (!loading && !operador) {
-      navigate("/login");
-    }
+    if (!loading && !operador) navigate("/login");
   }, [loading, operador, navigate]);
 
   if (loading) {
@@ -57,12 +55,12 @@ const PainelPagamentos = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl px-4 py-3">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-card/80 backdrop-blur-xl px-4 py-3">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
-                <ArrowLeft className="h-5 w-5" />
+              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors hidden sm:flex items-center justify-center h-9 w-9 rounded-xl hover:bg-muted/50">
+                <ArrowLeft className="h-4.5 w-4.5" />
               </Link>
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
                 <Plane className="h-4.5 w-4.5 text-primary-foreground" />
@@ -70,19 +68,19 @@ const PainelPagamentos = () => {
               <div>
                 <h1 className="text-base font-bold text-foreground leading-tight">AeroPayments</h1>
                 <p className="text-[11px] text-muted-foreground leading-tight">
-                  {operador.nome} • <span className="text-primary font-semibold">{operador.perfil === "admin" ? "Admin" : "Operador"}</span>
+                  {operador.nome} · <span className="text-primary font-semibold">{operador.perfil === "admin" ? "Admin" : "Operador"}</span>
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground gap-1.5 h-9">
-              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Sair</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground gap-1.5 h-9 rounded-xl">
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline text-xs">Sair</span>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Desktop Tabs (hidden on mobile — uses BottomNav instead) */}
-      <div className="border-b border-border bg-card/50 px-4 hidden md:block">
+      {/* Desktop Tabs */}
+      <div className="border-b border-border/40 bg-card/30 px-4 hidden md:block">
         <div className="mx-auto max-w-6xl flex gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -91,9 +89,7 @@ const PainelPagamentos = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                  activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -117,12 +113,12 @@ const PainelPagamentos = () => {
       </div>
 
       {/* Content */}
-      <main className="mx-auto max-w-6xl px-4 py-5 pb-safe-nav md:pb-6">
+      <main className="mx-auto max-w-6xl px-4 py-5 pb-28 md:pb-6">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 6 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: 0.2 }}
         >
           {activeTab === "pedidos" && (
             <div className="space-y-5">
@@ -133,16 +129,16 @@ const PainelPagamentos = () => {
 
           {activeTab === "pagamentos" && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">WhatsApp do Operador</div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">WhatsApp do Operador</div>
                 <div className="flex gap-2">
                   <Input
                     value={whatsappAdmin}
                     onChange={(e) => setWhatsappAdmin(e.target.value)}
-                    className="flex-1 h-11"
+                    className="flex-1 h-10"
                     placeholder="5511999999999"
                   />
-                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0 h-11">
+                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0 h-10 rounded-xl font-semibold text-xs">
                     Salvar
                   </Button>
                 </div>

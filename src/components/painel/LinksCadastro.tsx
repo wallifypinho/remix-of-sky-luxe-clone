@@ -1,6 +1,13 @@
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
-import type { LinkCadastro } from "@/types/pagamento";
+import { Copy, Check, ExternalLink } from "lucide-react";
+
+interface LinkCadastro {
+  companhia: string;
+  url: string;
+  accent: string;
+  bg: string;
+  icon: string;
+}
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return window.location.origin;
@@ -8,9 +15,27 @@ const getBaseUrl = () => {
 };
 
 const linksDefault: LinkCadastro[] = [
-  { companhia: "Azul", url: `${getBaseUrl()}/coleta-dados?airline=azul`, cor: "border-blue-400 bg-blue-50" },
-  { companhia: "GOL", url: `${getBaseUrl()}/coleta-dados?airline=gol`, cor: "border-orange-300 bg-orange-50" },
-  { companhia: "LATAM", url: `${getBaseUrl()}/coleta-dados?airline=latam`, cor: "border-red-300 bg-red-50" },
+  {
+    companhia: "Azul",
+    url: `${getBaseUrl()}/coleta-dados?airline=azul`,
+    accent: "hsl(210, 100%, 50%)",
+    bg: "hsl(210, 100%, 97%)",
+    icon: "✈️",
+  },
+  {
+    companhia: "GOL",
+    url: `${getBaseUrl()}/coleta-dados?airline=gol`,
+    accent: "hsl(25, 95%, 53%)",
+    bg: "hsl(25, 100%, 97%)",
+    icon: "🟠",
+  },
+  {
+    companhia: "LATAM",
+    url: `${getBaseUrl()}/coleta-dados?airline=latam`,
+    accent: "hsl(0, 80%, 55%)",
+    bg: "hsl(0, 100%, 97%)",
+    icon: "🔴",
+  },
 ];
 
 const LinksCadastro = () => {
@@ -23,32 +48,66 @@ const LinksCadastro = () => {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-        <span className="text-primary">🔗</span> Links de Cadastro por Companhia
+    <div className="space-y-2.5">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+        Links de Cadastro
       </h3>
-      <div className="space-y-3">
-        {linksDefault.map((link) => (
-          <div
-            key={link.companhia}
-            className={`flex items-center justify-between rounded-lg border-l-4 px-4 py-3 ${link.cor}`}
-          >
-            <div>
-              <div className="text-sm font-semibold text-foreground">{link.companhia}</div>
-              <div className="text-xs text-muted-foreground font-mono">{link.url}</div>
-            </div>
-            <button
-              onClick={() => handleCopy(link.url, link.companhia)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      <div className="grid gap-2.5">
+        {linksDefault.map((link) => {
+          const isCopied = copiedId === link.companhia;
+          return (
+            <div
+              key={link.companhia}
+              className="group relative rounded-xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md"
             >
-              {copiedId === link.companhia ? (
-                <><Check className="h-3.5 w-3.5" /> Copiado</>
-              ) : (
-                <><Copy className="h-3.5 w-3.5" /> Copiar</>
-              )}
-            </button>
-          </div>
-        ))}
+              {/* Accent bar */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+                style={{ background: link.accent }}
+              />
+              <div className="flex items-center gap-3 pl-4 pr-3 py-3">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-sm shrink-0"
+                  style={{ background: link.bg }}
+                >
+                  {link.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-foreground">{link.companhia}</div>
+                  <div className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                    {link.url}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleCopy(link.url, link.companhia)}
+                    className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-200 bg-muted/50 hover:bg-muted text-foreground"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-emerald-500">Copiado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        <span>Copiar</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
