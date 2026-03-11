@@ -233,6 +233,16 @@ const OperadoresSection = () => {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{op.email}</div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <button
+                        onClick={() => copyPainelLink(op.id)}
+                        className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors"
+                        title="Copiar link do painel"
+                      >
+                        {copiedLinkId === op.id ? <Check className="h-3 w-3 text-success" /> : <Link2 className="h-3 w-3" />}
+                        {copiedLinkId === op.id ? "Copiado!" : "Link do painel"}
+                      </button>
+                    </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       Último acesso: {formatDate(op.ultimo_acesso)}
                     </div>

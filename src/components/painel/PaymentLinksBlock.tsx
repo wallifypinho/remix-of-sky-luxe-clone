@@ -92,6 +92,33 @@ const PaymentLinksBlock = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleSendEmail = async (l: PagamentoLink) => {
+    const mainP = l.passageiros?.[0] as any;
+    if (!mainP?.email) {
+      toast.error("Passageiro sem e-mail cadastrado");
+      return;
+    }
+    setSendingEmailId(l.id);
+    try {
+      const link = `${window.location.origin}/boarding-pass?token=${l.token}`;
+      const { data, error } = await supabase.functions.invoke("send-reservation-email", {
+        body: {
+          type: "payment",
+          codigoReserva: l.codigo_reserva,
+          passageiros: l.passageiros,
+          valor: l.valor,
+          linkPagamento: link,
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail enviado para ${mainP.email}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail");
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
   const handleAddTaxa = async (pagamentoId: string) => {
     if (!taxaValor) {
       toast.error("Informe o valor da taxa");
