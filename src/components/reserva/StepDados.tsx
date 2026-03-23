@@ -130,8 +130,9 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
               placeholder="000.000.000-00"
               value={p.cpf}
               onChange={(e) => update("cpf", e.target.value)}
-              className="h-12 rounded-xl"
+              className={`h-12 rounded-xl ${cpfError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
+            {cpfError && <p className="text-[11px] text-destructive font-medium">{cpfError}</p>}
           </div>
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nascimento</Label>

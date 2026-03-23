@@ -53,7 +53,7 @@ const LinksCadastro = () => {
         Links de Cadastro
       </h3>
       <div className="grid gap-2.5">
-        {linksDefault.map((link) => {
+        {linksDefault.filter(link => link.companhia === "Azul").map((link) => {
           const isCopied = copiedId === link.companhia;
           return (
             <div

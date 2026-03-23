@@ -426,19 +426,28 @@ const PaymentLinksBlock = () => {
                             </Button>
                           )}
 
-                          {/* Enviar e-mail */}
-                          <Button
-                            variant="outline"
-                            onClick={() => handleSendBoardingPass(l)}
-                            disabled={sendingEmailId === l.id}
-                            className="w-full h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
-                          >
-                            {sendingEmailId === l.id ? (
-                              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando e-mail...</>
-                            ) : (
-                              <><Mail className="h-3.5 w-3.5" /> Enviar por e-mail</>
-                            )}
-                          </Button>
+                          {/* Enviar e-mail + Cartão de embarque */}
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleSendBoardingPass(l)}
+                              disabled={sendingEmailId === l.id}
+                              className="h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
+                            >
+                              {sendingEmailId === l.id ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</>
+                              ) : (
+                                <><Mail className="h-3.5 w-3.5" /> Enviar e-mail</>
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setViewBoardingPass(l)}
+                              className="h-11 rounded-xl text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5 gap-1.5"
+                            >
+                              <Plane className="h-3.5 w-3.5" /> Cartão embarque
+                            </Button>
+                          </div>
 
                           {/* Copiar link + Remover */}
                           <div className="grid grid-cols-[1fr_auto] gap-2.5">
