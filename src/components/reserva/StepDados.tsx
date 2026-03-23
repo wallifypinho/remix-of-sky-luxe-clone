@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,14 +25,54 @@ interface StepDadosProps {
   total: number;
 }
 
+const validateCPF = (cpf: string): boolean => {
+  const cleaned = cpf.replace(/\D/g, "");
+  if (cleaned.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleaned)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(cleaned[i]) * (10 - i);
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10) remainder = 0;
+  if (remainder !== parseInt(cleaned[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(cleaned[i]) * (11 - i);
+  remainder = (sum * 10) % 11;
+  if (remainder === 10) remainder = 0;
+  return remainder === parseInt(cleaned[10]);
+};
+
+const formatCPF = (value: string): string => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
+
 const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext, onBack, total }: StepDadosProps) => {
   const p = passageiros[currentIndex];
+  const [cpfError, setCpfError] = useState("");
 
   const update = (field: keyof PassageiroData, value: string) => {
+    if (field === "cpf") {
+      const formatted = formatCPF(value);
+      onChange(currentIndex, { ...p, cpf: formatted });
+      const cleaned = formatted.replace(/\D/g, "");
+      if (cleaned.length === 11) {
+        setCpfError(validateCPF(cleaned) ? "" : "CPF inválido");
+      } else {
+        setCpfError("");
+      }
+      return;
+    }
     onChange(currentIndex, { ...p, [field]: value });
   };
 
   const handleContinue = () => {
+    if (!validateCPF(p.cpf.replace(/\D/g, ""))) {
+      setCpfError("CPF inválido");
+      return;
+    }
     if (currentIndex < total - 1) {
       onChangeIndex(currentIndex + 1);
     } else {
@@ -39,7 +80,8 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
     }
   };
 
-  const isComplete = p.nomeCompleto && p.cpf && p.telefone && p.email && p.sexo;
+  const cpfValid = p.cpf.replace(/\D/g, "").length === 11 && validateCPF(p.cpf.replace(/\D/g, ""));
+  const isComplete = p.nomeCompleto && p.cpf && cpfValid && p.telefone && p.email && p.sexo;
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} key={currentIndex} transition={{ duration: 0.3 }} className="space-y-5">
@@ -88,8 +130,9 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
               placeholder="000.000.000-00"
               value={p.cpf}
               onChange={(e) => update("cpf", e.target.value)}
-              className="h-12 rounded-xl"
+              className={`h-12 rounded-xl ${cpfError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
+            {cpfError && <p className="text-[11px] text-destructive font-medium">{cpfError}</p>}
           </div>
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nascimento</Label>
