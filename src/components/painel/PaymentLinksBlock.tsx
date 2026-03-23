@@ -41,6 +41,7 @@ const PaymentLinksBlock = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [sendingBoardingEmailId, setSendingBoardingEmailId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [taxaOpenId, setTaxaOpenId] = useState<string | null>(null);
   const [taxaValor, setTaxaValor] = useState("");
@@ -111,13 +112,54 @@ const PaymentLinksBlock = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSendBoardingPass = async (l: PagamentoLink) => {
+  const handleSendTripDetails = async (l: PagamentoLink) => {
     const mainP = l.passageiros?.[0] as any;
     if (!mainP?.email) {
       toast.error("Passageiro sem e-mail cadastrado");
       return;
     }
     setSendingEmailId(l.id);
+    try {
+      const link = getLink(l.token);
+      const { error } = await supabase.functions.invoke("send-reservation-email", {
+        body: {
+          type: "trip_details",
+          codigoReserva: l.codigo_reserva,
+          passageiros: l.passageiros,
+          companhia: l.companhia,
+          origem: l.origem,
+          destino: l.destino,
+          numeroVoo: l.numero_voo,
+          classe: l.classe,
+          idaData: l.ida_data,
+          idaPartida: l.ida_partida,
+          idaChegada: l.ida_chegada,
+          voltaData: l.volta_data,
+          voltaPartida: l.volta_partida,
+          voltaChegada: l.volta_chegada,
+          valor: l.valor,
+          status: l.status,
+          metodoPagamento: "pix",
+          linkPagamento: link,
+          whatsappOperador: l.whatsapp_operador || "",
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail de detalhes enviado para ${mainP.email}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail");
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
+  const handleSendBoardingPassEmail = async (l: PagamentoLink) => {
+    const mainP = l.passageiros?.[0] as any;
+    if (!mainP?.email) {
+      toast.error("Passageiro sem e-mail cadastrado");
+      return;
+    }
+    setSendingBoardingEmailId(l.id);
     try {
       const link = getLink(l.token);
       const { error } = await supabase.functions.invoke("send-reservation-email", {
@@ -142,11 +184,11 @@ const PaymentLinksBlock = () => {
         },
       });
       if (error) throw error;
-      toast.success(`E-mail enviado para ${mainP.email}`);
+      toast.success(`Cartão de embarque enviado para ${mainP.email}`);
     } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar e-mail");
+      toast.error(err.message || "Erro ao enviar cartão de embarque");
     } finally {
-      setSendingEmailId(null);
+      setSendingBoardingEmailId(null);
     }
   };
 
@@ -426,11 +468,11 @@ const PaymentLinksBlock = () => {
                             </Button>
                           )}
 
-                          {/* Enviar e-mail + Cartão de embarque */}
+                          {/* Enviar e-mail (detalhes da viagem) + Cartão de embarque (email) */}
                           <div className="grid grid-cols-2 gap-2.5">
                             <Button
                               variant="outline"
-                              onClick={() => handleSendBoardingPass(l)}
+                              onClick={() => handleSendTripDetails(l)}
                               disabled={sendingEmailId === l.id}
                               className="h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
                             >
@@ -442,10 +484,15 @@ const PaymentLinksBlock = () => {
                             </Button>
                             <Button
                               variant="outline"
-                              onClick={() => setViewBoardingPass(l)}
+                              onClick={() => handleSendBoardingPassEmail(l)}
+                              disabled={sendingBoardingEmailId === l.id}
                               className="h-11 rounded-xl text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5 gap-1.5"
                             >
-                              <Plane className="h-3.5 w-3.5" /> Cartão embarque
+                              {sendingBoardingEmailId === l.id ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</>
+                              ) : (
+                                <><Plane className="h-3.5 w-3.5" /> Cartão embarque</>
+                              )}
                             </Button>
                           </div>
 
