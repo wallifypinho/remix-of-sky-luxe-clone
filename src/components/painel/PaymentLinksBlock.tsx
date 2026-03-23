@@ -41,6 +41,7 @@ const PaymentLinksBlock = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [sendingBoardingEmailId, setSendingBoardingEmailId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [taxaOpenId, setTaxaOpenId] = useState<string | null>(null);
   const [taxaValor, setTaxaValor] = useState("");
