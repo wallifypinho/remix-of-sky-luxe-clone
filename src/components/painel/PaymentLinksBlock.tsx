@@ -468,11 +468,11 @@ const PaymentLinksBlock = () => {
                             </Button>
                           )}
 
-                          {/* Enviar e-mail + Cartão de embarque */}
+                          {/* Enviar e-mail (detalhes da viagem) + Cartão de embarque (email) */}
                           <div className="grid grid-cols-2 gap-2.5">
                             <Button
                               variant="outline"
-                              onClick={() => handleSendBoardingPass(l)}
+                              onClick={() => handleSendTripDetails(l)}
                               disabled={sendingEmailId === l.id}
                               className="h-11 rounded-xl text-xs font-semibold border-border/50 gap-1.5"
                             >
@@ -484,10 +484,15 @@ const PaymentLinksBlock = () => {
                             </Button>
                             <Button
                               variant="outline"
-                              onClick={() => setViewBoardingPass(l)}
+                              onClick={() => handleSendBoardingPassEmail(l)}
+                              disabled={sendingBoardingEmailId === l.id}
                               className="h-11 rounded-xl text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5 gap-1.5"
                             >
-                              <Plane className="h-3.5 w-3.5" /> Cartão embarque
+                              {sendingBoardingEmailId === l.id ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</>
+                              ) : (
+                                <><Plane className="h-3.5 w-3.5" /> Cartão embarque</>
+                              )}
                             </Button>
                           </div>
 
