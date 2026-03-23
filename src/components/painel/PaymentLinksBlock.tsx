@@ -112,13 +112,54 @@ const PaymentLinksBlock = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSendBoardingPass = async (l: PagamentoLink) => {
+  const handleSendTripDetails = async (l: PagamentoLink) => {
     const mainP = l.passageiros?.[0] as any;
     if (!mainP?.email) {
       toast.error("Passageiro sem e-mail cadastrado");
       return;
     }
     setSendingEmailId(l.id);
+    try {
+      const link = getLink(l.token);
+      const { error } = await supabase.functions.invoke("send-reservation-email", {
+        body: {
+          type: "trip_details",
+          codigoReserva: l.codigo_reserva,
+          passageiros: l.passageiros,
+          companhia: l.companhia,
+          origem: l.origem,
+          destino: l.destino,
+          numeroVoo: l.numero_voo,
+          classe: l.classe,
+          idaData: l.ida_data,
+          idaPartida: l.ida_partida,
+          idaChegada: l.ida_chegada,
+          voltaData: l.volta_data,
+          voltaPartida: l.volta_partida,
+          voltaChegada: l.volta_chegada,
+          valor: l.valor,
+          status: l.status,
+          metodoPagamento: "pix",
+          linkPagamento: link,
+          whatsappOperador: l.whatsapp_operador || "",
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail de detalhes enviado para ${mainP.email}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail");
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
+  const handleSendBoardingPassEmail = async (l: PagamentoLink) => {
+    const mainP = l.passageiros?.[0] as any;
+    if (!mainP?.email) {
+      toast.error("Passageiro sem e-mail cadastrado");
+      return;
+    }
+    setSendingBoardingEmailId(l.id);
     try {
       const link = getLink(l.token);
       const { error } = await supabase.functions.invoke("send-reservation-email", {
@@ -143,11 +184,11 @@ const PaymentLinksBlock = () => {
         },
       });
       if (error) throw error;
-      toast.success(`E-mail enviado para ${mainP.email}`);
+      toast.success(`Cartão de embarque enviado para ${mainP.email}`);
     } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar e-mail");
+      toast.error(err.message || "Erro ao enviar cartão de embarque");
     } finally {
-      setSendingEmailId(null);
+      setSendingBoardingEmailId(null);
     }
   };
 
