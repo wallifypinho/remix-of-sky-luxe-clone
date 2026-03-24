@@ -183,7 +183,7 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
       <Button
         onClick={handleContinue}
         size="lg"
-        className="w-full text-base font-bold h-13 rounded-xl"
+        className="w-full text-lg font-bold h-14 rounded-xl"
         disabled={!isComplete}
       >
         {currentIndex < total - 1 ? "Próximo Passageiro →" : "Continuar"}

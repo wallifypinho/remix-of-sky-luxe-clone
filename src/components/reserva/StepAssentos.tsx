@@ -229,7 +229,7 @@ const StepAssentos = ({ totalPassageiros, selectedSeats, onChange, onNext, onBac
       <Button
         onClick={onNext}
         size="lg"
-        className="w-full text-base font-bold h-13 rounded-xl"
+        className="w-full text-lg font-bold h-14 rounded-xl"
         disabled={selectedSeats.length < totalPassageiros}
       >
         {selectedSeats.length < totalPassageiros

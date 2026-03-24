@@ -99,7 +99,7 @@ const StepPassageiros = ({ counts, onChange, onNext, onBack }: StepPassageirosPr
         <span className="text-2xl font-extrabold text-primary">{total}</span>
       </motion.div>
 
-      <Button onClick={onNext} size="lg" className="w-full text-base font-bold h-13 rounded-xl">
+      <Button onClick={onNext} size="lg" className="w-full text-lg font-bold h-14 rounded-xl">
         Continuar
       </Button>
       <button type="button" onClick={onBack} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2">

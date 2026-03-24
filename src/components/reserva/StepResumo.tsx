@@ -99,7 +99,7 @@ const StepResumo = ({ passageiros, assentos, metodoPagamento, onSubmit, onBack, 
       <Button
         onClick={onSubmit}
         size="lg"
-        className="w-full text-base font-bold h-13 rounded-xl"
+        className="w-full text-lg font-bold h-14 rounded-xl"
         disabled={!accepted || loading}
         style={accepted ? { background: "hsl(var(--success))" } : undefined}
       >
