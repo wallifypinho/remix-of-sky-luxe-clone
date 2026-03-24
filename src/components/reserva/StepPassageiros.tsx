@@ -21,12 +21,14 @@ const Counter = ({
   value,
   onChange,
   min = 0,
+  maxDisabled = false,
 }: {
   label: string;
   subtitle: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
+  maxDisabled?: boolean;
 }) => (
   <div className="flex items-center justify-between py-4">
     <div>
@@ -46,7 +48,8 @@ const Counter = ({
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 rounded-xl border-2 border-primary bg-primary/5 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all"
+        className="w-10 h-10 rounded-xl border-2 border-primary bg-primary/5 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all disabled:opacity-30 disabled:hover:bg-primary/5 disabled:hover:text-primary"
+        disabled={maxDisabled}
       >
         <Plus className="h-4 w-4" />
       </button>
@@ -54,8 +57,11 @@ const Counter = ({
   </div>
 );
 
+const MAX_PASSAGEIROS = 12;
+
 const StepPassageiros = ({ counts, onChange, onNext, onBack }: StepPassageirosProps) => {
   const total = counts.adultos + counts.criancas + counts.bebes;
+  const atMax = total >= MAX_PASSAGEIROS;
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="space-y-5">
@@ -65,7 +71,7 @@ const StepPassageiros = ({ counts, onChange, onNext, onBack }: StepPassageirosPr
         </div>
         <div>
           <h2 className="text-lg sm:text-xl font-extrabold text-foreground">Passageiros</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">Quantas pessoas vão viajar?</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Quantas pessoas vão viajar? (máx. {MAX_PASSAGEIROS})</p>
         </div>
       </div>
 
@@ -76,18 +82,21 @@ const StepPassageiros = ({ counts, onChange, onNext, onBack }: StepPassageirosPr
           value={counts.adultos}
           onChange={(v) => onChange({ ...counts, adultos: v })}
           min={1}
+          maxDisabled={atMax}
         />
         <Counter
           label="Crianças"
           subtitle="2 a 11 anos"
           value={counts.criancas}
           onChange={(v) => onChange({ ...counts, criancas: v })}
+          maxDisabled={atMax}
         />
         <Counter
           label="Bebês"
           subtitle="Até 2 anos"
           value={counts.bebes}
           onChange={(v) => onChange({ ...counts, bebes: v })}
+          maxDisabled={atMax}
         />
       </div>
 
