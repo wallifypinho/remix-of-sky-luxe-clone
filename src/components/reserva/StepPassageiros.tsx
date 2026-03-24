@@ -21,12 +21,14 @@ const Counter = ({
   value,
   onChange,
   min = 0,
+  maxDisabled = false,
 }: {
   label: string;
   subtitle: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
+  maxDisabled?: boolean;
 }) => (
   <div className="flex items-center justify-between py-4">
     <div>
