@@ -48,7 +48,8 @@ const Counter = ({
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 rounded-xl border-2 border-primary bg-primary/5 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all"
+        className="w-10 h-10 rounded-xl border-2 border-primary bg-primary/5 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all disabled:opacity-30 disabled:hover:bg-primary/5 disabled:hover:text-primary"
+        disabled={maxDisabled}
       >
         <Plus className="h-4 w-4" />
       </button>
