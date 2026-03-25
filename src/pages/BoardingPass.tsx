@@ -147,13 +147,7 @@ const BoardingPass = () => {
   const classeDisplay = data.classe === "executiva" ? "Executive" : data.classe === "primeira" ? "First Class" : "Premium";
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(145deg, #003FBF 0%, #0033A0 30%, #002080 70%, #001560 100%)" }}>
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, white 0%, transparent 70%)" }} />
-        <div className="absolute top-1/3 -left-32 w-64 h-64 rounded-full opacity-[0.05]" style={{ background: "radial-gradient(circle, white 0%, transparent 70%)" }} />
-        <div className="absolute bottom-1/4 right-0 w-40 h-96 opacity-[0.03]" style={{ background: "linear-gradient(180deg, white, transparent)" }} />
-      </div>
+    <div className="min-h-screen relative overflow-hidden bg-white">
 
       <div className="max-w-[430px] mx-auto min-h-screen flex flex-col relative z-10">
         <AnimatePresence mode="wait">
