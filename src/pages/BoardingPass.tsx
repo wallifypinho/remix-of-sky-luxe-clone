@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { generateBoardingPassPDF } from "@/lib/generateBoardingPassPDF";
+import { getAirportName } from "@/lib/airportCodes";
 
 interface PagamentoData {
   id: string;
