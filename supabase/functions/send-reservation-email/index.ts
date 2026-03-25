@@ -284,7 +284,7 @@ const buildTripDetailsEmail = (body: any) => {
       ${hasVolta ? cardBlock(`
         ${sectionTitle("✈ Trecho de Volta")}
         <table width="100%" cellpadding="0" cellspacing="0">
-          ${infoRow("Rota", `${destino || "—"} → ${origem || "—"}`)}
+          ${infoRow("Rota", `${airportDisplay(destino)} → ${airportDisplay(origem)}`)}
           ${infoRow("Data", voltaData || "—")}
           ${infoRow("Partida", voltaPartida || "—")}
           ${infoRow("Chegada", voltaChegada || "—")}
