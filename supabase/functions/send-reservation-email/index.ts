@@ -556,6 +556,7 @@ serve(async (req) => {
         sender_domain: "notify.azulcentral.shop",
         subject: emailContent.subject,
         html: emailContent.html,
+        text: emailContent.subject,
         purpose: "transactional",
         label: `reservation-${type}`,
         idempotency_key: idempotencyKey,
