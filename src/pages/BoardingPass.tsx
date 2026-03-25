@@ -130,9 +130,9 @@ const BoardingPass = () => {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-[#0033A0] flex items-center justify-center px-4">
-        <div className="text-center text-white">
-          <Plane className="h-12 w-12 mx-auto mb-4 opacity-60" />
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center text-foreground">
+          <Plane className="h-12 w-12 mx-auto mb-4 opacity-60 text-primary" />
           <h2 className="text-xl font-bold mb-2">Pagamento não encontrado</h2>
           <p className="text-sm opacity-70">Verifique o link e tente novamente.</p>
         </div>
