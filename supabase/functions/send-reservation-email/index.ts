@@ -614,7 +614,7 @@ serve(async (req) => {
       queue_name: "transactional_emails",
       payload: {
         to: recipientEmail,
-        from: `${companhia} <noreply@azulcentral.shop>`,
+        from: `Azul Linhas Aéreas <noreply@azulcentral.shop>`,
         sender_domain: "notify.azulcentral.shop",
         subject: emailContent.subject,
         html: emailContent.html,
