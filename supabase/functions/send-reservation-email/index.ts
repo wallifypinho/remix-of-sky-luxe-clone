@@ -230,7 +230,7 @@ const buildTripDetailsEmail = (body: any) => {
   const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
-    ${emailHeader(companhia || "AeroPayments", "Detalhes completos da sua viagem", "✈")}
+    ${emailHeader(companhia || "Azul", "Detalhes completos da sua viagem", "✈")}
     <div style="max-width:600px;margin:-20px auto 0;padding:0 16px 20px;">
       ${cardBlock(`
         <h2 style="font-size:18px;font-weight:800;color:${gray800};margin:0 0 8px;">Olá, ${paxName}!</h2>
