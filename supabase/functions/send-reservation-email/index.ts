@@ -508,12 +508,16 @@ serve(async (req) => {
     const body = await req.json();
     const { type, passageiros } = body;
 
-    const gmailUser = Deno.env.get("GMAIL_USER");
-    const gmailPass = Deno.env.get("GMAIL_APP_PASSWORD");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!gmailUser || !gmailPass) {
-      console.error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
-      return new Response(JSON.stringify({ success: false, error: "Email credentials not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return new Response(JSON.stringify({ success: false, error: "Missing backend configuration" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!apiKey) {
+      return new Response(JSON.stringify({ success: false, error: "Missing API key for email sending" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const mainPassenger = passageiros?.[0];
@@ -522,13 +526,6 @@ serve(async (req) => {
     if (!recipientEmail) {
       return new Response(JSON.stringify({ success: false, error: "No recipient email found in passenger data" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: { user: gmailUser, pass: gmailPass },
-    });
 
     let emailContent: { subject: string; html: string };
 
@@ -542,20 +539,47 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: `Unknown email type: ${type}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    console.log(`Sending email [${type}] to ${recipientEmail}`);
+    console.log(`Enqueuing email [${type}] to ${recipientEmail}`);
 
     const companhia = body.companhia || "AeroPayments";
-    const info = await transporter.sendMail({
-      from: `"${companhia}" <${gmailUser}>`,
-      to: recipientEmail,
-      subject: emailContent.subject,
-      html: emailContent.html,
+    const messageId = crypto.randomUUID();
+    const idempotencyKey = `reservation-${type}-${body.codigoReserva || messageId}-${Date.now()}`;
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Enqueue to transactional_emails queue
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        to: recipientEmail,
+        from: `${companhia} <noreply@azulcentral.shop>`,
+        sender_domain: "notify.azulcentral.shop",
+        subject: emailContent.subject,
+        html: emailContent.html,
+        purpose: "transactional",
+        label: `reservation-${type}`,
+        idempotency_key: idempotencyKey,
+        message_id: messageId,
+      },
     });
 
-    console.log("Email sent successfully:", info.messageId);
+    if (enqueueError) {
+      console.error("Enqueue error:", enqueueError);
+      throw new Error(enqueueError.message);
+    }
+
+    // Log as pending
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: `reservation-${type}`,
+      recipient_email: recipientEmail,
+      status: "pending",
+    });
+
+    console.log("Email enqueued successfully:", messageId);
 
     return new Response(
-      JSON.stringify({ success: true, emailSent: true, messageId: info.messageId }),
+      JSON.stringify({ success: true, emailSent: true, messageId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
