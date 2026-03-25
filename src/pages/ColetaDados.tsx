@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepWelcome from "@/components/reserva/StepWelcome";
@@ -21,6 +22,8 @@ const emptyPassageiro = (): PassageiroData => ({
 });
 
 const ColetaDados = () => {
+  const [searchParams] = useSearchParams();
+  const operadorId = searchParams.get("oid") || null;
   const [step, setStep] = useState(0);
   const [counts, setCounts] = useState({ adultos: 1, criancas: 0, bebes: 0 });
   const [passageiros, setPassageiros] = useState<PassageiroData[]>([emptyPassageiro()]);
@@ -47,9 +50,7 @@ const ColetaDados = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("reservas")
-        .insert({
+      const insertData: any = {
           adultos: counts.adultos,
           criancas: counts.criancas,
           bebes: counts.bebes,
@@ -57,7 +58,11 @@ const ColetaDados = () => {
           assentos: selectedSeats as any,
           metodo_pagamento: metodoPagamento,
           status: "pendente",
-        })
+        };
+      if (operadorId) insertData.operador_id = operadorId;
+      const { data, error } = await supabase
+        .from("reservas")
+        .insert(insertData)
         .select("codigo_reserva")
         .single();
 

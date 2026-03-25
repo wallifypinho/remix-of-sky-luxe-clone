@@ -38,9 +38,11 @@ const statusBadge = (status: string) => {
 
 interface PedidosSectionProps {
   onCountChange?: (count: number) => void;
+  operadorId?: string;
+  isAdmin?: boolean;
 }
 
-const PedidosSection = ({ onCountChange }: PedidosSectionProps) => {
+const PedidosSection = ({ onCountChange, operadorId, isAdmin }: PedidosSectionProps) => {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -50,11 +52,15 @@ const PedidosSection = ({ onCountChange }: PedidosSectionProps) => {
   const fetchReservas = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("reservas")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
+      if (!isAdmin && operadorId) {
+        query = query.eq("operador_id", operadorId);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       const list = (data || []) as Reserva[];
       setReservas(list);
@@ -64,7 +70,7 @@ const PedidosSection = ({ onCountChange }: PedidosSectionProps) => {
     } finally {
       setLoading(false);
     }
-  }, [onCountChange]);
+  }, [onCountChange, operadorId, isAdmin]);
 
   useEffect(() => { fetchReservas(); }, [fetchReservas]);
 

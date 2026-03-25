@@ -14,32 +14,37 @@ const getBaseUrl = () => {
   return "";
 };
 
-const linksDefault: LinkCadastro[] = [
-  {
-    companhia: "Azul",
-    url: `${getBaseUrl()}/cadastro?airline=azul`,
-    accent: "hsl(210, 100%, 50%)",
-    bg: "hsl(210, 100%, 97%)",
-    icon: "✈️",
-  },
-  {
-    companhia: "GOL",
-    url: `${getBaseUrl()}/cadastro?airline=gol`,
-    accent: "hsl(25, 95%, 53%)",
-    bg: "hsl(25, 100%, 97%)",
-    icon: "🟠",
-  },
-  {
-    companhia: "LATAM",
-    url: `${getBaseUrl()}/cadastro?airline=latam`,
-    accent: "hsl(0, 80%, 55%)",
-    bg: "hsl(0, 100%, 97%)",
-    icon: "🔴",
-  },
-];
+const buildLinks = (operadorId?: string): LinkCadastro[] => {
+  const base = getBaseUrl();
+  const opParam = operadorId ? `&oid=${operadorId}` : "";
+  return [
+    {
+      companhia: "Azul",
+      url: `${base}/cadastro?airline=azul${opParam}`,
+      accent: "hsl(210, 100%, 50%)",
+      bg: "hsl(210, 100%, 97%)",
+      icon: "✈️",
+    },
+    {
+      companhia: "GOL",
+      url: `${base}/cadastro?airline=gol${opParam}`,
+      accent: "hsl(25, 95%, 53%)",
+      bg: "hsl(25, 100%, 97%)",
+      icon: "🟠",
+    },
+    {
+      companhia: "LATAM",
+      url: `${base}/cadastro?airline=latam${opParam}`,
+      accent: "hsl(0, 80%, 55%)",
+      bg: "hsl(0, 100%, 97%)",
+      icon: "🔴",
+    },
+  ];
+};
 
-const LinksCadastro = () => {
+const LinksCadastro = ({ operadorId }: { operadorId?: string }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const linksDefault = buildLinks(operadorId);
 
   const handleCopy = (url: string, companhia: string) => {
     navigator.clipboard.writeText(url);

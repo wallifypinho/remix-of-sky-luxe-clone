@@ -124,8 +124,8 @@ const PainelPagamentos = () => {
         >
           {activeTab === "pedidos" && (
             <div className="space-y-5">
-              <LinksCadastro />
-              <PedidosSection onCountChange={setPedidosCount} />
+              <LinksCadastro operadorId={operador.id} />
+              <PedidosSection onCountChange={setPedidosCount} operadorId={operador.id} isAdmin={isAdmin} />
             </div>
           )}
 
@@ -145,14 +145,14 @@ const PainelPagamentos = () => {
                   </Button>
                 </div>
               </div>
-              <NovoPagamentoForm />
-              <PaymentLinksBlock />
+              <NovoPagamentoForm operadorId={operador.id} />
+              <PaymentLinksBlock operadorId={operador.id} isAdmin={isAdmin} />
             </div>
           )}
 
           {activeTab === "operadores" && isAdmin && <OperadoresSection />}
           {activeTab === "gateways" && <GatewaysSection />}
-          {activeTab === "lixeira" && <LixeiraSection />}
+          {activeTab === "lixeira" && <LixeiraSection operadorId={operador.id} isAdmin={isAdmin} />}
         </motion.div>
       </main>
 

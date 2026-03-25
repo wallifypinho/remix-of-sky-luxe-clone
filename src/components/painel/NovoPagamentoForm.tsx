@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Passageiro } from "@/types/pagamento";
 import { useGatewayStore } from "@/stores/gatewayStore";
 
-const NovoPagamentoForm = () => {
+const NovoPagamentoForm = ({ operadorId }: { operadorId?: string }) => {
   const allGateways = useGatewayStore((s) => s.gateways);
   const activeGateways = useMemo(() => allGateways.filter((g) => g.ativo && g.secretKey), [allGateways]);
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
@@ -418,7 +418,8 @@ const NovoPagamentoForm = () => {
           codigo_pix: pixCodeFinal || null,
           metodo_pagamento: metodoPagamento,
           status: "pendente",
-        })
+          operador_id: operadorId || null,
+        } as any)
         .select("token")
         .single();
 
