@@ -21,11 +21,42 @@ interface GatewayRequest {
   codigoReserva?: string;
 }
 
+const jsonHeaders = {
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+};
+
+function uniqueKeys(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function maskKey(value: string) {
+  if (!value) return "";
+  if (value.length <= 10) return value;
+  return `${value.substring(0, 6)}...${value.substring(value.length - 4)}`;
+}
+
+function isHuraSecretKey(value: string) {
+  return /^sk_(live|test)_/i.test(value.trim());
+}
+
+function isHuraPublicKey(value: string) {
+  return /^hurapay_(live|test)_/i.test(value.trim());
+}
+
 async function processHuraPay(body: GatewayRequest) {
   const url = "https://api.hurapayments.com.br/v1/payment-transaction/create";
-  const key = body.secretKey.trim();
+  const keyCandidates = uniqueKeys([body.secretKey, body.publicKey]);
+  const authCandidates = uniqueKeys([
+    ...keyCandidates.filter(isHuraSecretKey),
+    ...keyCandidates.filter((key) => !isHuraSecretKey(key)),
+  ]);
+  const publicKey = keyCandidates.find(isHuraPublicKey) || "";
 
-  console.log("[HuraPay] Using key prefix:", key.substring(0, 6) + "...");
+  console.log("[HuraPay] Auth candidates:", JSON.stringify(authCandidates.map(maskKey)));
+  if (publicKey) {
+    console.log("[HuraPay] Public key candidate:", maskKey(publicKey));
+  }
 
   const payload = {
     payment_method: "pix",
@@ -47,72 +78,61 @@ async function processHuraPay(body: GatewayRequest) {
 
   console.log("[HuraPay] Calling API with payload:", JSON.stringify(payload));
 
-  // Try with the key as-is (some APIs expect sk_xxx directly)
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "Authorization": key,
-    },
-    body: JSON.stringify(payload),
+  const authAttempts = authCandidates.flatMap((key) => {
+    const optionalPublicHeaders = publicKey ? { "x-public-key": publicKey } : {};
+
+    return [
+      {
+        label: `Bearer ${maskKey(key)}`,
+        headers: { ...jsonHeaders, ...optionalPublicHeaders, "Authorization": `Bearer ${key}` },
+      },
+      {
+        label: `Authorization ${maskKey(key)}`,
+        headers: { ...jsonHeaders, ...optionalPublicHeaders, "Authorization": key },
+      },
+      {
+        label: `x-api-key ${maskKey(key)}`,
+        headers: { ...jsonHeaders, ...optionalPublicHeaders, "x-api-key": key },
+      },
+      {
+        label: `apikey ${maskKey(key)}`,
+        headers: { ...jsonHeaders, ...optionalPublicHeaders, "apikey": key },
+      },
+    ];
   });
 
-  if (response.status === 401) {
-    // Try with Bearer prefix
-    console.log("[HuraPay] Direct key failed, trying Bearer format...");
-    const response2 = await fetch(url, {
+  let lastAuthError: unknown = null;
+
+  for (const attempt of authAttempts) {
+    console.log("[HuraPay] Trying auth strategy:", attempt.label);
+
+    const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": `Bearer ${key}`,
-      },
+      headers: attempt.headers,
       body: JSON.stringify(payload),
     });
 
-    if (response2.status === 401) {
-      // Try with x-api-key header
-      console.log("[HuraPay] Bearer failed, trying x-api-key header...");
-      const response3 = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "x-api-key": key,
-        },
-        body: JSON.stringify(payload),
-      });
+    const data = await response.json().catch(() => ({}));
 
-      const data3 = await response3.json().catch(() => ({}));
-      if (!response3.ok) {
-        console.error("[HuraPay] All auth methods failed:", response3.status, JSON.stringify(data3));
-        throw new Error(
-          `Hura Pay: Chave de API inválida ou formato incorreto. Verifique sua Secret Key na aba Gateways. (Status: ${response3.status})`
-        );
-      }
-      return parseHuraResponse(data3);
+    if (response.ok) {
+      return parseHuraResponse(data);
     }
 
-    const data2 = await response2.json().catch(() => ({}));
-    if (!response2.ok) {
-      console.error("[HuraPay] Bearer auth failed:", response2.status, JSON.stringify(data2));
-      throw new Error(
-        `Hura Pay: Chave de API inválida. Verifique sua Secret Key. (Status: ${response2.status})`
-      );
+    if (response.status === 401) {
+      lastAuthError = data;
+      continue;
     }
-    return parseHuraResponse(data2);
-  }
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
     console.error("[HuraPay] API error:", response.status, JSON.stringify(data));
     throw new Error(
       `Hura Pay retornou erro ${response.status}: ${data?.message || data?.error || JSON.stringify(data)}`
     );
   }
 
-  return parseHuraResponse(data);
+  console.error("[HuraPay] All auth methods failed:", JSON.stringify(lastAuthError));
+  throw new Error(
+    "Hura Pay: autenticação recusada. Confira se a Secret Key começa com sk_live_ e a Public Key com hurapay_live_."
+  );
 }
 
 function parseHuraResponse(data: any) {
