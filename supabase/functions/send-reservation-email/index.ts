@@ -6,6 +6,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Mapa de siglas IATA → nome completo
+const AIRPORT_NAMES: Record<string, string> = {
+  GRU: "São Paulo (Guarulhos)", CGH: "São Paulo (Congonhas)", VCP: "Campinas (Viracopos)",
+  GIG: "Rio de Janeiro (Galeão)", SDU: "Rio de Janeiro (Santos Dumont)", BSB: "Brasília",
+  CNF: "Belo Horizonte (Confins)", PLU: "Belo Horizonte (Pampulha)", SSA: "Salvador",
+  REC: "Recife", FOR: "Fortaleza", MAO: "Manaus", BEL: "Belém", CWB: "Curitiba",
+  POA: "Porto Alegre", FLN: "Florianópolis", NAT: "Natal", MCZ: "Maceió", AJU: "Aracaju",
+  SLZ: "São Luís", THE: "Teresina", CGB: "Cuiabá", CGR: "Campo Grande", GYN: "Goiânia",
+  VIX: "Vitória", JPA: "João Pessoa", PMW: "Palmas", PVH: "Porto Velho", MCP: "Macapá",
+  RBR: "Rio Branco", BVB: "Boa Vista", IGU: "Foz do Iguaçu", NVT: "Navegantes",
+  JOI: "Joinville", LDB: "Londrina", MGF: "Maringá", UDI: "Uberlândia", RAO: "Ribeirão Preto",
+  SJP: "São José do Rio Preto", BAU: "Bauru", IOS: "Ilhéus", BPS: "Porto Seguro",
+  CPV: "Campina Grande", PNZ: "Petrolina", JDO: "Juazeiro do Norte", IMP: "Imperatriz",
+  STM: "Santarém", CKS: "Carajás", MOC: "Montes Claros", CFB: "Cabo Frio",
+  MIA: "Miami", JFK: "Nova York (JFK)", EWR: "Nova York (Newark)", LAX: "Los Angeles",
+  ORD: "Chicago", MCO: "Orlando", FLL: "Fort Lauderdale", ATL: "Atlanta",
+  LHR: "Londres (Heathrow)", CDG: "Paris (Charles de Gaulle)", FCO: "Roma (Fiumicino)",
+  MAD: "Madrid", BCN: "Barcelona", LIS: "Lisboa", OPO: "Porto", AMS: "Amsterdã",
+  FRA: "Frankfurt", DXB: "Dubai", DOH: "Doha", IST: "Istambul", MEX: "Cidade do México",
+  SCL: "Santiago", EZE: "Buenos Aires (Ezeiza)", BOG: "Bogotá", LIM: "Lima",
+  MVD: "Montevidéu", ASU: "Assunção", PTY: "Cidade do Panamá", CUN: "Cancún",
+};
+
+const getAirportName = (code: string): string => {
+  if (!code) return "—";
+  return AIRPORT_NAMES[code.trim().toUpperCase()] || code;
+};
+
+const airportDisplay = (code: string): string => {
+  const name = getAirportName(code);
+  return name === code ? code : `${name} (${code})`;
+};
+
 const maskCpf = (cpf: string): string => {
   if (!cpf) return "";
   const clean = cpf.replace(/\D/g, "");
@@ -209,7 +242,8 @@ const buildTripDetailsEmail = (body: any) => {
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
           <tr>
             <td style="text-align:center;padding:8px 0;">
-              <div style="font-size:32px;font-weight:900;color:${gray800};letter-spacing:3px;">${origem || "—"}</div>
+              <div style="font-size:14px;font-weight:700;color:${gray600};">${getAirportName(origem)}</div>
+              <div style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:3px;">${origem || "—"}</div>
               <div style="font-size:11px;color:${gray400};margin-top:2px;">Origem</div>
             </td>
             <td style="text-align:center;padding:8px 16px;">
@@ -217,7 +251,8 @@ const buildTripDetailsEmail = (body: any) => {
               <div style="font-size:10px;color:${gray400};margin-top:2px;">${hasVolta ? "Ida e Volta" : "Somente Ida"}</div>
             </td>
             <td style="text-align:center;padding:8px 0;">
-              <div style="font-size:32px;font-weight:900;color:${gray800};letter-spacing:3px;">${destino || "—"}</div>
+              <div style="font-size:14px;font-weight:700;color:${gray600};">${getAirportName(destino)}</div>
+              <div style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:3px;">${destino || "—"}</div>
               <div style="font-size:11px;color:${gray400};margin-top:2px;">Destino</div>
             </td>
           </tr>
@@ -236,7 +271,7 @@ const buildTripDetailsEmail = (body: any) => {
       ${cardBlock(`
         ${sectionTitle("✈ Trecho de Ida")}
         <table width="100%" cellpadding="0" cellspacing="0">
-          ${infoRow("Rota", `${origem || "—"} → ${destino || "—"}`)}
+          ${infoRow("Rota", `${airportDisplay(origem)} → ${airportDisplay(destino)}`)}
           ${infoRow("Data", idaData || "—")}
           ${infoRow("Partida", idaPartida || "—")}
           ${infoRow("Chegada", idaChegada || "—")}
@@ -249,7 +284,7 @@ const buildTripDetailsEmail = (body: any) => {
       ${hasVolta ? cardBlock(`
         ${sectionTitle("✈ Trecho de Volta")}
         <table width="100%" cellpadding="0" cellspacing="0">
-          ${infoRow("Rota", `${destino || "—"} → ${origem || "—"}`)}
+          ${infoRow("Rota", `${airportDisplay(destino)} → ${airportDisplay(origem)}`)}
           ${infoRow("Data", voltaData || "—")}
           ${infoRow("Partida", voltaPartida || "—")}
           ${infoRow("Chegada", voltaChegada || "—")}
@@ -358,9 +393,15 @@ const generateBoardingCard = (p: {
     <div style="padding:20px 24px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
         <tr>
-          <td style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:2px;">${p.origem || "—"}</td>
+          <td>
+            <div style="font-size:13px;font-weight:700;color:${gray600};">${getAirportName(p.origem)}</div>
+            <div style="font-size:24px;font-weight:900;color:${gray800};letter-spacing:2px;">${p.origem || "—"}</div>
+          </td>
           <td style="text-align:center;color:${brandColor};font-size:18px;padding:0 12px;">→ ✈ →</td>
-          <td style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:2px;text-align:right;">${p.destino || "—"}</td>
+          <td style="text-align:right;">
+            <div style="font-size:13px;font-weight:700;color:${gray600};text-align:right;">${getAirportName(p.destino)}</div>
+            <div style="font-size:24px;font-weight:900;color:${gray800};letter-spacing:2px;text-align:right;">${p.destino || "—"}</div>
+          </td>
         </tr>
       </table>
       <div style="border-top:1px dashed #e0e0e0;padding-top:12px;margin-bottom:12px;">

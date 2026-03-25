@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { generateBoardingPassPDF } from "@/lib/generateBoardingPassPDF";
+import { getAirportName } from "@/lib/airportCodes";
 
 interface PagamentoData {
   id: string;
@@ -201,7 +202,10 @@ const BoardingPass = () => {
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
                         <div className="text-[10px] text-gray-400 uppercase font-semibold">Rota</div>
-                        <div className="font-bold text-gray-800 mt-0.5">{data.origem} → {data.destino}</div>
+                        <div className="font-bold text-gray-800 mt-0.5">
+                          {getAirportName(data.origem)} → {getAirportName(data.destino)}
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">{data.origem} → {data.destino}</div>
                       </div>
                       <div>
                         <div className="text-[10px] text-gray-400 uppercase font-semibold">Data</div>
@@ -394,16 +398,18 @@ const BoardingPass = () => {
                   {/* Route */}
                   <div className="flex items-start justify-between mb-6">
                     <div>
-                      <div className="text-[34px] font-black text-gray-900 tracking-wider leading-none">{data.origem || "—"}</div>
-                      <div className="text-[11px] text-gray-400 mt-1 font-medium">Origem</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.origem)}</div>
+                      <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.origem || "—"}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Origem</div>
                     </div>
-                    <div className="flex flex-col items-center pt-2">
+                    <div className="flex flex-col items-center pt-3">
                       <Plane className="h-6 w-6 text-[#0033A0]" />
                       <div className="text-[10px] text-gray-400 mt-1.5 font-medium">Voo {data.numero_voo || "—"}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[34px] font-black text-gray-900 tracking-wider leading-none">{data.destino || "—"}</div>
-                      <div className="text-[11px] text-gray-400 mt-1 font-medium">Destino</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.destino)}</div>
+                      <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.destino || "—"}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Destino</div>
                     </div>
                   </div>
 
@@ -621,19 +627,6 @@ const BoardingPass = () => {
 
                   {/* Action buttons */}
                   <div className="space-y-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleDownloadPDF}
-                      disabled={generatingPdf}
-                      className="w-full h-12 text-sm font-bold rounded-2xl border-gray-200 text-gray-700 hover:bg-gray-50"
-                    >
-                      {generatingPdf ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando bilhete...</>
-                      ) : (
-                        <><Download className="h-4 w-4 mr-2" /> Baixar Bilhete em PDF</>
-                      )}
-                    </Button>
-
                     {data.whatsapp_operador && (
                       <Button
                         onClick={handleWhatsApp}
