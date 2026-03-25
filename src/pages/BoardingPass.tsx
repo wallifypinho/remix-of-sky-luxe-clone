@@ -398,16 +398,18 @@ const BoardingPass = () => {
                   {/* Route */}
                   <div className="flex items-start justify-between mb-6">
                     <div>
-                      <div className="text-[34px] font-black text-gray-900 tracking-wider leading-none">{data.origem || "—"}</div>
-                      <div className="text-[11px] text-gray-400 mt-1 font-medium">Origem</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.origem)}</div>
+                      <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.origem || "—"}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Origem</div>
                     </div>
-                    <div className="flex flex-col items-center pt-2">
+                    <div className="flex flex-col items-center pt-3">
                       <Plane className="h-6 w-6 text-[#0033A0]" />
                       <div className="text-[10px] text-gray-400 mt-1.5 font-medium">Voo {data.numero_voo || "—"}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[34px] font-black text-gray-900 tracking-wider leading-none">{data.destino || "—"}</div>
-                      <div className="text-[11px] text-gray-400 mt-1 font-medium">Destino</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.destino)}</div>
+                      <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.destino || "—"}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Destino</div>
                     </div>
                   </div>
 
