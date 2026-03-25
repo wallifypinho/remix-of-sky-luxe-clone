@@ -22,6 +22,7 @@ const NovoPagamentoForm = () => {
   const [gatewaySecretKey, setGatewaySecretKey] = useState("");
   const [gatewayPublicKey, setGatewayPublicKey] = useState("");
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
+  const [numPassageiros, setNumPassageiros] = useState(1);
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
   const [passageiros, setPassageiros] = useState<Partial<Passageiro>[]>([{}]);
 
