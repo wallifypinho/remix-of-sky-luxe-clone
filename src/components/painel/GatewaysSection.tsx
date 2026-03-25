@@ -1,23 +1,41 @@
 import { useState } from "react";
-import { Zap, Plus, Trash2, Wifi, WifiOff } from "lucide-react";
+import { Zap, Plus, Trash2, Wifi, WifiOff, Eye, EyeOff, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import type { Gateway } from "@/types/pagamento";
 
 const GatewaysSection = () => {
   const [gateways, setGateways] = useState<Gateway[]>([
-    { id: "1", nome: "hura L", url: "https://api.hurapayments.com.br/v1/payment-transaction/create", ativo: false },
+    {
+      id: "hura-pay",
+      nome: "Hura Pay",
+      url: "https://api.hurapayments.com.br/v1/payment-transaction/create",
+      ativo: false,
+      secretKey: "",
+      publicKey: "",
+    },
+    {
+      id: "anubis-pay",
+      nome: "Anubis Pay",
+      url: "https://api.anubispay.com.br/v1/transaction/create",
+      ativo: false,
+      secretKey: "",
+      publicKey: "",
+    },
   ]);
   const [novoNome, setNovoNome] = useState("");
   const [novaUrl, setNovaUrl] = useState("");
   const [open, setOpen] = useState(false);
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [editingKeys, setEditingKeys] = useState<string | null>(null);
 
   const addGateway = () => {
     if (!novoNome || !novaUrl) return;
-    setGateways([...gateways, { id: Date.now().toString(), nome: novoNome, url: novaUrl, ativo: false }]);
+    setGateways([...gateways, { id: Date.now().toString(), nome: novoNome, url: novaUrl, ativo: false, secretKey: "", publicKey: "" }]);
     setNovoNome("");
     setNovaUrl("");
     setOpen(false);
@@ -25,9 +43,36 @@ const GatewaysSection = () => {
   };
 
   const removeGateway = (id: string) => {
+    if (id === "hura-pay" || id === "anubis-pay") {
+      toast.error("Gateways integrados não podem ser removidos");
+      return;
+    }
     setGateways(gateways.filter((g) => g.id !== id));
     toast.success("Gateway removido!");
   };
+
+  const toggleAtivo = (id: string) => {
+    setGateways(gateways.map((g) => {
+      if (g.id === id) {
+        if (!g.ativo && (!g.secretKey || !g.publicKey)) {
+          toast.error("Configure as chaves antes de ativar o gateway");
+          return g;
+        }
+        return { ...g, ativo: !g.ativo };
+      }
+      return g;
+    }));
+  };
+
+  const updateGatewayKey = (id: string, field: "secretKey" | "publicKey", value: string) => {
+    setGateways(gateways.map((g) => g.id === id ? { ...g, [field]: value } : g));
+  };
+
+  const toggleShowKey = (id: string) => {
+    setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const isIntegrated = (id: string) => id === "hura-pay" || id === "anubis-pay";
 
   return (
     <div className="space-y-4">
@@ -73,26 +118,87 @@ const GatewaysSection = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${gw.ativo ? "bg-emerald-500/10" : "bg-muted/50"}`}>
-                      {gw.ativo ? <Wifi className="h-4.5 w-4.5 text-emerald-600" /> : <WifiOff className="h-4.5 w-4.5 text-muted-foreground" />}
+                      {gw.ativo ? <Wifi className="h-4 w-4 text-emerald-600" /> : <WifiOff className="h-4 w-4 text-muted-foreground" />}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{gw.nome}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{gw.nome}</p>
+                        {isIntegrated(gw.id) && (
+                          <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-primary/10 text-primary border border-primary/20">
+                            Integrado
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">{gw.url}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-                      gw.ativo ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-muted text-muted-foreground border-border"
-                    }`}>
-                      {gw.ativo ? "Ativo" : "Inativo"}
-                    </span>
-                    <button
-                      onClick={() => removeGateway(gw.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <Switch checked={gw.ativo} onCheckedChange={() => toggleAtivo(gw.id)} />
+                    {!isIntegrated(gw.id) && (
+                      <button
+                        onClick={() => removeGateway(gw.id)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
+                </div>
+
+                {/* Keys config */}
+                <div className="mt-3">
+                  <button
+                    onClick={() => setEditingKeys(editingKeys === gw.id ? null : gw.id)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Key className="h-3 w-3" />
+                    {editingKeys === gw.id ? "Ocultar chaves" : "Configurar chaves"}
+                  </button>
+
+                  {editingKeys === gw.id && (
+                    <div className="mt-3 space-y-2.5 rounded-xl border border-border bg-muted/30 p-3">
+                      <div>
+                        <Label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-wider">Public Key</Label>
+                        <div className="flex gap-1.5 mt-1">
+                          <Input
+                            type={showKeys[`${gw.id}-pub`] ? "text" : "password"}
+                            value={gw.publicKey || ""}
+                            onChange={(e) => updateGatewayKey(gw.id, "publicKey", e.target.value)}
+                            placeholder="pk_live_..."
+                            className="text-xs font-mono"
+                          />
+                          <button onClick={() => toggleShowKey(`${gw.id}-pub`)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors border border-border">
+                            {showKeys[`${gw.id}-pub`] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-wider">Secret Key</Label>
+                        <div className="flex gap-1.5 mt-1">
+                          <Input
+                            type={showKeys[`${gw.id}-sec`] ? "text" : "password"}
+                            value={gw.secretKey || ""}
+                            onChange={(e) => updateGatewayKey(gw.id, "secretKey", e.target.value)}
+                            placeholder="sk_live_..."
+                            className="text-xs font-mono"
+                          />
+                          <button onClick={() => toggleShowKey(`${gw.id}-sec`)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors border border-border">
+                            {showKeys[`${gw.id}-sec`] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full h-8 text-xs rounded-lg"
+                        onClick={() => {
+                          setEditingKeys(null);
+                          toast.success(`Chaves do ${gw.nome} salvas!`);
+                        }}
+                      >
+                        Salvar Chaves
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

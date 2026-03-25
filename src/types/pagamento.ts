@@ -40,6 +40,8 @@ export interface Gateway {
   nome: string;
   url: string;
   ativo: boolean;
+  secretKey?: string;
+  publicKey?: string;
 }
 
 export interface Operador {

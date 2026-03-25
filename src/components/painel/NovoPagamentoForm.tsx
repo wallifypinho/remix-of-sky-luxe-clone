@@ -559,6 +559,16 @@ const NovoPagamentoForm = () => {
                   <Input placeholder="(11) 99999-9999" value={p.telefone || ""} onChange={(e) => updatePassageiro(idx, "telefone", e.target.value)} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Assento</Label>
+                  <Input placeholder="Ex: 14A" value={(p as any).assento || ""} onChange={(e) => updatePassageiro(idx, "assento", e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Seção</Label>
+                  <Input placeholder="Ex: A, B, C" value={(p as any).secao || ""} onChange={(e) => updatePassageiro(idx, "secao", e.target.value)} />
+                </div>
+              </div>
               <div>
                 <Label className="text-xs">E-mail</Label>
                 <Input placeholder="email@exemplo.com" value={p.email || ""} onChange={(e) => updatePassageiro(idx, "email", e.target.value)} />
