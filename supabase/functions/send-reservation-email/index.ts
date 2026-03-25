@@ -242,7 +242,8 @@ const buildTripDetailsEmail = (body: any) => {
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
           <tr>
             <td style="text-align:center;padding:8px 0;">
-              <div style="font-size:32px;font-weight:900;color:${gray800};letter-spacing:3px;">${origem || "—"}</div>
+              <div style="font-size:14px;font-weight:700;color:${gray600};">${getAirportName(origem)}</div>
+              <div style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:3px;">${origem || "—"}</div>
               <div style="font-size:11px;color:${gray400};margin-top:2px;">Origem</div>
             </td>
             <td style="text-align:center;padding:8px 16px;">
@@ -250,7 +251,8 @@ const buildTripDetailsEmail = (body: any) => {
               <div style="font-size:10px;color:${gray400};margin-top:2px;">${hasVolta ? "Ida e Volta" : "Somente Ida"}</div>
             </td>
             <td style="text-align:center;padding:8px 0;">
-              <div style="font-size:32px;font-weight:900;color:${gray800};letter-spacing:3px;">${destino || "—"}</div>
+              <div style="font-size:14px;font-weight:700;color:${gray600};">${getAirportName(destino)}</div>
+              <div style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:3px;">${destino || "—"}</div>
               <div style="font-size:11px;color:${gray400};margin-top:2px;">Destino</div>
             </td>
           </tr>
