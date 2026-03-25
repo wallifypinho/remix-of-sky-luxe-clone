@@ -1,4 +1,4 @@
-import { ClipboardList, CreditCard, Users, Zap } from "lucide-react";
+import { ClipboardList, CreditCard, Users, Zap, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways";
