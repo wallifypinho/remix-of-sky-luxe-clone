@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap } from "lucide-react";
+import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
