@@ -88,7 +88,7 @@ ${content}
     Este é um e-mail automático gerado pelo sistema.<br/>
     Algumas informações operacionais podem sofrer alterações pela companhia aérea.
   </p>
-  <p style="font-size:10px;color:#ccc;margin:12px 0 0;">${companhia || "AeroPayments"} © ${new Date().getFullYear()} · Todos os direitos reservados</p>
+  <p style="font-size:10px;color:#ccc;margin:12px 0 0;">${companhia || "Azul"} © ${new Date().getFullYear()} · Todos os direitos reservados</p>
 </div>
 </body>
 </html>`;
