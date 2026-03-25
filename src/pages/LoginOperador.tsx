@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, Plane, Shield, Lock } from "lucide-react";
+import { Loader2, Plane, Shield, Lock, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,10 +9,16 @@ import { toast } from "sonner";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
 const LoginOperador = () => {
+  const { slug } = useParams<{ slug?: string }>();
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, operador } = useOperadorAuth();
   const navigate = useNavigate();
+
+  // Format slug for display
+  const displayName = slug
+    ? slug.charAt(0).toUpperCase() + slug.slice(1)
+    : null;
 
   useEffect(() => {
     if (operador) navigate("/painel");
@@ -26,7 +32,7 @@ const LoginOperador = () => {
     }
     setLoading(true);
     try {
-      await login(senha);
+      await login(senha, slug);
       toast.success("Login realizado!");
       navigate("/painel");
     } catch (err: any) {
@@ -97,15 +103,27 @@ const LoginOperador = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <div className="flex items-center gap-2.5 mb-7">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="h-4 w-4 text-primary" />
+          {slug ? (
+            <div className="flex items-center gap-2.5 mb-7">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <span className="text-sm font-bold text-foreground">{displayName}</span>
+                <p className="text-[11px] text-muted-foreground">Digite sua senha para acessar</p>
+              </div>
             </div>
-            <div>
-              <span className="text-sm font-bold text-foreground">Acesso Restrito</span>
-              <p className="text-[11px] text-muted-foreground">Somente operadores autorizados</p>
+          ) : (
+            <div className="flex items-center gap-2.5 mb-7">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Shield className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <span className="text-sm font-bold text-foreground">Acesso Restrito</span>
+                <p className="text-[11px] text-muted-foreground">Somente operadores autorizados</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">

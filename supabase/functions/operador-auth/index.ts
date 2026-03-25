@@ -20,6 +20,10 @@ async function verifyPassword(password: string, storedHash: string, salt: string
   return hash === storedHash;
 }
 
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -34,13 +38,14 @@ Deno.serve(async (req) => {
 
     // LOGIN
     if (action === "login") {
-      const { senha } = params;
+      const { senha, slug } = params;
       if (!senha) {
         return new Response(JSON.stringify({ error: "Senha obrigatória" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      // Fetch active operadores
       const { data: operadores, error } = await supabase
         .from("operadores")
         .select("*")
@@ -52,8 +57,19 @@ Deno.serve(async (req) => {
         });
       }
 
+      // If slug provided, filter to only that operator
+      const candidates = slug
+        ? operadores.filter(op => slugify(op.nome) === slug)
+        : operadores;
+
+      if (candidates.length === 0) {
+        return new Response(JSON.stringify({ error: "Operador não encontrado" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       let operador = null;
-      for (const op of operadores) {
+      for (const op of candidates) {
         const parts = op.senha_hash.split(":");
         if (parts.length !== 2) continue;
         const valid = await verifyPassword(senha, parts[1], parts[0]);
@@ -113,6 +129,16 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Check if slug already exists
+      const newSlug = slugify(nome);
+      const { data: existing } = await supabase.from("operadores").select("id, nome").eq("status", "ativo");
+      const slugExists = (existing || []).some(op => slugify(op.nome) === newSlug);
+      if (slugExists) {
+        return new Response(JSON.stringify({ error: "Já existe um operador com este nome. Escolha um nome diferente." }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { hash, salt } = await hashPassword(senha);
       const senhaHash = `${salt}:${hash}`;
 
@@ -124,9 +150,7 @@ Deno.serve(async (req) => {
         status: "ativo",
       }).select("id, nome, email, perfil, status, created_at").single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       return new Response(JSON.stringify({ success: true, operador: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
