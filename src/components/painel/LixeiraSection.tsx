@@ -18,7 +18,7 @@ interface PagamentoLixeira {
   passageiros: any[];
 }
 
-const LixeiraSection = () => {
+const LixeiraSection = ({ operadorId, isAdmin }: { operadorId?: string; isAdmin?: boolean }) => {
   const [items, setItems] = useState<PagamentoLixeira[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
