@@ -136,7 +136,7 @@ const buildConfirmationEmail = (body: any) => {
     </tr>
   `).join("");
 
-  const subject = `✅ Reserva Confirmada - ${codigoReserva} | ${companhia || "AeroPayments"}`;
+  const subject = `✅ Reserva Confirmada - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
     ${emailHeader("Reserva Confirmada", "Sua solicitação foi recebida com sucesso", "✅")}
