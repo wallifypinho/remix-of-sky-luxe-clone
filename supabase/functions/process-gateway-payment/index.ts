@@ -36,114 +36,90 @@ function maskKey(value: string) {
   return `${value.substring(0, 6)}...${value.substring(value.length - 4)}`;
 }
 
-function isHuraSecretKey(value: string) {
-  return /^sk_(live|test)_/i.test(value.trim());
-}
-
-function isHuraPublicKey(value: string) {
-  return /^hurapay_(live|test)_/i.test(value.trim());
-}
-
 async function processHuraPay(body: GatewayRequest) {
   const url = "https://api.hurapayments.com.br/v1/payment-transaction/create";
-  const keyCandidates = uniqueKeys([body.secretKey, body.publicKey]);
-  const authCandidates = uniqueKeys([
-    ...keyCandidates.filter(isHuraSecretKey),
-    ...keyCandidates.filter((key) => !isHuraSecretKey(key)),
-  ]);
-  const publicKey = keyCandidates.find(isHuraPublicKey) || "";
 
-  console.log("[HuraPay] Auth candidates:", JSON.stringify(authCandidates.map(maskKey)));
-  if (publicKey) {
-    console.log("[HuraPay] Public key candidate:", maskKey(publicKey));
+  // Hura Pay uses Basic Auth: Base64(PUBLIC_KEY:SECRET_KEY)
+  let publicKey = body.publicKey?.trim() || "";
+  let secretKey = body.secretKey?.trim() || "";
+
+  // Auto-swap if keys are in wrong fields
+  if (/^sk_/i.test(publicKey) && /^hurapay_/i.test(secretKey)) {
+    [publicKey, secretKey] = [secretKey, publicKey];
   }
+
+  console.log("[HuraPay] Public key:", maskKey(publicKey));
+  console.log("[HuraPay] Secret key:", maskKey(secretKey));
+
+  // Encode Basic Auth: Base64(PUBLIC_KEY:SECRET_KEY)
+  const basicAuth = btoa(`${publicKey}:${secretKey}`);
+
+  const description = body.description || `Pagamento reserva ${body.codigoReserva || ""}`;
 
   const payload = {
     payment_method: "pix",
-    amount: body.amount,
-    description: body.description || `Pagamento reserva ${body.codigoReserva || ""}`,
+    amount: body.amount, // amount in cents from frontend
+    postback_url: "https://qhxwrjhbeoxamozcykdg.supabase.co/functions/v1/process-gateway-payment",
     customer: {
       name: body.customer.name,
       email: body.customer.email,
-      phone: body.customer.phone || "",
+      phone: (body.customer.phone || "").replace(/\D/g, ""),
       document: {
         type: "cpf",
         number: body.customer.cpf.replace(/\D/g, ""),
       },
     },
+    items: [
+      {
+        title: description,
+        quantity: 1,
+        unit_price: body.amount,
+      },
+    ],
     pix: {
       expiration_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
+    metadata: {
+      provider_name: "AeroPayments",
+      codigo_reserva: body.codigoReserva || "",
     },
   };
 
   console.log("[HuraPay] Calling API with payload:", JSON.stringify(payload));
 
-  const authAttempts = authCandidates.flatMap((key) => {
-    const optionalPublicHeaders = publicKey ? { "x-public-key": publicKey } : {};
-
-    return [
-      {
-        label: `Bearer ${maskKey(key)}`,
-        headers: { ...jsonHeaders, ...optionalPublicHeaders, "Authorization": `Bearer ${key}` },
-      },
-      {
-        label: `Authorization ${maskKey(key)}`,
-        headers: { ...jsonHeaders, ...optionalPublicHeaders, "Authorization": key },
-      },
-      {
-        label: `x-api-key ${maskKey(key)}`,
-        headers: { ...jsonHeaders, ...optionalPublicHeaders, "x-api-key": key },
-      },
-      {
-        label: `apikey ${maskKey(key)}`,
-        headers: { ...jsonHeaders, ...optionalPublicHeaders, "apikey": key },
-      },
-    ];
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Authorization": `Basic ${basicAuth}`,
+    },
+    body: JSON.stringify(payload),
   });
 
-  let lastAuthError: unknown = null;
+  const data = await response.json().catch(() => ({}));
 
-  for (const attempt of authAttempts) {
-    console.log("[HuraPay] Trying auth strategy:", attempt.label);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: attempt.headers,
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (response.ok) {
-      return parseHuraResponse(data);
-    }
-
-    if (response.status === 401) {
-      lastAuthError = data;
-      continue;
-    }
-
+  if (!response.ok) {
     console.error("[HuraPay] API error:", response.status, JSON.stringify(data));
+    if (response.status === 401) {
+      throw new Error(
+        "Hura Pay: autenticação recusada. Verifique se a Public Key e Secret Key estão corretas no painel Hura Pay."
+      );
+    }
     throw new Error(
       `Hura Pay retornou erro ${response.status}: ${data?.message || data?.error || JSON.stringify(data)}`
     );
   }
 
-  console.error("[HuraPay] All auth methods failed:", JSON.stringify(lastAuthError));
-  throw new Error(
-    "Hura Pay: autenticação recusada. Confira se a Secret Key começa com sk_live_ e a Public Key com hurapay_live_."
-  );
-}
-
-function parseHuraResponse(data: any) {
   console.log("[HuraPay] Success:", JSON.stringify(data));
+
   return {
     success: true,
     gateway: "hura-pay",
-    transactionId: data.id || data.transaction_id || data.payment_id,
-    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.code || data.pix?.copy_paste || null,
-    pixQrCodeUrl: data.pix?.qr_code_url || data.qr_code_url || null,
-    status: data.status || "pending",
+    transactionId: data.Id || data.id || data.transaction_id,
+    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.PixCode || null,
+    pixQrCodeUrl: data.pix?.qr_code_url || data.qr_code_url || data.PixQrCodeUrl || null,
+    status: data.Status || data.status || "PENDING",
     rawResponse: data,
   };
 }
