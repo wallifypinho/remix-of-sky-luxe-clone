@@ -51,6 +51,7 @@ const PainelPagamentos = () => {
     { id: "pagamentos", label: "Pagamentos", icon: CreditCard },
     ...(isAdmin ? [{ id: "operadores" as Tab, label: "Operadores", icon: Users }] : []),
     { id: "gateways", label: "Gateways", icon: Zap },
+    { id: "lixeira", label: "Lixeira", icon: Trash2 },
   ];
 
   return (
