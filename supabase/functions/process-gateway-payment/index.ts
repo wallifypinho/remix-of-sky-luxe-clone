@@ -10,7 +10,7 @@ interface GatewayRequest {
   gateway: "hura-pay" | "anubis-pay";
   secretKey: string;
   publicKey: string;
-  amount: number; // in cents
+  amount: number;
   customer: {
     name: string;
     email: string;
@@ -23,6 +23,9 @@ interface GatewayRequest {
 
 async function processHuraPay(body: GatewayRequest) {
   const url = "https://api.hurapayments.com.br/v1/payment-transaction/create";
+  const key = body.secretKey.trim();
+
+  console.log("[HuraPay] Using key prefix:", key.substring(0, 6) + "...");
 
   const payload = {
     payment_method: "pix",
@@ -44,18 +47,64 @@ async function processHuraPay(body: GatewayRequest) {
 
   console.log("[HuraPay] Calling API with payload:", JSON.stringify(payload));
 
+  // Try with the key as-is (some APIs expect sk_xxx directly)
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${body.secretKey}`,
+      "Accept": "application/json",
+      "Authorization": key,
     },
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json();
+  if (response.status === 401) {
+    // Try with Bearer prefix
+    console.log("[HuraPay] Direct key failed, trying Bearer format...");
+    const response2 = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": `Bearer ${key}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
+    if (response2.status === 401) {
+      // Try with x-api-key header
+      console.log("[HuraPay] Bearer failed, trying x-api-key header...");
+      const response3 = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "x-api-key": key,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data3 = await response3.json().catch(() => ({}));
+      if (!response3.ok) {
+        console.error("[HuraPay] All auth methods failed:", response3.status, JSON.stringify(data3));
+        throw new Error(
+          `Hura Pay: Chave de API inválida ou formato incorreto. Verifique sua Secret Key na aba Gateways. (Status: ${response3.status})`
+        );
+      }
+      return parseHuraResponse(data3);
+    }
+
+    const data2 = await response2.json().catch(() => ({}));
+    if (!response2.ok) {
+      console.error("[HuraPay] Bearer auth failed:", response2.status, JSON.stringify(data2));
+      throw new Error(
+        `Hura Pay: Chave de API inválida. Verifique sua Secret Key. (Status: ${response2.status})`
+      );
+    }
+    return parseHuraResponse(data2);
+  }
+
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     console.error("[HuraPay] API error:", response.status, JSON.stringify(data));
     throw new Error(
@@ -63,14 +112,16 @@ async function processHuraPay(body: GatewayRequest) {
     );
   }
 
-  console.log("[HuraPay] Success:", JSON.stringify(data));
+  return parseHuraResponse(data);
+}
 
-  // Extract PIX data from response
+function parseHuraResponse(data: any) {
+  console.log("[HuraPay] Success:", JSON.stringify(data));
   return {
     success: true,
     gateway: "hura-pay",
     transactionId: data.id || data.transaction_id || data.payment_id,
-    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.code || null,
+    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.code || data.pix?.copy_paste || null,
     pixQrCodeUrl: data.pix?.qr_code_url || data.qr_code_url || null,
     status: data.status || "pending",
     rawResponse: data,
@@ -79,6 +130,7 @@ async function processHuraPay(body: GatewayRequest) {
 
 async function processAnubisPay(body: GatewayRequest) {
   const url = "https://api.anubispay.com.br/v1/transaction/create";
+  const key = body.secretKey.trim();
 
   const payload = {
     payment_method: "pix",
@@ -101,13 +153,13 @@ async function processAnubisPay(body: GatewayRequest) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${body.secretKey}`,
+      "Accept": "application/json",
+      "Authorization": `Bearer ${key}`,
     },
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     console.error("[AnubisPay] API error:", response.status, JSON.stringify(data));
@@ -122,7 +174,7 @@ async function processAnubisPay(body: GatewayRequest) {
     success: true,
     gateway: "anubis-pay",
     transactionId: data.id || data.transaction_id || data.payment_id,
-    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.code || null,
+    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.code || data.pix?.copy_paste || null,
     pixQrCodeUrl: data.pix?.qr_code_url || data.qr_code_url || null,
     status: data.status || "pending",
     rawResponse: data,
@@ -144,9 +196,9 @@ serve(async (req) => {
       );
     }
 
-    if (!body.secretKey) {
+    if (!body.secretKey || body.secretKey.trim().length < 5) {
       return new Response(
-        JSON.stringify({ success: false, error: "Secret Key não fornecida" }),
+        JSON.stringify({ success: false, error: "Secret Key inválida ou não configurada. Vá na aba Gateways e configure sua chave." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
