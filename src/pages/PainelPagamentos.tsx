@@ -9,6 +9,7 @@ import LinksCadastro from "@/components/painel/LinksCadastro";
 import NovoPagamentoForm from "@/components/painel/NovoPagamentoForm";
 import OperadoresSection from "@/components/painel/OperadoresSection";
 import GatewaysSection from "@/components/painel/GatewaysSection";
+import LixeiraSection from "@/components/painel/LixeiraSection";
 import PedidosSection from "@/components/painel/PedidosSection";
 import PaymentLinksBlock from "@/components/painel/PaymentLinksBlock";
 import BottomNav from "@/components/painel/BottomNav";
