@@ -61,6 +61,7 @@ const PaymentLinksBlock = () => {
       const { data, error } = await supabase
         .from("pagamentos")
         .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix, numero_voo, classe, ida_data, ida_partida, ida_chegada, volta_data, volta_partida, volta_chegada, whatsapp_operador")
+        .neq("status", "lixeira")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
