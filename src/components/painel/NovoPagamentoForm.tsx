@@ -18,7 +18,6 @@ const NovoPagamentoForm = () => {
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
   const [gatewaySelected, setGatewaySelected] = useState("");
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
-  const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [numPassageiros, setNumPassageiros] = useState(1);
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
   const [passageiros, setPassageiros] = useState<Partial<Passageiro>[]>([{}]);
