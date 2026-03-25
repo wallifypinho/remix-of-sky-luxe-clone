@@ -14,9 +14,13 @@ const getBaseUrl = () => {
   return "";
 };
 
-const buildLinks = (operadorId?: string): LinkCadastro[] => {
+const slugify = (str: string) =>
+  str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+const buildLinks = (operadorId?: string, operadorNome?: string): LinkCadastro[] => {
   const base = getBaseUrl();
-  const opParam = operadorId ? `&oid=${operadorId}` : "";
+  const slug = operadorNome ? slugify(operadorNome) : "";
+  const opParam = slug ? `&oid=${slug}` : operadorId ? `&oid=${operadorId}` : "";
   return [
     {
       companhia: "Azul",
