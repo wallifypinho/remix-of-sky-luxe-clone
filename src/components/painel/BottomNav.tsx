@@ -1,7 +1,7 @@
-import { ClipboardList, CreditCard, Users, Zap } from "lucide-react";
+import { ClipboardList, CreditCard, Users, Zap, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways";
+type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways" | "lixeira";
 
 interface BottomNavProps {
   activeTab: Tab;
@@ -16,6 +16,7 @@ const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNav
     { id: "pagamentos", icon: CreditCard, label: "Pagamentos" },
     ...(isAdmin ? [{ id: "operadores" as Tab, icon: Users, label: "Operadores" }] : []),
     { id: "gateways", icon: Zap, label: "Gateway" },
+    { id: "lixeira", icon: Trash2, label: "Lixeira" },
   ];
 
   return (
