@@ -176,6 +176,8 @@ const NovoPagamentoForm = () => {
         sexo: p.sexo || "",
         telefone: p.telefone || "",
         email: p.email || "",
+        assento: p.assento || "",
+        secao: p.secao || "",
       }));
       setPassageiros(newPassageiros);
       setNumPassageiros(newPassageiros.length);
