@@ -547,6 +547,24 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get or create unsubscribe token for recipient
+    const { data: existingToken } = await supabase
+      .from("email_unsubscribe_tokens")
+      .select("token")
+      .eq("email", recipientEmail)
+      .is("used_at", null)
+      .limit(1)
+      .single();
+
+    let unsubscribeToken = existingToken?.token;
+    if (!unsubscribeToken) {
+      unsubscribeToken = crypto.randomUUID();
+      await supabase.from("email_unsubscribe_tokens").insert({
+        email: recipientEmail,
+        token: unsubscribeToken,
+      });
+    }
+
     // Enqueue to transactional_emails queue
     const { error: enqueueError } = await supabase.rpc("enqueue_email", {
       queue_name: "transactional_emails",
@@ -561,6 +579,7 @@ serve(async (req) => {
         label: `reservation-${type}`,
         idempotency_key: idempotencyKey,
         message_id: messageId,
+        unsubscribe_token: unsubscribeToken,
       },
     });
 
