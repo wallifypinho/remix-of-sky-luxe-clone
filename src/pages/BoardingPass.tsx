@@ -368,33 +368,34 @@ const BoardingPass = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col pb-6"
+              className="flex-1 flex items-center justify-center py-6 px-4"
             >
-              {/* ── Blue header area ── */}
-              <div className="px-5 pt-8 pb-10">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm text-white/80 font-semibold">
-                    {data.companhia || "Azul"} ✈
-                  </span>
-                  <div className="text-right">
-                    <div className="text-[11px] text-white/50 uppercase tracking-[0.2em] font-bold leading-tight">
-                      {(data.companhia || "AZUL LINHAS AÉREAS").toUpperCase()}
+              {/* ── SINGLE UNIFIED CARD ── */}
+              <div className="w-full max-w-[430px] rounded-[28px] overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.25),0_4px_16px_rgba(0,0,0,0.1)]">
+
+                {/* ── HEADER AZUL ── */}
+                <div style={{ background: "linear-gradient(135deg, #003FBF 0%, #0033A0 50%, #002080 100%)" }} className="px-6 pt-7 pb-8">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-sm text-white/80 font-semibold">
+                      {data.companhia || "Azul"} ✈
+                    </span>
+                    <div className="text-right">
+                      <div className="text-[11px] text-white/50 uppercase tracking-[0.2em] font-bold leading-tight">
+                        {(data.companhia || "AZUL LINHAS AÉREAS").toUpperCase()}
+                      </div>
+                      <div className="text-base font-extrabold text-white italic tracking-wide">{classeDisplay}</div>
                     </div>
-                    <div className="text-base font-extrabold text-white italic tracking-wide">{classeDisplay}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold mb-1">Cliente</div>
+                    <div className="text-[22px] font-extrabold text-white uppercase tracking-wide leading-tight">
+                      {mainPassenger.nomeCompleto || mainPassenger.nome || "—"}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold mb-1">Cliente</div>
-                  <div className="text-[22px] font-extrabold text-white uppercase tracking-wide leading-tight">
-                    {mainPassenger.nomeCompleto || mainPassenger.nome || "—"}
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Floating white card ── */}
-              <div className="mx-4 -mt-3 rounded-[24px] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
-                <div className="px-6 pt-7 pb-5">
+                {/* ── CORPO BRANCO ── */}
+                <div className="bg-white px-6 pt-7 pb-5">
 
                   {/* Route */}
                   <div className="flex items-start justify-between mb-6">
@@ -448,7 +449,7 @@ const BoardingPass = () => {
                       </div>
                       <div className="grid grid-cols-3 gap-3 text-xs">
                         <div>
-                          <div className="text-[10px] text-gray-400 uppercase font-semibold">Dados</div>
+                          <div className="text-[10px] text-gray-400 uppercase font-semibold">Data</div>
                           <div className="font-bold text-gray-900 text-sm mt-0.5">{data.volta_data}</div>
                         </div>
                         <div>
@@ -464,15 +465,15 @@ const BoardingPass = () => {
                   )}
                 </div>
 
-                {/* Ticket tear divider */}
-                <div className="relative flex items-center px-0">
+                {/* ── Ticket tear divider ── */}
+                <div className="relative flex items-center bg-white px-0">
                   <div className="absolute -left-3 w-6 h-6 rounded-full z-10" style={{ background: "linear-gradient(145deg, #003FBF, #0033A0)" }} />
                   <div className="flex-1 border-t-2 border-dashed border-gray-200 mx-4" />
                   <div className="absolute -right-3 w-6 h-6 rounded-full z-10" style={{ background: "linear-gradient(145deg, #003FBF, #0033A0)" }} />
                 </div>
 
-                {/* Bottom section of card */}
-                <div className="px-6 pt-5 pb-6">
+                {/* ── Bottom section (still white) ── */}
+                <div className="bg-white px-6 pt-5 pb-5">
                   {/* Seat + Embarque prioritário */}
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex gap-8">
@@ -494,10 +495,10 @@ const BoardingPass = () => {
                   {/* More details */}
                   <button
                     onClick={() => setDetalhesAbertos(!detalhesAbertos)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-gray-50/50 py-3 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-gray-50/50 py-3 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors mb-4"
                   >
                     <Info className="h-4 w-4" />
-                    {detalhesAbertos ? "Fechar detalhes" : "Mais"}
+                    {detalhesAbertos ? "Fechar detalhes" : "Mais detalhes"}
                     {detalhesAbertos ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
 
@@ -507,7 +508,7 @@ const BoardingPass = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden mt-4"
+                        className="overflow-hidden mb-4"
                       >
                         <div className="space-y-3">
                           <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4">
@@ -590,72 +591,74 @@ const BoardingPass = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
-              </div>
 
-              {/* Notices + actions outside card, on blue bg */}
-              <div className="px-6 pt-5 space-y-3">
-                <div className="space-y-2">
-                  <p className="text-[10px] text-white/50 text-center leading-relaxed">
-                    Os assentos reservados podem ser disponibilizados a outros viajantes caso exceda o prazo de sua reserva.
-                  </p>
-                  <p className="text-[10px] text-white/50 text-center leading-relaxed">
-                    Os demais detalhes estarão informados após a emissão. Caso tenha dúvidas, consulte o atendente.
-                  </p>
-                </div>
-
-                {/* Payment pending */}
-                {isPendente && (
-                  <button
-                    onClick={() => { setShowPayment(true); setDetalhesAbertos(false); }}
-                    className="w-full rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 py-4 flex items-center justify-center gap-2 hover:bg-white/15 transition-colors active:scale-[0.98]"
-                  >
-                    <AlertTriangle className="h-4 w-4 text-amber-300" />
-                    <span className="text-sm font-bold text-white">Pendência no pagamento</span>
-                  </button>
-                )}
-
-                {data.status === "pago" && (
-                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-4 text-center">
-                    <span className="text-white font-bold text-sm">✅ Pagamento confirmado!</span>
-                  </div>
-                )}
-
-                {data.status === "taxa_paga" && (
-                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-4 text-center">
-                    <span className="text-white font-bold text-sm">✅ Todos os pagamentos confirmados!</span>
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="space-y-3 pt-1">
-                  <Button
-                    variant="outline"
-                    onClick={handleDownloadPDF}
-                    disabled={generatingPdf}
-                    className="w-full h-12 text-sm font-bold rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:text-white"
-                  >
-                    {generatingPdf ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando bilhete...</>
-                    ) : (
-                      <><Download className="h-4 w-4 mr-2" /> Baixar Bilhete em PDF</>
-                    )}
-                  </Button>
-
-                  {data.whatsapp_operador && (
-                    <Button
-                      onClick={handleWhatsApp}
-                      className="w-full h-12 text-sm font-bold rounded-2xl bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg shadow-[#25D366]/20 border-0"
+                  {/* Payment pending */}
+                  {isPendente && (
+                    <button
+                      onClick={() => { setShowPayment(true); setDetalhesAbertos(false); }}
+                      className="w-full rounded-2xl bg-amber-50 border border-amber-200 py-4 flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors active:scale-[0.98] mb-4"
                     >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Falar no WhatsApp
-                    </Button>
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-bold text-amber-700">Pendência no pagamento</span>
+                    </button>
                   )}
+
+                  {data.status === "pago" && (
+                    <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-center mb-4">
+                      <span className="text-emerald-700 font-bold text-sm">✅ Pagamento confirmado!</span>
+                    </div>
+                  )}
+
+                  {data.status === "taxa_paga" && (
+                    <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-center mb-4">
+                      <span className="text-emerald-700 font-bold text-sm">✅ Todos os pagamentos confirmados!</span>
+                    </div>
+                  )}
+
+                  {/* Notices */}
+                  <div className="space-y-1.5 mb-4">
+                    <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+                      Os assentos reservados podem ser disponibilizados a outros viajantes caso exceda o prazo de sua reserva.
+                    </p>
+                    <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+                      Os demais detalhes estarão informados após a emissão. Caso tenha dúvidas, consulte o atendente.
+                    </p>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadPDF}
+                      disabled={generatingPdf}
+                      className="w-full h-12 text-sm font-bold rounded-2xl border-gray-200 text-gray-700 hover:bg-gray-50"
+                    >
+                      {generatingPdf ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando bilhete...</>
+                      ) : (
+                        <><Download className="h-4 w-4 mr-2" /> Baixar Bilhete em PDF</>
+                      )}
+                    </Button>
+
+                    {data.whatsapp_operador && (
+                      <Button
+                        onClick={handleWhatsApp}
+                        className="w-full h-12 text-sm font-bold rounded-2xl bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg shadow-[#25D366]/20 border-0"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Falar no WhatsApp
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
-                {/* Footer text */}
-                <div className="text-center pt-2 pb-4">
-                  <div className="text-[10px] text-white/40">Transação protegida · Dados criptografados</div>
+                {/* ── FOOTER AZUL ── */}
+                <div className="px-6 py-4 text-center" style={{ background: "linear-gradient(135deg, #0033A0, #002080)" }}>
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <Lock className="h-3 w-3 text-white/60" />
+                    <span className="text-[11px] font-bold text-white/80">Transação protegida</span>
+                  </div>
+                  <div className="text-[10px] text-white/40">Dados criptografados · SSL · LGPD</div>
                 </div>
               </div>
             </motion.div>
