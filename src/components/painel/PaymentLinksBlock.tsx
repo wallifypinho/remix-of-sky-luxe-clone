@@ -34,7 +34,7 @@ interface PagamentoLink {
   whatsapp_operador?: string | null;
 }
 
-const PaymentLinksBlock = () => {
+const PaymentLinksBlock = ({ operadorId, isAdmin }: { operadorId?: string; isAdmin?: boolean }) => {
   const [links, setLinks] = useState<PagamentoLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
