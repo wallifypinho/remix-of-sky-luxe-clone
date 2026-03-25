@@ -554,6 +554,35 @@ const NovoPagamentoForm = () => {
         </div>
       </div>
 
+      {/* Gateway selector - shown when gateway is selected */}
+      {metodoPagamento === "gateway" && (
+        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <div className="text-xs font-semibold text-primary flex items-center gap-1">⚡ Configuração do Gateway</div>
+          <div>
+            <Label className="text-xs">Gateway</Label>
+            <Select value={gatewaySelected} onValueChange={setGatewaySelected}>
+              <SelectTrigger><SelectValue placeholder="Selecione o gateway" /></SelectTrigger>
+              <SelectContent>
+                {GATEWAYS_DISPONIVEIS.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Public Key</Label>
+              <Input type="password" placeholder="pk_live_..." value={gatewayPublicKey} onChange={(e) => setGatewayPublicKey(e.target.value)} className="font-mono text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Secret Key *</Label>
+              <Input type="password" placeholder="sk_live_..." value={gatewaySecretKey} onChange={(e) => setGatewaySecretKey(e.target.value)} className="font-mono text-xs" />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground">As chaves serão usadas para gerar o PIX automaticamente via API do gateway.</p>
+        </div>
+      )}
+
       {/* N° de Passageiros */}
       <div className="mb-5">
         <Label className="text-xs font-medium mb-2 flex items-center gap-1">
