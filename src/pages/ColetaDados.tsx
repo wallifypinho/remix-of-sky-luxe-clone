@@ -34,6 +34,27 @@ const ColetaDados = () => {
   const [codigoReserva, setCodigoReserva] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Resolve slug-based oid to UUID
+  useEffect(() => {
+    if (!oidParam) return;
+    // If it's already a UUID, use directly
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(oidParam)) {
+      setOperadorId(oidParam);
+      return;
+    }
+    // Otherwise resolve slug to UUID
+    const resolve = async () => {
+      const { data } = await supabase.from("operadores").select("id, nome").limit(100);
+      if (data) {
+        const slugify = (s: string) =>
+          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        const match = data.find(op => slugify(op.nome) === oidParam);
+        if (match) setOperadorId(match.id);
+      }
+    };
+    resolve();
+  }, [oidParam]);
+
   const totalPassageiros = counts.adultos + counts.criancas + counts.bebes;
 
   const handleCountsChange = (newCounts: typeof counts) => {
