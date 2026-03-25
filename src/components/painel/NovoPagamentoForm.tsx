@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Plus, Minus, Upload, ClipboardPaste, ChevronUp, ChevronDown, X, Loader2, Eye, ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +13,8 @@ import type { Passageiro } from "@/types/pagamento";
 import { useGatewayStore } from "@/stores/gatewayStore";
 
 const NovoPagamentoForm = () => {
-  const activeGateways = useGatewayStore((s) => s.gateways.filter((g) => g.ativo && g.secretKey));
   const allGateways = useGatewayStore((s) => s.gateways);
+  const activeGateways = useMemo(() => allGateways.filter((g) => g.ativo && g.secretKey), [allGateways]);
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
   const [gatewaySelected, setGatewaySelected] = useState("");
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
