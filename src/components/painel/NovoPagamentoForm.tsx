@@ -282,6 +282,60 @@ const NovoPagamentoForm = () => {
       toast.error("Informe o código PIX");
       return;
     }
+    if (metodoPagamento === "gateway" && !gatewaySelected) {
+      toast.error("Selecione um gateway de pagamento");
+      return;
+    }
+    if (metodoPagamento === "gateway" && !gatewaySecretKey) {
+      toast.error("Informe a Secret Key do gateway");
+      return;
+    }
+
+    let pixCodeFinal = codigoPix;
+
+    // If gateway, call the edge function to generate PIX via gateway
+    if (metodoPagamento === "gateway") {
+      setIsProcessingGateway(true);
+      try {
+        const mainPax = passageiros[0] || {};
+        const amountCents = Math.round(parseFloat(valor.replace(/[^\d.,]/g, "").replace(",", ".")) * 100);
+        
+        const { data: gwResult, error: gwError } = await supabase.functions.invoke("process-gateway-payment", {
+          body: {
+            gateway: gatewaySelected,
+            secretKey: gatewaySecretKey,
+            publicKey: gatewayPublicKey,
+            amount: amountCents,
+            customer: {
+              name: mainPax.nomeCompleto || "Cliente",
+              email: mainPax.email || "",
+              cpf: mainPax.cpfDocumento || "",
+              phone: mainPax.telefone || "",
+            },
+            description: descricao || `Reserva ${codReserva}`,
+            codigoReserva: codReserva,
+          },
+        });
+
+        if (gwError) throw gwError;
+        if (!gwResult?.success) throw new Error(gwResult?.error || "Erro ao processar gateway");
+
+        pixCodeFinal = gwResult.pixCode || gwResult.rawResponse?.pix?.qr_code || "";
+        if (!pixCodeFinal) {
+          toast.warning("Gateway processado mas código PIX não retornado. Verifique a resposta.");
+          console.log("Gateway raw response:", gwResult.rawResponse);
+        } else {
+          toast.success(`Pagamento gerado via ${gatewaySelected === "hura-pay" ? "Hura Pay" : "Anubis Pay"}!`);
+        }
+      } catch (err: any) {
+        console.error("Gateway error:", err);
+        toast.error("Erro no gateway: " + (err.message || "Tente novamente"));
+        setIsProcessingGateway(false);
+        return;
+      } finally {
+        setIsProcessingGateway(false);
+      }
+    }
 
     try {
       const { data, error } = await supabase
@@ -303,7 +357,7 @@ const NovoPagamentoForm = () => {
           codigo_reserva: codReserva,
           valor,
           whatsapp_cliente: whatsappCliente,
-          codigo_pix: codigoPix,
+          codigo_pix: pixCodeFinal || null,
           metodo_pagamento: metodoPagamento,
           status: "pendente",
         })
