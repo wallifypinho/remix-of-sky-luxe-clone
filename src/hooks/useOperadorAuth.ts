@@ -11,11 +11,18 @@ export interface Operador {
 
 const STORAGE_KEY = "operador_session";
 
-function getStoredSession(): { operador: Operador; sessionToken: string } | null {
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function getStoredSession(): { operador: Operador; sessionToken: string; loginAt: number } | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.loginAt || Date.now() - parsed.loginAt > SESSION_TTL_MS) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -41,7 +48,7 @@ export function useOperadorAuth() {
     if (error) throw new Error("Erro de conexão");
     if (!data?.success) throw new Error(data?.error || "Login falhou");
 
-    const session = { operador: data.operador, sessionToken: data.sessionToken };
+    const session = { operador: data.operador, sessionToken: data.sessionToken, loginAt: Date.now() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     setOperador(data.operador);
     return data.operador;
