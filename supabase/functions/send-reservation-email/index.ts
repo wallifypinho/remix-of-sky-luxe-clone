@@ -393,9 +393,15 @@ const generateBoardingCard = (p: {
     <div style="padding:20px 24px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
         <tr>
-          <td style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:2px;">${p.origem || "—"}</td>
+          <td>
+            <div style="font-size:13px;font-weight:700;color:${gray600};">${getAirportName(p.origem)}</div>
+            <div style="font-size:24px;font-weight:900;color:${gray800};letter-spacing:2px;">${p.origem || "—"}</div>
+          </td>
           <td style="text-align:center;color:${brandColor};font-size:18px;padding:0 12px;">→ ✈ →</td>
-          <td style="font-size:28px;font-weight:900;color:${gray800};letter-spacing:2px;text-align:right;">${p.destino || "—"}</td>
+          <td style="text-align:right;">
+            <div style="font-size:13px;font-weight:700;color:${gray600};text-align:right;">${getAirportName(p.destino)}</div>
+            <div style="font-size:24px;font-weight:900;color:${gray800};letter-spacing:2px;text-align:right;">${p.destino || "—"}</div>
+          </td>
         </tr>
       </table>
       <div style="border-top:1px dashed #e0e0e0;padding-top:12px;margin-bottom:12px;">
