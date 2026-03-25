@@ -121,7 +121,7 @@ const BoardingPass = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 text-white animate-spin" />
+          <Loader2 className="h-8 w-8 text-primary animate-spin" />
           <p className="text-white/60 text-sm">Carregando bilhete...</p>
         </div>
       </div>
