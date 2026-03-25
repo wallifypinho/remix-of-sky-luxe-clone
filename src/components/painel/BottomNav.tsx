@@ -1,7 +1,7 @@
 import { ClipboardList, CreditCard, Users, Zap, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways";
+type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways" | "lixeira";
 
 interface BottomNavProps {
   activeTab: Tab;
