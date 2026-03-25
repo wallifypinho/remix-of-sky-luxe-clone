@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { generateBoardingPassPDF } from "@/lib/generateBoardingPassPDF";
-import { getAirportName } from "@/lib/airportCodes";
+import { getAirportName, getCityName } from "@/lib/airportCodes";
 
 interface PagamentoData {
   id: string;
@@ -398,7 +398,7 @@ const BoardingPass = () => {
                   {/* Route */}
                   <div className="flex items-start justify-between mb-6">
                     <div>
-                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.origem)}</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getCityName(data.origem)}</div>
                       <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.origem || "—"}</div>
                       <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Origem</div>
                     </div>
@@ -407,7 +407,7 @@ const BoardingPass = () => {
                       <div className="text-[10px] text-gray-400 mt-1.5 font-medium">Voo {data.numero_voo || "—"}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.destino)}</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getCityName(data.destino)}</div>
                       <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.destino || "—"}</div>
                       <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Destino</div>
                     </div>
