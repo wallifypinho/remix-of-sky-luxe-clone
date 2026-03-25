@@ -10,17 +10,14 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Passageiro } from "@/types/pagamento";
-
-const GATEWAYS_DISPONIVEIS = [
-  { id: "hura-pay", nome: "Hura Pay" },
-  { id: "anubis-pay", nome: "Anubis Pay" },
-];
+import { useGatewayStore } from "@/stores/gatewayStore";
 
 const NovoPagamentoForm = () => {
+  const activeGateways = useGatewayStore((s) => s.gateways.filter((g) => g.ativo && g.secretKey));
+  const allGateways = useGatewayStore((s) => s.gateways);
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
   const [gatewaySelected, setGatewaySelected] = useState("");
-  const [gatewaySecretKey, setGatewaySecretKey] = useState("");
-  const [gatewayPublicKey, setGatewayPublicKey] = useState("");
+  const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [numPassageiros, setNumPassageiros] = useState(1);
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
