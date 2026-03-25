@@ -115,7 +115,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          email: string
+          email?: string
           id?: string
           nome: string
           perfil?: string
@@ -152,6 +152,7 @@ export type Database = {
           ida_partida: string
           metodo_pagamento: string
           numero_voo: string
+          operador_id: string | null
           origem: string
           passageiros: Json
           status: string
@@ -177,6 +178,7 @@ export type Database = {
           ida_partida?: string
           metodo_pagamento?: string
           numero_voo?: string
+          operador_id?: string | null
           origem?: string
           passageiros?: Json
           status?: string
@@ -202,6 +204,7 @@ export type Database = {
           ida_partida?: string
           metodo_pagamento?: string
           numero_voo?: string
+          operador_id?: string | null
           origem?: string
           passageiros?: Json
           status?: string
@@ -225,6 +228,7 @@ export type Database = {
           criancas: number
           id: string
           metodo_pagamento: string
+          operador_id: string | null
           passageiros: Json
           status: string
           whatsapp_operador: string | null
@@ -238,6 +242,7 @@ export type Database = {
           criancas?: number
           id?: string
           metodo_pagamento?: string
+          operador_id?: string | null
           passageiros?: Json
           status?: string
           whatsapp_operador?: string | null
@@ -251,6 +256,7 @@ export type Database = {
           criancas?: number
           id?: string
           metodo_pagamento?: string
+          operador_id?: string | null
           passageiros?: Json
           status?: string
           whatsapp_operador?: string | null
