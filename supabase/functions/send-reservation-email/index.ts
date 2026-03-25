@@ -6,6 +6,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Mapa de siglas IATA → nome completo
+const AIRPORT_NAMES: Record<string, string> = {
+  GRU: "São Paulo (Guarulhos)", CGH: "São Paulo (Congonhas)", VCP: "Campinas (Viracopos)",
+  GIG: "Rio de Janeiro (Galeão)", SDU: "Rio de Janeiro (Santos Dumont)", BSB: "Brasília",
+  CNF: "Belo Horizonte (Confins)", PLU: "Belo Horizonte (Pampulha)", SSA: "Salvador",
+  REC: "Recife", FOR: "Fortaleza", MAO: "Manaus", BEL: "Belém", CWB: "Curitiba",
+  POA: "Porto Alegre", FLN: "Florianópolis", NAT: "Natal", MCZ: "Maceió", AJU: "Aracaju",
+  SLZ: "São Luís", THE: "Teresina", CGB: "Cuiabá", CGR: "Campo Grande", GYN: "Goiânia",
+  VIX: "Vitória", JPA: "João Pessoa", PMW: "Palmas", PVH: "Porto Velho", MCP: "Macapá",
+  RBR: "Rio Branco", BVB: "Boa Vista", IGU: "Foz do Iguaçu", NVT: "Navegantes",
+  JOI: "Joinville", LDB: "Londrina", MGF: "Maringá", UDI: "Uberlândia", RAO: "Ribeirão Preto",
+  SJP: "São José do Rio Preto", BAU: "Bauru", IOS: "Ilhéus", BPS: "Porto Seguro",
+  CPV: "Campina Grande", PNZ: "Petrolina", JDO: "Juazeiro do Norte", IMP: "Imperatriz",
+  STM: "Santarém", CKS: "Carajás", MOC: "Montes Claros", CFB: "Cabo Frio",
+  MIA: "Miami", JFK: "Nova York (JFK)", EWR: "Nova York (Newark)", LAX: "Los Angeles",
+  ORD: "Chicago", MCO: "Orlando", FLL: "Fort Lauderdale", ATL: "Atlanta",
+  LHR: "Londres (Heathrow)", CDG: "Paris (Charles de Gaulle)", FCO: "Roma (Fiumicino)",
+  MAD: "Madrid", BCN: "Barcelona", LIS: "Lisboa", OPO: "Porto", AMS: "Amsterdã",
+  FRA: "Frankfurt", DXB: "Dubai", DOH: "Doha", IST: "Istambul", MEX: "Cidade do México",
+  SCL: "Santiago", EZE: "Buenos Aires (Ezeiza)", BOG: "Bogotá", LIM: "Lima",
+  MVD: "Montevidéu", ASU: "Assunção", PTY: "Cidade do Panamá", CUN: "Cancún",
+};
+
+const getAirportName = (code: string): string => {
+  if (!code) return "—";
+  return AIRPORT_NAMES[code.trim().toUpperCase()] || code;
+};
+
+const airportDisplay = (code: string): string => {
+  const name = getAirportName(code);
+  return name === code ? code : `${name} (${code})`;
+};
+
 const maskCpf = (cpf: string): string => {
   if (!cpf) return "";
   const clean = cpf.replace(/\D/g, "");
