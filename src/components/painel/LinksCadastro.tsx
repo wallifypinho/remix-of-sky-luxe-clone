@@ -31,7 +31,7 @@ const linksDefault: LinkCadastro[] = [
   },
   {
     companhia: "LATAM",
-    url: `${getBaseUrl()}/coleta-dados?airline=latam`,
+    url: `${getBaseUrl()}/cadastro?airline=latam`,
     accent: "hsl(0, 80%, 55%)",
     bg: "hsl(0, 100%, 97%)",
     icon: "🔴",

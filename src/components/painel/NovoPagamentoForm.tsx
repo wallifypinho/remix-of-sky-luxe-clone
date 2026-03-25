@@ -433,7 +433,7 @@ const NovoPagamentoForm = () => {
     }
   };
 
-  const generatedLink = generatedToken ? `${window.location.origin}/boarding-pass?token=${generatedToken}` : null;
+  const generatedLink = generatedToken ? `${window.location.origin}/pagamento?token=${generatedToken}` : null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
