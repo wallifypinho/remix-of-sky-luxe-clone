@@ -152,6 +152,7 @@ const PainelPagamentos = () => {
 
           {activeTab === "operadores" && isAdmin && <OperadoresSection />}
           {activeTab === "gateways" && <GatewaysSection />}
+          {activeTab === "lixeira" && <LixeiraSection />}
         </motion.div>
       </main>
 

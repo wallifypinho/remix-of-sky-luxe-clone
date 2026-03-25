@@ -226,9 +226,9 @@ const PaymentLinksBlock = () => {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const { error } = await supabase.from("pagamentos").delete().eq("id", id);
+      const { error } = await supabase.from("pagamentos").update({ status: "lixeira" }).eq("id", id);
       if (error) throw error;
-      toast.success("Link removido!");
+      toast.success("Movido para a lixeira!");
       if (expandedId === id) setExpandedId(null);
       fetchLinks();
     } catch {
