@@ -50,9 +50,7 @@ const ColetaDados = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("reservas")
-        .insert({
+      const insertData: any = {
           adultos: counts.adultos,
           criancas: counts.criancas,
           bebes: counts.bebes,
@@ -60,7 +58,11 @@ const ColetaDados = () => {
           assentos: selectedSeats as any,
           metodo_pagamento: metodoPagamento,
           status: "pendente",
-        })
+        };
+      if (operadorId) insertData.operador_id = operadorId;
+      const { data, error } = await supabase
+        .from("reservas")
+        .insert(insertData)
         .select("codigo_reserva")
         .single();
 
