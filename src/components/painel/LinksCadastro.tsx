@@ -24,7 +24,7 @@ const linksDefault: LinkCadastro[] = [
   },
   {
     companhia: "GOL",
-    url: `${getBaseUrl()}/coleta-dados?airline=gol`,
+    url: `${getBaseUrl()}/cadastro?airline=gol`,
     accent: "hsl(25, 95%, 53%)",
     bg: "hsl(25, 100%, 97%)",
     icon: "🟠",
