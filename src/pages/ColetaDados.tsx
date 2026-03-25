@@ -23,7 +23,8 @@ const emptyPassageiro = (): PassageiroData => ({
 
 const ColetaDados = () => {
   const [searchParams] = useSearchParams();
-  const operadorId = searchParams.get("oid") || null;
+  const oidParam = searchParams.get("oid") || null;
+  const [operadorId, setOperadorId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [counts, setCounts] = useState({ adultos: 1, criancas: 0, bebes: 0 });
   const [passageiros, setPassageiros] = useState<PassageiroData[]>([emptyPassageiro()]);

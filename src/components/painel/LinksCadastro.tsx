@@ -46,9 +46,9 @@ const buildLinks = (operadorId?: string, operadorNome?: string): LinkCadastro[] 
   ];
 };
 
-const LinksCadastro = ({ operadorId }: { operadorId?: string }) => {
+const LinksCadastro = ({ operadorId, operadorNome }: { operadorId?: string; operadorNome?: string }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const linksDefault = buildLinks(operadorId);
+  const linksDefault = buildLinks(operadorId, operadorNome);
 
   const handleCopy = (url: string, companhia: string) => {
     navigator.clipboard.writeText(url);
