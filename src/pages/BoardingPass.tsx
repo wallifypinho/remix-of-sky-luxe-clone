@@ -165,7 +165,7 @@ const BoardingPass = () => {
               <div className="px-5 pt-8 pb-6">
                 <button
                   onClick={() => setShowPayment(false)}
-                  className="flex items-center gap-1.5 text-xs text-white/70 font-semibold hover:text-white transition-colors mb-5"
+                  className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:text-primary/80 transition-colors mb-5"
                 >
                   ← Voltar ao bilhete
                 </button>
