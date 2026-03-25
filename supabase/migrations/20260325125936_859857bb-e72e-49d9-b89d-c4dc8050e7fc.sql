@@ -1,0 +1,1 @@
+ALTER TABLE public.operadores DROP CONSTRAINT IF EXISTS operadores_email_key;
