@@ -15,7 +15,7 @@ import PaymentLinksBlock from "@/components/painel/PaymentLinksBlock";
 import BottomNav from "@/components/painel/BottomNav";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
-type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways";
+type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways" | "lixeira";
 
 const PainelPagamentos = () => {
   const { operador, loading, logout, isAdmin } = useOperadorAuth();
