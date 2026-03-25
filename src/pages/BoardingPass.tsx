@@ -627,19 +627,6 @@ const BoardingPass = () => {
 
                   {/* Action buttons */}
                   <div className="space-y-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleDownloadPDF}
-                      disabled={generatingPdf}
-                      className="w-full h-12 text-sm font-bold rounded-2xl border-gray-200 text-gray-700 hover:bg-gray-50"
-                    >
-                      {generatingPdf ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando bilhete...</>
-                      ) : (
-                        <><Download className="h-4 w-4 mr-2" /> Baixar Bilhete em PDF</>
-                      )}
-                    </Button>
-
                     {data.whatsapp_operador && (
                       <Button
                         onClick={handleWhatsApp}
