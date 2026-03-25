@@ -36,7 +36,7 @@ const StepSucesso = ({ codigo, passageiros, assentos, metodoPagamento, whatsappU
 
       {/* Code banner */}
       <div className="bg-success/10 border border-success/20 rounded-2xl p-4 text-center">
-        <p className="text-xs text-success font-semibold uppercase tracking-wider mb-1">Código da Reserva</p>
+        <p className="text-xs text-success font-semibold uppercase tracking-wider mb-1">Número do Pedido</p>
         <p className="text-2xl font-extrabold font-mono tracking-[0.15em] text-success">{codigo}</p>
       </div>
 

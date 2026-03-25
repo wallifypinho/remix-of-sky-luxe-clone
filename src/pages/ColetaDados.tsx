@@ -82,7 +82,7 @@ const ColetaDados = () => {
 
       const operadorWhatsApp = "5521982592219";
       const msg = encodeURIComponent(
-        `Olá! Acabei de realizar meu cadastro de reserva. Meu código é: ${codigo}`
+        `Olá! Acabei de realizar meu cadastro. Meu número de pedido é: ${codigo}`
       );
       setTimeout(() => {
         window.open(`https://wa.me/${operadorWhatsApp}?text=${msg}`, "_blank");
