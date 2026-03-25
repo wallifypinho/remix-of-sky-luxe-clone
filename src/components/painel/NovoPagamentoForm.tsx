@@ -555,29 +555,23 @@ const NovoPagamentoForm = () => {
       {/* Gateway selector - shown when gateway is selected */}
       {metodoPagamento === "gateway" && (
         <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-          <div className="text-xs font-semibold text-primary flex items-center gap-1">⚡ Configuração do Gateway</div>
-          <div>
-            <Label className="text-xs">Gateway</Label>
-            <Select value={gatewaySelected} onValueChange={setGatewaySelected}>
-              <SelectTrigger><SelectValue placeholder="Selecione o gateway" /></SelectTrigger>
-              <SelectContent>
-                {GATEWAYS_DISPONIVEIS.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="text-xs font-semibold text-primary flex items-center gap-1">⚡ Gateway de Pagamento</div>
+          {activeGateways.length === 0 ? (
+            <p className="text-xs text-destructive">Nenhum gateway ativo. Configure e ative um gateway na aba <strong>Gateways</strong>.</p>
+          ) : (
             <div>
-              <Label className="text-xs">Public Key</Label>
-              <Input type="password" placeholder="pk_live_..." value={gatewayPublicKey} onChange={(e) => setGatewayPublicKey(e.target.value)} className="font-mono text-xs" />
+              <Label className="text-xs">Selecione o gateway</Label>
+              <Select value={gatewaySelected} onValueChange={setGatewaySelected}>
+                <SelectTrigger><SelectValue placeholder="Escolha um gateway ativo" /></SelectTrigger>
+                <SelectContent>
+                  {activeGateways.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <Label className="text-xs">Secret Key *</Label>
-              <Input type="password" placeholder="sk_live_..." value={gatewaySecretKey} onChange={(e) => setGatewaySecretKey(e.target.value)} className="font-mono text-xs" />
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground">As chaves serão usadas para gerar o PIX automaticamente via API do gateway.</p>
+          )}
+          <p className="text-[10px] text-muted-foreground">O PIX será gerado automaticamente pela API do gateway selecionado.</p>
         </div>
       )}
 
