@@ -418,7 +418,8 @@ const NovoPagamentoForm = ({ operadorId }: { operadorId?: string }) => {
           codigo_pix: pixCodeFinal || null,
           metodo_pagamento: metodoPagamento,
           status: "pendente",
-        })
+          operador_id: operadorId || null,
+        } as any)
         .select("token")
         .single();
 
