@@ -38,9 +38,11 @@ const statusBadge = (status: string) => {
 
 interface PedidosSectionProps {
   onCountChange?: (count: number) => void;
+  operadorId?: string;
+  isAdmin?: boolean;
 }
 
-const PedidosSection = ({ onCountChange }: PedidosSectionProps) => {
+const PedidosSection = ({ onCountChange, operadorId, isAdmin }: PedidosSectionProps) => {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
