@@ -202,7 +202,10 @@ const BoardingPass = () => {
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
                         <div className="text-[10px] text-gray-400 uppercase font-semibold">Rota</div>
-                        <div className="font-bold text-gray-800 mt-0.5">{data.origem} → {data.destino}</div>
+                        <div className="font-bold text-gray-800 mt-0.5">
+                          {getAirportName(data.origem)} → {getAirportName(data.destino)}
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">{data.origem} → {data.destino}</div>
                       </div>
                       <div>
                         <div className="text-[10px] text-gray-400 uppercase font-semibold">Data</div>
