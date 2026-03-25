@@ -165,7 +165,7 @@ const BoardingPass = () => {
               <div className="px-5 pt-8 pb-6">
                 <button
                   onClick={() => setShowPayment(false)}
-                  className="flex items-center gap-1.5 text-xs text-white/70 font-semibold hover:text-white transition-colors mb-5"
+                  className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:text-primary/80 transition-colors mb-5"
                 >
                   ← Voltar ao bilhete
                 </button>
@@ -593,7 +593,7 @@ const BoardingPass = () => {
                       className="w-full rounded-2xl bg-amber-50 border border-amber-200 py-4 flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors active:scale-[0.98] mb-4"
                     >
                       <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-bold text-amber-700">Pendência no pagamento</span>
+                      <span className="text-sm font-bold text-amber-700">Reserva aguardando pagamento</span>
                     </button>
                   )}
 
