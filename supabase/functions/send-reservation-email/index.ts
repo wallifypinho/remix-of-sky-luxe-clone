@@ -93,9 +93,12 @@ ${content}
 </body>
 </html>`;
 
+const AZUL_LOGO_URL = "https://www.centralazul.site/azul-logo-email.jpg";
+
 const emailHeader = (title: string, subtitle: string, icon: string) => `
-<div style="background:linear-gradient(135deg,${brandColor},${brandDark});padding:36px 20px 28px;text-align:center;">
-  <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:0.5px;">${icon} ${title}</div>
+<div style="background:linear-gradient(135deg,${brandColor},${brandDark});padding:28px 20px 24px;text-align:center;">
+  <img src="${AZUL_LOGO_URL}" alt="Azul" style="width:160px;height:auto;margin:0 auto 16px;display:block;border-radius:8px;" />
+  <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:0.5px;">${icon} ${title}</div>
   ${subtitle ? `<div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px;">${subtitle}</div>` : ""}
 </div>`;
 
