@@ -11,9 +11,17 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Passageiro } from "@/types/pagamento";
 
+const GATEWAYS_DISPONIVEIS = [
+  { id: "hura-pay", nome: "Hura Pay" },
+  { id: "anubis-pay", nome: "Anubis Pay" },
+];
+
 const NovoPagamentoForm = () => {
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
-  const [numPassageiros, setNumPassageiros] = useState(1);
+  const [gatewaySelected, setGatewaySelected] = useState("");
+  const [gatewaySecretKey, setGatewaySecretKey] = useState("");
+  const [gatewayPublicKey, setGatewayPublicKey] = useState("");
+  const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
   const [passageiros, setPassageiros] = useState<Partial<Passageiro>[]>([{}]);
 
