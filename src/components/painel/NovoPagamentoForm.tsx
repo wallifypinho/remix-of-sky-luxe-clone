@@ -146,6 +146,27 @@ const NovoPagamentoForm = () => {
     });
   };
 
+  const looksLikeHuraSecretKey = (value?: string) => /^sk_(live|test)_/i.test((value || "").trim());
+  const looksLikeHuraPublicKey = (value?: string) => /^hurapay_(live|test)_/i.test((value || "").trim());
+
+  const normalizeGatewayCredentials = (gateway: { id: string; secretKey: string; publicKey: string }) => {
+    let secretKey = gateway.secretKey.trim();
+    let publicKey = gateway.publicKey.trim();
+
+    if (gateway.id === "hura-pay" && !looksLikeHuraSecretKey(secretKey) && looksLikeHuraSecretKey(publicKey)) {
+      [secretKey, publicKey] = [publicKey, secretKey];
+    }
+
+    return {
+      secretKey,
+      publicKey,
+      huraKeysLookConfigured:
+        gateway.id !== "hura-pay" ||
+        looksLikeHuraSecretKey(secretKey) ||
+        looksLikeHuraPublicKey(publicKey),
+    };
+  };
+
   const applyExtractedData = (data: any) => {
     if (data.origem) setOrigem(data.origem);
     if (data.destino) setDestino(data.destino);
@@ -313,15 +334,21 @@ const NovoPagamentoForm = () => {
       return;
     }
     const selectedGw = allGateways.find((g) => g.id === gatewaySelected);
-    if (metodoPagamento === "gateway" && (!selectedGw || !selectedGw.secretKey)) {
+    const normalizedGw = selectedGw ? normalizeGatewayCredentials(selectedGw) : null;
+    if (metodoPagamento === "gateway" && (!selectedGw || !normalizedGw?.secretKey)) {
       toast.error("O gateway selecionado não tem Secret Key configurada. Configure na aba Gateways.");
+      return;
+    }
+
+    if (metodoPagamento === "gateway" && gatewaySelected === "hura-pay" && normalizedGw && !normalizedGw.huraKeysLookConfigured) {
+      toast.error("Na Hura Pay, confira se a Secret Key começa com sk_live_ e a Public Key com hurapay_live_.");
       return;
     }
 
     let pixCodeFinal = codigoPix;
 
     // If gateway, call the edge function to generate PIX via gateway
-    if (metodoPagamento === "gateway" && selectedGw) {
+    if (metodoPagamento === "gateway" && selectedGw && normalizedGw) {
       setIsProcessingGateway(true);
       try {
         const mainPax = passageiros[0] || {};
@@ -330,8 +357,8 @@ const NovoPagamentoForm = () => {
         const { data: gwResult, error: gwError } = await supabase.functions.invoke("process-gateway-payment", {
           body: {
             gateway: gatewaySelected,
-            secretKey: selectedGw.secretKey,
-            publicKey: selectedGw.publicKey,
+            secretKey: normalizedGw.secretKey,
+            publicKey: normalizedGw.publicKey,
             amount: amountCents,
             customer: {
               name: mainPax.nomeCompleto || "Cliente",
@@ -356,7 +383,11 @@ const NovoPagamentoForm = () => {
         }
       } catch (err: any) {
         console.error("Gateway error:", err);
-        toast.error("Erro no gateway: " + (err.message || "Tente novamente"));
+        toast.error(
+          gatewaySelected === "hura-pay"
+            ? "Erro no gateway: confira se a Secret Key é sk_live_ e a Public Key é hurapay_live_."
+            : "Erro no gateway: " + (err.message || "Tente novamente")
+        );
         setIsProcessingGateway(false);
         return;
       } finally {

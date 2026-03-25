@@ -16,6 +16,24 @@ const GatewaysSection = () => {
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [editingKeys, setEditingKeys] = useState<string | null>(null);
 
+  const getPublicKeyPlaceholder = (id: string) => {
+    if (id === "hura-pay") return "hurapay_live_...";
+    return "pk_live_...";
+  };
+
+  const getSecretKeyPlaceholder = (id: string) => {
+    if (id === "hura-pay") return "sk_live_...";
+    return "sk_live_...";
+  };
+
+  const getGatewayHint = (id: string) => {
+    if (id === "hura-pay") {
+      return "Hura Pay: use Secret Key com prefixo sk_live_ e Public Key com prefixo hurapay_live_.";
+    }
+
+    return null;
+  };
+
   const handleAdd = () => {
     if (!novoNome || !novaUrl) return;
     addGateway({ id: Date.now().toString(), nome: novoNome, url: novaUrl, ativo: false, secretKey: "", publicKey: "" });
@@ -127,6 +145,11 @@ const GatewaysSection = () => {
 
                   {editingKeys === gw.id && (
                     <div className="mt-3 space-y-2.5 rounded-xl border border-border bg-muted/30 p-3">
+                      {getGatewayHint(gw.id) && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {getGatewayHint(gw.id)}
+                        </p>
+                      )}
                       <div>
                         <Label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-wider">Public Key</Label>
                         <div className="flex gap-1.5 mt-1">
@@ -134,7 +157,7 @@ const GatewaysSection = () => {
                             type={showKeys[`${gw.id}-pub`] ? "text" : "password"}
                             value={gw.publicKey}
                             onChange={(e) => updateGateway(gw.id, { publicKey: e.target.value })}
-                            placeholder="pk_live_..."
+                            placeholder={getPublicKeyPlaceholder(gw.id)}
                             className="text-xs font-mono"
                           />
                           <button onClick={() => toggleShowKey(`${gw.id}-pub`)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors border border-border">
@@ -149,7 +172,7 @@ const GatewaysSection = () => {
                             type={showKeys[`${gw.id}-sec`] ? "text" : "password"}
                             value={gw.secretKey}
                             onChange={(e) => updateGateway(gw.id, { secretKey: e.target.value })}
-                            placeholder="sk_live_..."
+                            placeholder={getSecretKeyPlaceholder(gw.id)}
                             className="text-xs font-mono"
                           />
                           <button onClick={() => toggleShowKey(`${gw.id}-sec`)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors border border-border">
