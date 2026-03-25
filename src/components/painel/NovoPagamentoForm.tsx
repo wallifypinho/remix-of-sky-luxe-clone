@@ -11,8 +11,17 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Passageiro } from "@/types/pagamento";
 
+const GATEWAYS_DISPONIVEIS = [
+  { id: "hura-pay", nome: "Hura Pay" },
+  { id: "anubis-pay", nome: "Anubis Pay" },
+];
+
 const NovoPagamentoForm = () => {
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
+  const [gatewaySelected, setGatewaySelected] = useState("");
+  const [gatewaySecretKey, setGatewaySecretKey] = useState("");
+  const [gatewayPublicKey, setGatewayPublicKey] = useState("");
+  const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [numPassageiros, setNumPassageiros] = useState(1);
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
   const [passageiros, setPassageiros] = useState<Partial<Passageiro>[]>([{}]);
@@ -274,6 +283,60 @@ const NovoPagamentoForm = () => {
       toast.error("Informe o código PIX");
       return;
     }
+    if (metodoPagamento === "gateway" && !gatewaySelected) {
+      toast.error("Selecione um gateway de pagamento");
+      return;
+    }
+    if (metodoPagamento === "gateway" && !gatewaySecretKey) {
+      toast.error("Informe a Secret Key do gateway");
+      return;
+    }
+
+    let pixCodeFinal = codigoPix;
+
+    // If gateway, call the edge function to generate PIX via gateway
+    if (metodoPagamento === "gateway") {
+      setIsProcessingGateway(true);
+      try {
+        const mainPax = passageiros[0] || {};
+        const amountCents = Math.round(parseFloat(valor.replace(/[^\d.,]/g, "").replace(",", ".")) * 100);
+        
+        const { data: gwResult, error: gwError } = await supabase.functions.invoke("process-gateway-payment", {
+          body: {
+            gateway: gatewaySelected,
+            secretKey: gatewaySecretKey,
+            publicKey: gatewayPublicKey,
+            amount: amountCents,
+            customer: {
+              name: mainPax.nomeCompleto || "Cliente",
+              email: mainPax.email || "",
+              cpf: mainPax.cpfDocumento || "",
+              phone: mainPax.telefone || "",
+            },
+            description: descricao || `Reserva ${codReserva}`,
+            codigoReserva: codReserva,
+          },
+        });
+
+        if (gwError) throw gwError;
+        if (!gwResult?.success) throw new Error(gwResult?.error || "Erro ao processar gateway");
+
+        pixCodeFinal = gwResult.pixCode || gwResult.rawResponse?.pix?.qr_code || "";
+        if (!pixCodeFinal) {
+          toast.warning("Gateway processado mas código PIX não retornado. Verifique a resposta.");
+          console.log("Gateway raw response:", gwResult.rawResponse);
+        } else {
+          toast.success(`Pagamento gerado via ${gatewaySelected === "hura-pay" ? "Hura Pay" : "Anubis Pay"}!`);
+        }
+      } catch (err: any) {
+        console.error("Gateway error:", err);
+        toast.error("Erro no gateway: " + (err.message || "Tente novamente"));
+        setIsProcessingGateway(false);
+        return;
+      } finally {
+        setIsProcessingGateway(false);
+      }
+    }
 
     try {
       const { data, error } = await supabase
@@ -295,7 +358,7 @@ const NovoPagamentoForm = () => {
           codigo_reserva: codReserva,
           valor,
           whatsapp_cliente: whatsappCliente,
-          codigo_pix: codigoPix,
+          codigo_pix: pixCodeFinal || null,
           metodo_pagamento: metodoPagamento,
           status: "pendente",
         })
@@ -491,6 +554,35 @@ const NovoPagamentoForm = () => {
           </button>
         </div>
       </div>
+
+      {/* Gateway selector - shown when gateway is selected */}
+      {metodoPagamento === "gateway" && (
+        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <div className="text-xs font-semibold text-primary flex items-center gap-1">⚡ Configuração do Gateway</div>
+          <div>
+            <Label className="text-xs">Gateway</Label>
+            <Select value={gatewaySelected} onValueChange={setGatewaySelected}>
+              <SelectTrigger><SelectValue placeholder="Selecione o gateway" /></SelectTrigger>
+              <SelectContent>
+                {GATEWAYS_DISPONIVEIS.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Public Key</Label>
+              <Input type="password" placeholder="pk_live_..." value={gatewayPublicKey} onChange={(e) => setGatewayPublicKey(e.target.value)} className="font-mono text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Secret Key *</Label>
+              <Input type="password" placeholder="sk_live_..." value={gatewaySecretKey} onChange={(e) => setGatewaySecretKey(e.target.value)} className="font-mono text-xs" />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground">As chaves serão usadas para gerar o PIX automaticamente via API do gateway.</p>
+        </div>
+      )}
 
       {/* N° de Passageiros */}
       <div className="mb-5">
@@ -698,23 +790,37 @@ const NovoPagamentoForm = () => {
         </div>
       </div>
 
-      {/* Código PIX */}
-      <div className="mb-5">
-        <Label className="text-xs">Código PIX *</Label>
-        <Textarea
-          value={codigoPix}
-          onChange={(e) => setCodigoPix(e.target.value)}
-          placeholder="Cole aqui qualquer texto para o cliente copiar (chave PIX, código copia e cola, dados bancários, etc.)"
-          rows={3}
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Este texto será exibido para o cliente copiar na tela de pagamento.
-        </p>
-      </div>
+      {/* Código PIX - only for manual PIX */}
+      {metodoPagamento === "pix" && (
+        <div className="mb-5">
+          <Label className="text-xs">Código PIX *</Label>
+          <Textarea
+            value={codigoPix}
+            onChange={(e) => setCodigoPix(e.target.value)}
+            placeholder="Cole aqui qualquer texto para o cliente copiar (chave PIX, código copia e cola, dados bancários, etc.)"
+            rows={3}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Este texto será exibido para o cliente copiar na tela de pagamento.
+          </p>
+        </div>
+      )}
+
+      {metodoPagamento === "gateway" && (
+        <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs text-amber-700">
+            ⚡ O código PIX será gerado automaticamente pelo gateway <strong>{GATEWAYS_DISPONIVEIS.find(g => g.id === gatewaySelected)?.nome || "selecionado"}</strong> ao gerar o pagamento.
+          </p>
+        </div>
+      )}
 
       {/* Submit */}
-      <Button onClick={handleSubmit} className="w-full h-12 text-sm font-semibold">
-        Gerar Pagamento ({numPassageiros} passageiro{numPassageiros > 1 ? "s" : ""})
+      <Button onClick={handleSubmit} disabled={isProcessingGateway} className="w-full h-12 text-sm font-semibold">
+        {isProcessingGateway ? (
+          <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando gateway...</>
+        ) : (
+          <>Gerar Pagamento ({numPassageiros} passageiro{numPassageiros > 1 ? "s" : ""})</>
+        )}
       </Button>
 
       {/* Generated Link Section */}
