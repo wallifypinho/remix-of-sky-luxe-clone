@@ -17,7 +17,7 @@ const getBaseUrl = () => {
 const linksDefault: LinkCadastro[] = [
   {
     companhia: "Azul",
-    url: `${getBaseUrl()}/coleta-dados?airline=azul`,
+    url: `${getBaseUrl()}/cadastro?airline=azul`,
     accent: "hsl(210, 100%, 50%)",
     bg: "hsl(210, 100%, 97%)",
     icon: "✈️",
