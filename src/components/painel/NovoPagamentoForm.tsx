@@ -424,7 +424,7 @@ const NovoPagamentoForm = () => {
 
       if (error) throw error;
 
-      const link = `${window.location.origin}/boarding-pass?token=${data.token}`;
+      const link = `${window.location.origin}/pagamento?token=${data.token}`;
       await navigator.clipboard.writeText(link);
       setGeneratedToken(data.token);
       toast.success("Pagamento gerado! Link copiado para a área de transferência.");
@@ -433,7 +433,7 @@ const NovoPagamentoForm = () => {
     }
   };
 
-  const generatedLink = generatedToken ? `${window.location.origin}/boarding-pass?token=${generatedToken}` : null;
+  const generatedLink = generatedToken ? `${window.location.origin}/pagamento?token=${generatedToken}` : null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">

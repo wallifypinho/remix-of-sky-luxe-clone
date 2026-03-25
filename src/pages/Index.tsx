@@ -48,7 +48,7 @@ const Index = () => {
             </motion.div>
           </Link>
 
-          <Link to="/coleta-dados">
+          <Link to="/cadastro">
             <motion.div
               className="group relative flex items-center gap-3 rounded-xl border border-border bg-card p-5 text-left text-card-foreground shadow-sm transition-all hover:shadow-md hover:scale-[1.02]"
               whileHover={{ scale: 1.02 }}

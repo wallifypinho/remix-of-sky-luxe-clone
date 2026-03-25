@@ -17,21 +17,21 @@ const getBaseUrl = () => {
 const linksDefault: LinkCadastro[] = [
   {
     companhia: "Azul",
-    url: `${getBaseUrl()}/coleta-dados?airline=azul`,
+    url: `${getBaseUrl()}/cadastro?airline=azul`,
     accent: "hsl(210, 100%, 50%)",
     bg: "hsl(210, 100%, 97%)",
     icon: "✈️",
   },
   {
     companhia: "GOL",
-    url: `${getBaseUrl()}/coleta-dados?airline=gol`,
+    url: `${getBaseUrl()}/cadastro?airline=gol`,
     accent: "hsl(25, 95%, 53%)",
     bg: "hsl(25, 100%, 97%)",
     icon: "🟠",
   },
   {
     companhia: "LATAM",
-    url: `${getBaseUrl()}/coleta-dados?airline=latam`,
+    url: `${getBaseUrl()}/cadastro?airline=latam`,
     accent: "hsl(0, 80%, 55%)",
     bg: "hsl(0, 100%, 97%)",
     icon: "🔴",

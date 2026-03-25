@@ -23,6 +23,9 @@ const App = () => (
           <Route path="/login" element={<LoginOperador />} />
           <Route path="/painel/:slug" element={<LoginOperador />} />
           <Route path="/painel" element={<PainelPagamentos />} />
+          <Route path="/cadastro" element={<ColetaDados />} />
+          <Route path="/pagamento" element={<BoardingPass />} />
+          {/* Legacy redirects */}
           <Route path="/coleta-dados" element={<ColetaDados />} />
           <Route path="/boarding-pass" element={<BoardingPass />} />
           <Route path="*" element={<NotFound />} />
