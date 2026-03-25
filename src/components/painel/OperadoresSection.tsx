@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Shield, ShieldOff, Ban, CheckCircle, Loader2, RefreshCw, KeyRound, Copy, Check } from "lucide-react";
+import { Users, Plus, Shield, ShieldOff, Ban, CheckCircle, Loader2, RefreshCw, KeyRound, Copy, Check, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,8 +35,8 @@ const OperadoresSection = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<OperadorRow | null>(null);
   const [novaSenha, setNovaSenha] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<OperadorRow | null>(null);
   const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [perfil, setPerfil] = useState("operador");
 
@@ -57,16 +58,16 @@ const OperadoresSection = () => {
   useEffect(() => { fetchOperadores(); }, [fetchOperadores]);
 
   const handleCriar = async () => {
-    if (!nome || !email || !senha) { toast.error("Preencha todos os campos"); return; }
+    if (!nome || !senha) { toast.error("Preencha nome e senha"); return; }
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke("operador-auth", {
-        body: { action: "criar", nome, email, senha, perfil },
+        body: { action: "criar", nome, senha, perfil },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Erro ao criar");
       toast.success("Operador criado!");
-      setNome(""); setEmail(""); setSenha(""); setPerfil("operador");
+      setNome(""); setSenha(""); setPerfil("operador");
       setDialogOpen(false);
       fetchOperadores();
     } catch (err: any) {
@@ -104,6 +105,22 @@ const OperadoresSection = () => {
       setResetTarget(null);
     } catch (err: any) {
       toast.error(err.message || "Erro ao resetar senha");
+    }
+  };
+
+  const handleExcluir = async () => {
+    if (!deleteTarget) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("operador-auth", {
+        body: { action: "excluir", operadorId: deleteTarget.id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error);
+      toast.success("Operador excluído!");
+      setDeleteTarget(null);
+      fetchOperadores();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir operador");
     }
   };
 
@@ -157,8 +174,7 @@ const OperadoresSection = () => {
                 <DialogTitle>Cadastrar Operador</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 pt-2">
-                <div><Label className="text-xs font-medium">Nome</Label><Input placeholder="Nome completo" value={nome} onChange={e => setNome(e.target.value)} className="mt-1.5" /></div>
-                <div><Label className="text-xs font-medium">Email</Label><Input type="email" placeholder="email@exemplo.com" value={email} onChange={e => setEmail(e.target.value)} className="mt-1.5" /></div>
+                <div><Label className="text-xs font-medium">Nome</Label><Input placeholder="Nome do operador" value={nome} onChange={e => setNome(e.target.value)} className="mt-1.5" /></div>
                 <div><Label className="text-xs font-medium">Senha</Label><Input type="password" placeholder="Mínimo 6 caracteres" value={senha} onChange={e => setSenha(e.target.value)} className="mt-1.5" /></div>
                 <div>
                   <Label className="text-xs font-medium">Perfil</Label>
@@ -192,6 +208,24 @@ const OperadoresSection = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir operador</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.nome}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExcluir} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* List */}
       {loading ? (
@@ -228,7 +262,7 @@ const OperadoresSection = () => {
                           <span className="text-sm font-semibold text-foreground truncate">{op.nome}</span>
                           {op.perfil === "admin" && <Shield className="h-3.5 w-3.5 text-primary shrink-0" />}
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate">{op.email}</p>
+                        <p className="text-[11px] text-muted-foreground">{op.perfil === "admin" ? "Administrador" : "Operador"}</p>
                       </div>
                     </div>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border shrink-0 ${sc.className}`}>
@@ -270,6 +304,9 @@ const OperadoresSection = () => {
                       )}
                       <Button variant="ghost" size="sm" onClick={() => { setResetTarget(op); setResetDialogOpen(true); }} className="h-7 w-7 p-0 rounded-lg" title="Resetar senha">
                         <KeyRound className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(op)} className="h-7 w-7 p-0 rounded-lg" title="Excluir">
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </div>
                   </div>

@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple hash function using Web Crypto API (SHA-256 + salt)
 async function hashPassword(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
   const useSalt = salt || crypto.randomUUID();
   const encoder = new TextEncoder();
@@ -42,7 +41,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Fetch all active operadores and try password against each
       const { data: operadores, error } = await supabase
         .from("operadores")
         .select("*")
@@ -71,14 +69,11 @@ Deno.serve(async (req) => {
         });
       }
 
-
-      // Update session
       await supabase.from("operadores").update({
         sessao_ativa: true,
         ultimo_acesso: new Date().toISOString(),
       }).eq("id", operador.id);
 
-      // Generate simple session token
       const sessionToken = crypto.randomUUID();
 
       return new Response(JSON.stringify({
@@ -109,11 +104,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // CRIAR OPERADOR (apenas admin)
+    // CRIAR OPERADOR
     if (action === "criar") {
-      const { nome, email, senha, perfil } = params;
-      if (!nome || !email || !senha) {
-        return new Response(JSON.stringify({ error: "Nome, email e senha obrigatórios" }), {
+      const { nome, senha, perfil } = params;
+      if (!nome || !senha) {
+        return new Response(JSON.stringify({ error: "Nome e senha obrigatórios" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -123,22 +118,34 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase.from("operadores").insert({
         nome,
-        email: email.toLowerCase().trim(),
+        email: "",
         senha_hash: senhaHash,
         perfil: perfil || "operador",
         status: "ativo",
       }).select("id, nome, email, perfil, status, created_at").single();
 
       if (error) {
-        if (error.code === "23505") {
-          return new Response(JSON.stringify({ error: "Email já cadastrado" }), {
-            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
         throw error;
       }
 
       return new Response(JSON.stringify({ success: true, operador: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // EXCLUIR OPERADOR
+    if (action === "excluir") {
+      const { operadorId } = params;
+      if (!operadorId) {
+        return new Response(JSON.stringify({ error: "operadorId obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await supabase.from("operadores").delete().eq("id", operadorId);
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
