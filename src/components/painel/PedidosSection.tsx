@@ -52,11 +52,15 @@ const PedidosSection = ({ onCountChange, operadorId, isAdmin }: PedidosSectionPr
   const fetchReservas = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("reservas")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
+      if (!isAdmin && operadorId) {
+        query = query.eq("operador_id", operadorId);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       const list = (data || []) as Reserva[];
       setReservas(list);
@@ -66,7 +70,7 @@ const PedidosSection = ({ onCountChange, operadorId, isAdmin }: PedidosSectionPr
     } finally {
       setLoading(false);
     }
-  }, [onCountChange]);
+  }, [onCountChange, operadorId, isAdmin]);
 
   useEffect(() => { fetchReservas(); }, [fetchReservas]);
 

@@ -58,12 +58,16 @@ const PaymentLinksBlock = ({ operadorId, isAdmin }: { operadorId?: string; isAdm
   const fetchLinks = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("pagamentos")
-        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix, numero_voo, classe, ida_data, ida_partida, ida_chegada, volta_data, volta_partida, volta_chegada, whatsapp_operador")
+        .select("id, token, codigo_reserva, valor, status, companhia, origem, destino, created_at, passageiros, codigo_pix, numero_voo, classe, ida_data, ida_partida, ida_chegada, volta_data, volta_partida, volta_chegada, whatsapp_operador, operador_id")
         .neq("status", "lixeira")
         .order("created_at", { ascending: false })
         .limit(100);
+      if (!isAdmin && operadorId) {
+        query = query.eq("operador_id", operadorId);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       setLinks((data || []) as PagamentoLink[]);
     } catch {
@@ -71,7 +75,7 @@ const PaymentLinksBlock = ({ operadorId, isAdmin }: { operadorId?: string; isAdm
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [operadorId, isAdmin]);
 
   useEffect(() => { fetchLinks(); }, [fetchLinks]);
 

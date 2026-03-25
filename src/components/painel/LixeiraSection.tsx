@@ -26,15 +26,19 @@ const LixeiraSection = ({ operadorId, isAdmin }: { operadorId?: string; isAdmin?
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    let query = supabase
       .from("pagamentos")
       .select("*")
       .eq("status", "lixeira")
       .order("created_at", { ascending: false })
       .limit(100);
+    if (!isAdmin && operadorId) {
+      query = query.eq("operador_id", operadorId);
+    }
+    const { data } = await query;
     setItems((data as PagamentoLixeira[]) || []);
     setLoading(false);
-  }, []);
+  }, [operadorId, isAdmin]);
 
   useEffect(() => {
     fetchItems();
