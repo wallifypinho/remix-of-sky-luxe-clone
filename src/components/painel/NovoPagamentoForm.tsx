@@ -789,23 +789,37 @@ const NovoPagamentoForm = () => {
         </div>
       </div>
 
-      {/* Código PIX */}
-      <div className="mb-5">
-        <Label className="text-xs">Código PIX *</Label>
-        <Textarea
-          value={codigoPix}
-          onChange={(e) => setCodigoPix(e.target.value)}
-          placeholder="Cole aqui qualquer texto para o cliente copiar (chave PIX, código copia e cola, dados bancários, etc.)"
-          rows={3}
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Este texto será exibido para o cliente copiar na tela de pagamento.
-        </p>
-      </div>
+      {/* Código PIX - only for manual PIX */}
+      {metodoPagamento === "pix" && (
+        <div className="mb-5">
+          <Label className="text-xs">Código PIX *</Label>
+          <Textarea
+            value={codigoPix}
+            onChange={(e) => setCodigoPix(e.target.value)}
+            placeholder="Cole aqui qualquer texto para o cliente copiar (chave PIX, código copia e cola, dados bancários, etc.)"
+            rows={3}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Este texto será exibido para o cliente copiar na tela de pagamento.
+          </p>
+        </div>
+      )}
+
+      {metodoPagamento === "gateway" && (
+        <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs text-amber-700">
+            ⚡ O código PIX será gerado automaticamente pelo gateway <strong>{GATEWAYS_DISPONIVEIS.find(g => g.id === gatewaySelected)?.nome || "selecionado"}</strong> ao gerar o pagamento.
+          </p>
+        </div>
+      )}
 
       {/* Submit */}
-      <Button onClick={handleSubmit} className="w-full h-12 text-sm font-semibold">
-        Gerar Pagamento ({numPassageiros} passageiro{numPassageiros > 1 ? "s" : ""})
+      <Button onClick={handleSubmit} disabled={isProcessingGateway} className="w-full h-12 text-sm font-semibold">
+        {isProcessingGateway ? (
+          <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando gateway...</>
+        ) : (
+          <>Gerar Pagamento ({numPassageiros} passageiro{numPassageiros > 1 ? "s" : ""})</>
+        )}
       </Button>
 
       {/* Generated Link Section */}
