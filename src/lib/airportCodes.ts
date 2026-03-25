@@ -114,3 +114,13 @@ export const getAirportName = (code: string): string => {
   const upper = code.trim().toUpperCase();
   return AIRPORT_NAMES[upper] || upper;
 };
+
+/**
+ * Retorna somente o nome da cidade (sem o nome do aeroporto entre parênteses).
+ * Ex: "São Paulo (Guarulhos)" → "São Paulo"
+ */
+export const getCityName = (code: string): string => {
+  if (!code) return "—";
+  const full = getAirportName(code);
+  return full.replace(/\s*\(.*\)$/, "");
+};
