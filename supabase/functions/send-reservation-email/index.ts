@@ -88,14 +88,17 @@ ${content}
     Este é um e-mail automático gerado pelo sistema.<br/>
     Algumas informações operacionais podem sofrer alterações pela companhia aérea.
   </p>
-  <p style="font-size:10px;color:#ccc;margin:12px 0 0;">${companhia || "AeroPayments"} © ${new Date().getFullYear()} · Todos os direitos reservados</p>
+  <p style="font-size:10px;color:#ccc;margin:12px 0 0;">${companhia || "Azul"} © ${new Date().getFullYear()} · Todos os direitos reservados</p>
 </div>
 </body>
 </html>`;
 
+const AZUL_LOGO_URL = "https://www.centralazul.site/azul-logo-email.jpg";
+
 const emailHeader = (title: string, subtitle: string, icon: string) => `
-<div style="background:linear-gradient(135deg,${brandColor},${brandDark});padding:36px 20px 28px;text-align:center;">
-  <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:0.5px;">${icon} ${title}</div>
+<div style="background:linear-gradient(135deg,${brandColor},${brandDark});padding:28px 20px 24px;text-align:center;">
+  <img src="${AZUL_LOGO_URL}" alt="Azul" style="width:160px;height:auto;margin:0 auto 16px;display:block;border-radius:8px;" />
+  <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:0.5px;">${icon} ${title}</div>
   ${subtitle ? `<div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px;">${subtitle}</div>` : ""}
 </div>`;
 
@@ -133,7 +136,7 @@ const buildConfirmationEmail = (body: any) => {
     </tr>
   `).join("");
 
-  const subject = `✅ Reserva Confirmada - ${codigoReserva} | ${companhia || "AeroPayments"}`;
+  const subject = `✅ Reserva Confirmada - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
     ${emailHeader("Reserva Confirmada", "Sua solicitação foi recebida com sucesso", "✅")}
@@ -224,10 +227,10 @@ const buildTripDetailsEmail = (body: any) => {
     </div>`;
   }).join("");
 
-  const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "AeroPayments"}`;
+  const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
-    ${emailHeader(companhia || "AeroPayments", "Detalhes completos da sua viagem", "✈")}
+    ${emailHeader(companhia || "Azul", "Detalhes completos da sua viagem", "✈")}
     <div style="max-width:600px;margin:-20px auto 0;padding:0 16px 20px;">
       ${cardBlock(`
         <h2 style="font-size:18px;font-weight:800;color:${gray800};margin:0 0 8px;">Olá, ${paxName}!</h2>
@@ -454,7 +457,7 @@ const generateBoardingCard = (p: {
       </table>
     </div>
     <div style="background:${gray100};padding:8px 24px;text-align:center;">
-      <span style="font-size:10px;color:${gray400};font-weight:600;">${p.companhia || "AeroPayments"} · Emissão digital</span>
+      <span style="font-size:10px;color:${gray400};font-weight:600;">${p.companhia || "Azul"} · Emissão digital</span>
     </div>
   </div>`;
 };
@@ -494,10 +497,10 @@ const buildBoardingPassEmail = (body: any) => {
     }
   }
 
-  const subject = `✈ Cartão de Embarque - ${codigoReserva} | ${companhia || "AeroPayments"}`;
+  const subject = `✈ Cartão de Embarque - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
-    ${emailHeader(companhia || "AeroPayments", "Seu cartão de embarque digital", "✈")}
+    ${emailHeader(companhia || "Azul", "Seu cartão de embarque digital", "✈")}
     <div style="max-width:620px;margin:-20px auto 0;padding:0 16px 20px;">
       ${cardBlock(`
         <h2 style="font-size:18px;font-weight:800;color:${gray800};margin:0 0 8px;">Olá, ${paxName}!</h2>
@@ -582,7 +585,7 @@ serve(async (req) => {
 
     console.log(`Enqueuing email [${type}] to ${recipientEmail}`);
 
-    const companhia = body.companhia || "AeroPayments";
+    const companhia = body.companhia || "Azul";
     const messageId = crypto.randomUUID();
     const idempotencyKey = `reservation-${type}-${body.codigoReserva || messageId}-${Date.now()}`;
 
@@ -611,7 +614,7 @@ serve(async (req) => {
       queue_name: "transactional_emails",
       payload: {
         to: recipientEmail,
-        from: `${companhia} <noreply@azulcentral.shop>`,
+        from: `Azul Linhas Aéreas <noreply@azulcentral.shop>`,
         sender_domain: "notify.azulcentral.shop",
         subject: emailContent.subject,
         html: emailContent.html,

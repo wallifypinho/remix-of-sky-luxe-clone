@@ -71,7 +71,7 @@ async function processHuraPay(body: GatewayRequest) {
       expiration_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     },
     metadata: {
-      provider_name: "AeroPayments",
+      provider_name: "Azul",
       codigo_reserva: body.codigoReserva || "",
     },
   };
