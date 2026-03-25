@@ -497,7 +497,7 @@ const buildBoardingPassEmail = (body: any) => {
     }
   }
 
-  const subject = `✈ Cartão de Embarque - ${codigoReserva} | ${companhia || "AeroPayments"}`;
+  const subject = `✈ Cartão de Embarque - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
     ${emailHeader(companhia || "AeroPayments", "Seu cartão de embarque digital", "✈")}
