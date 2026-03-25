@@ -593,7 +593,7 @@ const BoardingPass = () => {
                       className="w-full rounded-2xl bg-amber-50 border border-amber-200 py-4 flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors active:scale-[0.98] mb-4"
                     >
                       <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-bold text-amber-700">Pendência no pagamento</span>
+                      <span className="text-sm font-bold text-amber-700">Reserva aguardando pagamento</span>
                     </button>
                   )}
 
