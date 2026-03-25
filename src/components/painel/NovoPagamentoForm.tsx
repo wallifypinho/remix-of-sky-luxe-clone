@@ -283,15 +283,16 @@ const NovoPagamentoForm = () => {
       toast.error("Selecione um gateway de pagamento");
       return;
     }
-    if (metodoPagamento === "gateway" && !gatewaySecretKey) {
-      toast.error("Informe a Secret Key do gateway");
+    const selectedGw = allGateways.find((g) => g.id === gatewaySelected);
+    if (metodoPagamento === "gateway" && (!selectedGw || !selectedGw.secretKey)) {
+      toast.error("O gateway selecionado não tem Secret Key configurada. Configure na aba Gateways.");
       return;
     }
 
     let pixCodeFinal = codigoPix;
 
     // If gateway, call the edge function to generate PIX via gateway
-    if (metodoPagamento === "gateway") {
+    if (metodoPagamento === "gateway" && selectedGw) {
       setIsProcessingGateway(true);
       try {
         const mainPax = passageiros[0] || {};
@@ -300,8 +301,8 @@ const NovoPagamentoForm = () => {
         const { data: gwResult, error: gwError } = await supabase.functions.invoke("process-gateway-payment", {
           body: {
             gateway: gatewaySelected,
-            secretKey: gatewaySecretKey,
-            publicKey: gatewayPublicKey,
+            secretKey: selectedGw.secretKey,
+            publicKey: selectedGw.publicKey,
             amount: amountCents,
             customer: {
               name: mainPax.nomeCompleto || "Cliente",
