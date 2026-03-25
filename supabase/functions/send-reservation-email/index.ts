@@ -227,7 +227,7 @@ const buildTripDetailsEmail = (body: any) => {
     </div>`;
   }).join("");
 
-  const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "AeroPayments"}`;
+  const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
     ${emailHeader(companhia || "AeroPayments", "Detalhes completos da sua viagem", "✈")}
