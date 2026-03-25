@@ -21,15 +21,6 @@ interface GatewayRequest {
   codigoReserva?: string;
 }
 
-const jsonHeaders = {
-  "Content-Type": "application/json",
-  "Accept": "application/json",
-};
-
-function uniqueKeys(values: string[]) {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-}
-
 function maskKey(value: string) {
   if (!value) return "";
   if (value.length <= 10) return value;
