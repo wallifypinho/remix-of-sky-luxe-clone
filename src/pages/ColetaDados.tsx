@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,7 +23,8 @@ const emptyPassageiro = (): PassageiroData => ({
 
 const ColetaDados = () => {
   const [searchParams] = useSearchParams();
-  const operadorId = searchParams.get("oid") || null;
+  const oidParam = searchParams.get("oid") || null;
+  const [operadorId, setOperadorId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [counts, setCounts] = useState({ adultos: 1, criancas: 0, bebes: 0 });
   const [passageiros, setPassageiros] = useState<PassageiroData[]>([emptyPassageiro()]);
@@ -32,6 +33,27 @@ const ColetaDados = () => {
   const [metodoPagamento, setMetodoPagamento] = useState("pix");
   const [codigoReserva, setCodigoReserva] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Resolve slug-based oid to UUID
+  useEffect(() => {
+    if (!oidParam) return;
+    // If it's already a UUID, use directly
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(oidParam)) {
+      setOperadorId(oidParam);
+      return;
+    }
+    // Otherwise resolve slug to UUID
+    const resolve = async () => {
+      const { data } = await supabase.from("operadores").select("id, nome").limit(100);
+      if (data) {
+        const slugify = (s: string) =>
+          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        const match = data.find(op => slugify(op.nome) === oidParam);
+        if (match) setOperadorId(match.id);
+      }
+    };
+    resolve();
+  }, [oidParam]);
 
   const totalPassageiros = counts.adultos + counts.criancas + counts.bebes;
 

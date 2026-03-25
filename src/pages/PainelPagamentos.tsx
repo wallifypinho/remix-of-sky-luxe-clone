@@ -124,7 +124,7 @@ const PainelPagamentos = () => {
         >
           {activeTab === "pedidos" && (
             <div className="space-y-5">
-              <LinksCadastro operadorId={operador.id} />
+              <LinksCadastro operadorId={operador.id} operadorNome={operador.nome} />
               <PedidosSection onCountChange={setPedidosCount} operadorId={operador.id} isAdmin={isAdmin} />
             </div>
           )}
