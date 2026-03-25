@@ -11,11 +11,18 @@ export interface Operador {
 
 const STORAGE_KEY = "operador_session";
 
-function getStoredSession(): { operador: Operador; sessionToken: string } | null {
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function getStoredSession(): { operador: Operador; sessionToken: string; loginAt: number } | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.loginAt || Date.now() - parsed.loginAt > SESSION_TTL_MS) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
