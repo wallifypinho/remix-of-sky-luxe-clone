@@ -585,7 +585,7 @@ serve(async (req) => {
 
     console.log(`Enqueuing email [${type}] to ${recipientEmail}`);
 
-    const companhia = body.companhia || "AeroPayments";
+    const companhia = body.companhia || "Azul";
     const messageId = crypto.randomUUID();
     const idempotencyKey = `reservation-${type}-${body.codigoReserva || messageId}-${Date.now()}`;
 
