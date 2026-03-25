@@ -119,7 +119,7 @@ const BoardingPass = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0033A0] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 text-white animate-spin" />
           <p className="text-white/60 text-sm">Carregando bilhete...</p>
