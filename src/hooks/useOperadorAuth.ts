@@ -48,7 +48,7 @@ export function useOperadorAuth() {
     if (error) throw new Error("Erro de conexão");
     if (!data?.success) throw new Error(data?.error || "Login falhou");
 
-    const session = { operador: data.operador, sessionToken: data.sessionToken };
+    const session = { operador: data.operador, sessionToken: data.sessionToken, loginAt: Date.now() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     setOperador(data.operador);
     return data.operador;
