@@ -398,7 +398,7 @@ const BoardingPass = () => {
                   {/* Route */}
                   <div className="flex items-start justify-between mb-6">
                     <div>
-                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.origem)}</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getCityName(data.origem)}</div>
                       <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.origem || "—"}</div>
                       <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Origem</div>
                     </div>
