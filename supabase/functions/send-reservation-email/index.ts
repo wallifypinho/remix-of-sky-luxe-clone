@@ -457,7 +457,7 @@ const generateBoardingCard = (p: {
       </table>
     </div>
     <div style="background:${gray100};padding:8px 24px;text-align:center;">
-      <span style="font-size:10px;color:${gray400};font-weight:600;">${p.companhia || "AeroPayments"} · Emissão digital</span>
+      <span style="font-size:10px;color:${gray400};font-weight:600;">${p.companhia || "Azul"} · Emissão digital</span>
     </div>
   </div>`;
 };
