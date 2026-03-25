@@ -93,6 +93,33 @@ const NovoPagamentoForm = () => {
     return () => { supabase.removeChannel(channel); };
   }, [generatedToken]);
 
+  // Auto-fetch reservation seats when codReserva changes
+  useEffect(() => {
+    const fetchReservaAssentos = async () => {
+      if (!codReserva || codReserva.length < 5) return;
+      try {
+        const { data: reserva } = await supabase
+          .from("reservas")
+          .select("assentos, passageiros")
+          .eq("codigo_reserva", codReserva)
+          .maybeSingle();
+
+        if (reserva?.assentos && Array.isArray(reserva.assentos)) {
+          const assentos = reserva.assentos as string[];
+          setPassageiros((prev) =>
+            prev.map((p, idx) => ({
+              ...p,
+              assento: assentos[idx] || (p as any).assento || "",
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Erro ao buscar assentos da reserva:", err);
+      }
+    };
+    fetchReservaAssentos();
+  }, [codReserva]);
+
   const addPassageiro = () => {
     setNumPassageiros((n) => n + 1);
     setPassageiros((p) => [...p, {}]);
@@ -149,6 +176,8 @@ const NovoPagamentoForm = () => {
         sexo: p.sexo || "",
         telefone: p.telefone || "",
         email: p.email || "",
+        assento: p.assento || "",
+        secao: p.secao || "",
       }));
       setPassageiros(newPassageiros);
       setNumPassageiros(newPassageiros.length);
