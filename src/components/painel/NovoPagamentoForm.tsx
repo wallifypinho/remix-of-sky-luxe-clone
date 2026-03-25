@@ -10,17 +10,13 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Passageiro } from "@/types/pagamento";
-
-const GATEWAYS_DISPONIVEIS = [
-  { id: "hura-pay", nome: "Hura Pay" },
-  { id: "anubis-pay", nome: "Anubis Pay" },
-];
+import { useGatewayStore } from "@/stores/gatewayStore";
 
 const NovoPagamentoForm = () => {
+  const activeGateways = useGatewayStore((s) => s.gateways.filter((g) => g.ativo && g.secretKey));
+  const allGateways = useGatewayStore((s) => s.gateways);
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "gateway">("pix");
   const [gatewaySelected, setGatewaySelected] = useState("");
-  const [gatewaySecretKey, setGatewaySecretKey] = useState("");
-  const [gatewayPublicKey, setGatewayPublicKey] = useState("");
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [numPassageiros, setNumPassageiros] = useState(1);
   const [passageirosAbertos, setPassageirosAbertos] = useState<number[]>([0]);
@@ -287,15 +283,16 @@ const NovoPagamentoForm = () => {
       toast.error("Selecione um gateway de pagamento");
       return;
     }
-    if (metodoPagamento === "gateway" && !gatewaySecretKey) {
-      toast.error("Informe a Secret Key do gateway");
+    const selectedGw = allGateways.find((g) => g.id === gatewaySelected);
+    if (metodoPagamento === "gateway" && (!selectedGw || !selectedGw.secretKey)) {
+      toast.error("O gateway selecionado não tem Secret Key configurada. Configure na aba Gateways.");
       return;
     }
 
     let pixCodeFinal = codigoPix;
 
     // If gateway, call the edge function to generate PIX via gateway
-    if (metodoPagamento === "gateway") {
+    if (metodoPagamento === "gateway" && selectedGw) {
       setIsProcessingGateway(true);
       try {
         const mainPax = passageiros[0] || {};
@@ -304,8 +301,8 @@ const NovoPagamentoForm = () => {
         const { data: gwResult, error: gwError } = await supabase.functions.invoke("process-gateway-payment", {
           body: {
             gateway: gatewaySelected,
-            secretKey: gatewaySecretKey,
-            publicKey: gatewayPublicKey,
+            secretKey: selectedGw.secretKey,
+            publicKey: selectedGw.publicKey,
             amount: amountCents,
             customer: {
               name: mainPax.nomeCompleto || "Cliente",
@@ -558,29 +555,23 @@ const NovoPagamentoForm = () => {
       {/* Gateway selector - shown when gateway is selected */}
       {metodoPagamento === "gateway" && (
         <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-          <div className="text-xs font-semibold text-primary flex items-center gap-1">⚡ Configuração do Gateway</div>
-          <div>
-            <Label className="text-xs">Gateway</Label>
-            <Select value={gatewaySelected} onValueChange={setGatewaySelected}>
-              <SelectTrigger><SelectValue placeholder="Selecione o gateway" /></SelectTrigger>
-              <SelectContent>
-                {GATEWAYS_DISPONIVEIS.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="text-xs font-semibold text-primary flex items-center gap-1">⚡ Gateway de Pagamento</div>
+          {activeGateways.length === 0 ? (
+            <p className="text-xs text-destructive">Nenhum gateway ativo. Configure e ative um gateway na aba <strong>Gateways</strong>.</p>
+          ) : (
             <div>
-              <Label className="text-xs">Public Key</Label>
-              <Input type="password" placeholder="pk_live_..." value={gatewayPublicKey} onChange={(e) => setGatewayPublicKey(e.target.value)} className="font-mono text-xs" />
+              <Label className="text-xs">Selecione o gateway</Label>
+              <Select value={gatewaySelected} onValueChange={setGatewaySelected}>
+                <SelectTrigger><SelectValue placeholder="Escolha um gateway ativo" /></SelectTrigger>
+                <SelectContent>
+                  {activeGateways.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <Label className="text-xs">Secret Key *</Label>
-              <Input type="password" placeholder="sk_live_..." value={gatewaySecretKey} onChange={(e) => setGatewaySecretKey(e.target.value)} className="font-mono text-xs" />
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground">As chaves serão usadas para gerar o PIX automaticamente via API do gateway.</p>
+          )}
+          <p className="text-[10px] text-muted-foreground">O PIX será gerado automaticamente pela API do gateway selecionado.</p>
         </div>
       )}
 
@@ -809,7 +800,7 @@ const NovoPagamentoForm = () => {
       {metodoPagamento === "gateway" && (
         <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
           <p className="text-xs text-amber-700">
-            ⚡ O código PIX será gerado automaticamente pelo gateway <strong>{GATEWAYS_DISPONIVEIS.find(g => g.id === gatewaySelected)?.nome || "selecionado"}</strong> ao gerar o pagamento.
+            ⚡ O código PIX será gerado automaticamente pelo gateway <strong>{activeGateways.find(g => g.id === gatewaySelected)?.nome || "selecionado"}</strong> ao gerar o pagamento.
           </p>
         </div>
       )}

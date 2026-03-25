@@ -6,77 +6,52 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import type { Gateway } from "@/types/pagamento";
+import { useGatewayStore } from "@/stores/gatewayStore";
 
 const GatewaysSection = () => {
-  const [gateways, setGateways] = useState<Gateway[]>([
-    {
-      id: "hura-pay",
-      nome: "Hura Pay",
-      url: "https://api.hurapayments.com.br/v1/payment-transaction/create",
-      ativo: false,
-      secretKey: "",
-      publicKey: "",
-    },
-    {
-      id: "anubis-pay",
-      nome: "Anubis Pay",
-      url: "https://api.anubispay.com.br/v1/transaction/create",
-      ativo: false,
-      secretKey: "",
-      publicKey: "",
-    },
-  ]);
+  const { gateways, updateGateway, addGateway, removeGateway: removeFromStore } = useGatewayStore();
   const [novoNome, setNovoNome] = useState("");
   const [novaUrl, setNovaUrl] = useState("");
   const [open, setOpen] = useState(false);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [editingKeys, setEditingKeys] = useState<string | null>(null);
 
-  const addGateway = () => {
+  const handleAdd = () => {
     if (!novoNome || !novaUrl) return;
-    setGateways([...gateways, { id: Date.now().toString(), nome: novoNome, url: novaUrl, ativo: false, secretKey: "", publicKey: "" }]);
+    addGateway({ id: Date.now().toString(), nome: novoNome, url: novaUrl, ativo: false, secretKey: "", publicKey: "" });
     setNovoNome("");
     setNovaUrl("");
     setOpen(false);
     toast.success("Gateway adicionado!");
   };
 
-  const removeGateway = (id: string) => {
+  const handleRemove = (id: string) => {
     if (id === "hura-pay" || id === "anubis-pay") {
       toast.error("Gateways integrados não podem ser removidos");
       return;
     }
-    setGateways(gateways.filter((g) => g.id !== id));
+    removeFromStore(id);
     toast.success("Gateway removido!");
   };
 
   const toggleAtivo = (id: string) => {
-    setGateways(gateways.map((g) => {
-      if (g.id === id) {
-        if (!g.ativo && (!g.secretKey || !g.publicKey)) {
-          toast.error("Configure as chaves antes de ativar o gateway");
-          return g;
-        }
-        return { ...g, ativo: !g.ativo };
-      }
-      return g;
-    }));
+    const gw = gateways.find((g) => g.id === id);
+    if (!gw) return;
+    if (!gw.ativo && (!gw.secretKey || !gw.publicKey)) {
+      toast.error("Configure as chaves antes de ativar o gateway");
+      return;
+    }
+    updateGateway(id, { ativo: !gw.ativo });
   };
 
-  const updateGatewayKey = (id: string, field: "secretKey" | "publicKey", value: string) => {
-    setGateways(gateways.map((g) => g.id === id ? { ...g, [field]: value } : g));
-  };
-
-  const toggleShowKey = (id: string) => {
-    setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleShowKey = (key: string) => {
+    setShowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const isIntegrated = (id: string) => id === "hura-pay" || id === "anubis-pay";
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <h3 className="text-base font-bold text-foreground">Gateways</h3>
@@ -95,13 +70,12 @@ const GatewaysSection = () => {
             <div className="space-y-3 pt-2">
               <div><Label className="text-xs font-medium">Nome</Label><Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome do gateway" className="mt-1.5" /></div>
               <div><Label className="text-xs font-medium">URL da API</Label><Input value={novaUrl} onChange={(e) => setNovaUrl(e.target.value)} placeholder="https://..." className="mt-1.5" /></div>
-              <Button onClick={addGateway} className="w-full h-10 rounded-xl font-semibold">Adicionar</Button>
+              <Button onClick={handleAdd} className="w-full h-10 rounded-xl font-semibold">Adicionar</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* List */}
       {gateways.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50 mx-auto mb-3">
@@ -135,17 +109,13 @@ const GatewaysSection = () => {
                   <div className="flex items-center gap-2 shrink-0">
                     <Switch checked={gw.ativo} onCheckedChange={() => toggleAtivo(gw.id)} />
                     {!isIntegrated(gw.id) && (
-                      <button
-                        onClick={() => removeGateway(gw.id)}
-                        className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      >
+                      <button onClick={() => handleRemove(gw.id)} className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Keys config */}
                 <div className="mt-3">
                   <button
                     onClick={() => setEditingKeys(editingKeys === gw.id ? null : gw.id)}
@@ -162,8 +132,8 @@ const GatewaysSection = () => {
                         <div className="flex gap-1.5 mt-1">
                           <Input
                             type={showKeys[`${gw.id}-pub`] ? "text" : "password"}
-                            value={gw.publicKey || ""}
-                            onChange={(e) => updateGatewayKey(gw.id, "publicKey", e.target.value)}
+                            value={gw.publicKey}
+                            onChange={(e) => updateGateway(gw.id, { publicKey: e.target.value })}
                             placeholder="pk_live_..."
                             className="text-xs font-mono"
                           />
@@ -177,8 +147,8 @@ const GatewaysSection = () => {
                         <div className="flex gap-1.5 mt-1">
                           <Input
                             type={showKeys[`${gw.id}-sec`] ? "text" : "password"}
-                            value={gw.secretKey || ""}
-                            onChange={(e) => updateGatewayKey(gw.id, "secretKey", e.target.value)}
+                            value={gw.secretKey}
+                            onChange={(e) => updateGateway(gw.id, { secretKey: e.target.value })}
                             placeholder="sk_live_..."
                             className="text-xs font-mono"
                           />
