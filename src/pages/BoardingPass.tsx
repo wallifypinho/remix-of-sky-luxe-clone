@@ -407,7 +407,7 @@ const BoardingPass = () => {
                       <div className="text-[10px] text-gray-400 mt-1.5 font-medium">Voo {data.numero_voo || "—"}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-base font-bold text-gray-900 leading-tight">{getAirportName(data.destino)}</div>
+                      <div className="text-base font-bold text-gray-900 leading-tight">{getCityName(data.destino)}</div>
                       <div className="text-[28px] font-black text-gray-900 tracking-wider leading-none">{data.destino || "—"}</div>
                       <div className="text-[10px] text-gray-400 mt-0.5 font-medium">Destino</div>
                     </div>
