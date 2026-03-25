@@ -374,7 +374,7 @@ const NovoPagamentoForm = () => {
         if (gwError) throw gwError;
         if (!gwResult?.success) throw new Error(gwResult?.error || "Erro ao processar gateway");
 
-        pixCodeFinal = gwResult.pixCode || gwResult.rawResponse?.pix?.qr_code || "";
+        pixCodeFinal = gwResult.pixCode || gwResult.rawResponse?.data?.pix?.qr_code || gwResult.rawResponse?.pix?.qr_code || "";
         if (!pixCodeFinal) {
           toast.warning("Gateway processado mas código PIX não retornado. Verifique a resposta.");
           console.log("Gateway raw response:", gwResult.rawResponse);

@@ -104,13 +104,16 @@ async function processHuraPay(body: GatewayRequest) {
 
   console.log("[HuraPay] Success:", JSON.stringify(data));
 
+  // Hura Pay wraps response under "data" key: { data: { id, pix: { qr_code } }, success: true }
+  const inner = data.data || data;
+
   return {
     success: true,
     gateway: "hura-pay",
-    transactionId: data.Id || data.id || data.transaction_id,
-    pixCode: data.pix?.qr_code || data.pix?.emv || data.qr_code || data.pix_code || data.PixCode || null,
-    pixQrCodeUrl: data.pix?.qr_code_url || data.qr_code_url || data.PixQrCodeUrl || null,
-    status: data.Status || data.status || "PENDING",
+    transactionId: inner.id || inner.Id || inner.transaction_id,
+    pixCode: inner.pix?.qr_code || inner.pix?.emv || inner.qr_code || inner.pix_code || null,
+    pixQrCodeUrl: inner.pix?.qr_code_url || inner.pix?.url || inner.qr_code_url || null,
+    status: inner.status || inner.Status || "PENDING",
     rawResponse: data,
   };
 }
