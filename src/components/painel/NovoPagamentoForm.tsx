@@ -800,7 +800,7 @@ const NovoPagamentoForm = () => {
       {metodoPagamento === "gateway" && (
         <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
           <p className="text-xs text-amber-700">
-            ⚡ O código PIX será gerado automaticamente pelo gateway <strong>{GATEWAYS_DISPONIVEIS.find(g => g.id === gatewaySelected)?.nome || "selecionado"}</strong> ao gerar o pagamento.
+            ⚡ O código PIX será gerado automaticamente pelo gateway <strong>{activeGateways.find(g => g.id === gatewaySelected)?.nome || "selecionado"}</strong> ao gerar o pagamento.
           </p>
         </div>
       )}
