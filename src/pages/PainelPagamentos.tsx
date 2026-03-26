@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -21,12 +22,20 @@ const PainelPagamentos = () => {
   const { operador, loading, logout, isAdmin } = useOperadorAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("pedidos");
-  const [whatsappAdmin, setWhatsappAdmin] = useState("5521982592219");
+  const [whatsappAdmin, setWhatsappAdmin] = useState("");
   const [pedidosCount, setPedidosCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !operador) navigate("/login");
   }, [loading, operador, navigate]);
+
+  // Load operator's WhatsApp from DB
+  useEffect(() => {
+    if (!operador?.id) return;
+    supabase.from("operadores").select("whatsapp").eq("id", operador.id).single().then(({ data }) => {
+      if (data?.whatsapp) setWhatsappAdmin(data.whatsapp);
+    });
+  }, [operador?.id]);
 
   if (loading) {
     return (
@@ -140,7 +149,10 @@ const PainelPagamentos = () => {
                     className="flex-1 h-10"
                     placeholder="5511999999999"
                   />
-                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0 h-10 rounded-xl font-semibold text-xs">
+                  <Button onClick={async () => {
+                    await supabase.from("operadores").update({ whatsapp: whatsappAdmin } as any).eq("id", operador.id);
+                    toast.success("WhatsApp salvo!");
+                  }} className="shrink-0 h-10 rounded-xl font-semibold text-xs">
                     Salvar
                   </Button>
                 </div>

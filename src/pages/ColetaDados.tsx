@@ -107,13 +107,25 @@ const ColetaDados = () => {
         });
       } catch { }
 
-      const operadorWhatsApp = "5521982592219";
-      const msg = encodeURIComponent(
-        `Olá! Acabei de realizar meu cadastro. Meu número de pedido é: ${codigo}`
-      );
-      setTimeout(() => {
-        window.open(`https://wa.me/${operadorWhatsApp}?text=${msg}`, "_blank");
-      }, 3000);
+      // Fetch operator's WhatsApp number from DB
+      let operadorWhatsApp = "";
+      if (operadorId) {
+        const { data: opData } = await supabase
+          .from("operadores")
+          .select("whatsapp")
+          .eq("id", operadorId)
+          .single();
+        operadorWhatsApp = (opData as any)?.whatsapp || "";
+      }
+
+      if (operadorWhatsApp) {
+        const msg = encodeURIComponent(
+          `Olá! Acabei de realizar meu cadastro. Meu número de pedido é: ${codigo}`
+        );
+        setTimeout(() => {
+          window.open(`https://wa.me/${operadorWhatsApp}?text=${msg}`, "_blank");
+        }, 3000);
+      }
     } catch (err: any) {
       toast.error("Erro ao enviar: " + (err.message || "Tente novamente"));
     } finally {
