@@ -112,6 +112,7 @@ export type Database = {
           sessao_ativa: boolean
           status: string
           ultimo_acesso: string | null
+          whatsapp: string | null
         }
         Insert: {
           created_at?: string
@@ -123,6 +124,7 @@ export type Database = {
           sessao_ativa?: boolean
           status?: string
           ultimo_acesso?: string | null
+          whatsapp?: string | null
         }
         Update: {
           created_at?: string
@@ -134,6 +136,7 @@ export type Database = {
           sessao_ativa?: boolean
           status?: string
           ultimo_acesso?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
