@@ -28,6 +28,14 @@ const PainelPagamentos = () => {
     if (!loading && !operador) navigate("/login");
   }, [loading, operador, navigate]);
 
+  // Load operator's WhatsApp from DB
+  useEffect(() => {
+    if (!operador?.id) return;
+    supabase.from("operadores").select("whatsapp").eq("id", operador.id).single().then(({ data }) => {
+      if (data?.whatsapp) setWhatsappAdmin(data.whatsapp);
+    });
+  }, [operador?.id]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
