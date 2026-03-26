@@ -148,7 +148,10 @@ const PainelPagamentos = () => {
                     className="flex-1 h-10"
                     placeholder="5511999999999"
                   />
-                  <Button onClick={() => toast.success("WhatsApp salvo!")} className="shrink-0 h-10 rounded-xl font-semibold text-xs">
+                  <Button onClick={async () => {
+                    await supabase.from("operadores").update({ whatsapp: whatsappAdmin } as any).eq("id", operador.id);
+                    toast.success("WhatsApp salvo!");
+                  }} className="shrink-0 h-10 rounded-xl font-semibold text-xs">
                     Salvar
                   </Button>
                 </div>
