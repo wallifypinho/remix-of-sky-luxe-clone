@@ -355,10 +355,10 @@ const PaymentLinksBlock = ({ operadorId, isAdmin }: { operadorId?: string; isAdm
                         transition={{ duration: 0.25 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 space-y-4">
+                        <div className="px-3 sm:px-4 pb-4 space-y-3">
                           {/* Link URL display */}
-                          <div className="rounded-xl border border-border/40 bg-card px-3 py-2.5">
-                            <p className="text-xs text-muted-foreground font-mono truncate">{linkUrl}</p>
+                          <div className="rounded-xl border border-border/40 bg-card px-3 py-2">
+                            <p className="text-[10px] text-muted-foreground font-mono truncate leading-relaxed">{linkUrl}</p>
                           </div>
 
                           {/* Emitir Taxa + Novo Valor buttons */}
