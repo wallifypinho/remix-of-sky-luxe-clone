@@ -21,7 +21,7 @@ const PainelPagamentos = () => {
   const { operador, loading, logout, isAdmin } = useOperadorAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("pedidos");
-  const [whatsappAdmin, setWhatsappAdmin] = useState("5521982592219");
+  const [whatsappAdmin, setWhatsappAdmin] = useState("");
   const [pedidosCount, setPedidosCount] = useState(0);
 
   useEffect(() => {
