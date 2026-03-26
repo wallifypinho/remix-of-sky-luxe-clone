@@ -321,26 +321,27 @@ const PaymentLinksBlock = ({ operadorId, isAdmin }: { operadorId?: string; isAdm
                   {/* Collapsed header - always visible */}
                   <button
                     onClick={() => setExpandedId(expanded ? null : l.id)}
-                    className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/20"
+                    className="w-full flex items-center gap-2.5 p-3 sm:p-4 text-left transition-colors hover:bg-muted/20"
                   >
-                    <Plane className="h-5 w-5 text-primary shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{mainName}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {l.companhia} – {l.destino} · {l.passageiros?.length || 1}p
+                    <Plane className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <p className="text-sm font-semibold text-foreground truncate max-w-[140px] sm:max-w-none">{mainName}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {l.companhia} – {l.origem}›{l.destino} · {l.passageiros?.length || 1}p
                         {viewers > 0 && (
-                          <span className="inline-flex items-center gap-1 ml-2 text-primary font-medium">
+                          <span className="inline-flex items-center gap-1 ml-1.5 text-primary font-medium">
                             <Eye className="h-3 w-3" />{viewers}
                           </span>
                         )}
                       </p>
                     </div>
-                    <span className="text-base font-bold text-primary whitespace-nowrap">R$ {l.valor}</span>
+                    <span className="text-sm font-bold text-primary whitespace-nowrap shrink-0">R$ {l.valor}</span>
                     <motion.div
                       animate={{ rotate: expanded ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
+                      className="shrink-0"
                     >
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     </motion.div>
                   </button>
 
@@ -354,10 +355,10 @@ const PaymentLinksBlock = ({ operadorId, isAdmin }: { operadorId?: string; isAdm
                         transition={{ duration: 0.25 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 space-y-4">
+                        <div className="px-3 sm:px-4 pb-4 space-y-3">
                           {/* Link URL display */}
-                          <div className="rounded-xl border border-border/40 bg-card px-3 py-2.5">
-                            <p className="text-xs text-muted-foreground font-mono truncate">{linkUrl}</p>
+                          <div className="rounded-xl border border-border/40 bg-card px-3 py-2">
+                            <p className="text-[10px] text-muted-foreground font-mono truncate leading-relaxed">{linkUrl}</p>
                           </div>
 
                           {/* Emitir Taxa + Novo Valor buttons */}
