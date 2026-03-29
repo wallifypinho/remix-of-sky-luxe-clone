@@ -11,15 +11,10 @@ import { normalizeOperatorCode } from "@/lib/operatorAccess";
 
 const LoginOperador = () => {
   const { slug } = useParams<{ slug?: string }>();
-  const [identificador, setIdentificador] = useState(slug || "");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, operador } = useOperadorAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setIdentificador(slug || "");
-  }, [slug]);
 
   const normalizedSlug = normalizeOperatorCode(slug);
 
@@ -29,18 +24,14 @@ const LoginOperador = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const loginIdentifier = normalizeOperatorCode(slug || identificador) || (slug || identificador).trim();
-    if (!loginIdentifier) {
-      toast.error("Digite o código de acesso");
-      return;
-    }
     if (!senha) {
       toast.error("Digite a senha de acesso");
       return;
     }
     setLoading(true);
     try {
-      await login(senha, loginIdentifier);
+      const identifier = normalizedSlug || undefined;
+      await login(senha, identifier);
       toast.success("Login realizado!");
       navigate("/painel");
     } catch (err: any) {
