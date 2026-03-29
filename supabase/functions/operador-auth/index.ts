@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
     if (action === "login") {
       const { senha, identificador, slug } = params;
       const rawIdentifier = String(identificador || slug || "").trim();
-      if (!senha || !rawIdentifier) {
-        return new Response(JSON.stringify({ error: "Código e senha são obrigatórios" }), {
+      if (!senha) {
+        return new Response(JSON.stringify({ error: "Senha é obrigatória" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -83,10 +83,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      const normalizedCode = normalizeOperatorCode(rawIdentifier);
-      const candidates = operadores.filter(op =>
-        (normalizedCode && op.codigo_acesso === normalizedCode) || slugify(op.nome) === rawIdentifier
-      );
+      // If identifier provided, filter by it; otherwise try all operators
+      let candidates = operadores;
+      if (rawIdentifier) {
+        const normalizedCode = normalizeOperatorCode(rawIdentifier);
+        candidates = operadores.filter(op =>
+          (normalizedCode && op.codigo_acesso === normalizedCode) || slugify(op.nome) === rawIdentifier
+        );
+      }
 
       if (candidates.length === 0) {
         return new Response(JSON.stringify({ error: "Operador não encontrado" }), {
