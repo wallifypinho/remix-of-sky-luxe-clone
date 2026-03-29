@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getOperatorLoginUrl } from "@/lib/operatorAccess";
 
 interface OperadorRow {
   id: string;
+  codigo_acesso: string;
   nome: string;
   email: string;
   perfil: string;
@@ -130,8 +132,7 @@ const OperadoresSection = () => {
   };
 
   const getPainelLink = (op: OperadorRow) => {
-    const slug = op.nome.toLowerCase().replace(/\s+/g, "");
-    return `${window.location.origin}/painel/${slug}`;
+    return getOperatorLoginUrl(op.codigo_acesso);
   };
 
   const copyPainelLink = (op: OperadorRow) => {

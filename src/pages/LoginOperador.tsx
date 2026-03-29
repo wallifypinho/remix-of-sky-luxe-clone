@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
+import { normalizeOperatorCode } from "@/lib/operatorAccess";
 
 const LoginOperador = () => {
   const { slug } = useParams<{ slug?: string }>();
+  const [identificador, setIdentificador] = useState(slug || "");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, operador } = useOperadorAuth();
   const navigate = useNavigate();
 
-  // Format slug for display
-  const displayName = slug
-    ? slug.charAt(0).toUpperCase() + slug.slice(1)
-    : null;
+  useEffect(() => {
+    setIdentificador(slug || "");
+  }, [slug]);
+
+  const normalizedSlug = normalizeOperatorCode(slug);
 
   useEffect(() => {
     if (operador) navigate("/painel");
@@ -26,13 +29,18 @@ const LoginOperador = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const loginIdentifier = normalizeOperatorCode(slug || identificador) || (slug || identificador).trim();
+    if (!loginIdentifier) {
+      toast.error("Digite o código de acesso");
+      return;
+    }
     if (!senha) {
       toast.error("Digite a senha de acesso");
       return;
     }
     setLoading(true);
     try {
-      await login(senha, slug);
+      await login(senha, loginIdentifier);
       toast.success("Login realizado!");
       navigate("/painel");
     } catch (err: any) {
@@ -109,9 +117,14 @@ const LoginOperador = () => {
                 <User className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <span className="text-sm font-bold text-foreground">{displayName}</span>
+                <span className="text-sm font-bold text-foreground">Acesso do operador</span>
                 <p className="text-[11px] text-muted-foreground">Digite sua senha para acessar</p>
               </div>
+              {normalizedSlug && (
+                <span className="ml-auto rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-bold tracking-[0.2em] text-muted-foreground">
+                  {normalizedSlug.toUpperCase()}
+                </span>
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-2.5 mb-7">
@@ -126,6 +139,19 @@ const LoginOperador = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {!slug && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Código de Acesso</Label>
+                <Input
+                  type="text"
+                  placeholder="Ex: a1b2c3"
+                  value={identificador}
+                  onChange={(e) => setIdentificador(e.target.value)}
+                  autoComplete="username"
+                  className="h-12 bg-secondary/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl uppercase"
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Senha de Acesso</Label>
               <Input
