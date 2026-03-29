@@ -103,6 +103,7 @@ export type Database = {
       }
       operadores: {
         Row: {
+          codigo_acesso: string
           created_at: string
           email: string
           id: string
@@ -115,6 +116,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          codigo_acesso: string
           created_at?: string
           email?: string
           id?: string
@@ -127,6 +129,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          codigo_acesso?: string
           created_at?: string
           email?: string
           id?: string

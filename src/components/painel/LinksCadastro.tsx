@@ -1,21 +1,12 @@
 import { useState } from "react";
 import { Copy, Check, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { getBaseUrl, getOperatorCadastroUrl } from "@/lib/operatorAccess";
 
-const getBaseUrl = () => {
-  if (typeof window !== "undefined") return window.location.origin;
-  return "";
-};
-
-const slugify = (str: string) =>
-  str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
-const LinksCadastro = ({ operadorId, operadorNome }: { operadorId?: string; operadorNome?: string }) => {
+const LinksCadastro = ({ operadorCodigo }: { operadorCodigo?: string }) => {
   const [copied, setCopied] = useState(false);
   const base = getBaseUrl();
-  const slug = operadorNome ? slugify(operadorNome) : "";
-  const opParam = slug ? `&oid=${slug}` : operadorId ? `&oid=${operadorId}` : "";
-  const linkUrl = `${base}/cadastro?airline=azul${opParam}`;
+  const linkUrl = operadorCodigo ? getOperatorCadastroUrl(operadorCodigo, base) : `${base}/cadastro?airline=azul`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(linkUrl);

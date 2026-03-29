@@ -24,6 +24,31 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/\s+/g, "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function normalizeOperatorCode(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 6);
+}
+
+async function generateUniqueOperatorCode(supabase: ReturnType<typeof createClient>): Promise<string> {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const code = crypto.randomUUID().replace(/-/g, "").slice(0, 6);
+    const { data, error } = await supabase
+      .from("operadores")
+      .select("id")
+      .eq("codigo_acesso", code)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return code;
+  }
+
+  throw new Error("Não foi possível gerar um código de acesso único");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -38,9 +63,10 @@ Deno.serve(async (req) => {
 
     // LOGIN
     if (action === "login") {
-      const { senha, slug } = params;
-      if (!senha) {
-        return new Response(JSON.stringify({ error: "Senha obrigatória" }), {
+      const { senha, identificador, slug } = params;
+      const rawIdentifier = String(identificador || slug || "").trim();
+      if (!senha || !rawIdentifier) {
+        return new Response(JSON.stringify({ error: "Código e senha são obrigatórios" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -57,10 +83,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      // If slug provided, filter to only that operator
-      const candidates = slug
-        ? operadores.filter(op => slugify(op.nome) === slug)
-        : operadores;
+      const normalizedCode = normalizeOperatorCode(rawIdentifier);
+      const candidates = operadores.filter(op =>
+        (normalizedCode && op.codigo_acesso === normalizedCode) || slugify(op.nome) === rawIdentifier
+      );
 
       if (candidates.length === 0) {
         return new Response(JSON.stringify({ error: "Operador não encontrado" }), {
@@ -98,6 +124,7 @@ Deno.serve(async (req) => {
           id: operador.id,
           nome: operador.nome,
           email: operador.email,
+          codigo_acesso: operador.codigo_acesso,
           perfil: operador.perfil,
           status: operador.status,
         },
@@ -129,26 +156,18 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check if slug already exists
-      const newSlug = slugify(nome);
-      const { data: existing } = await supabase.from("operadores").select("id, nome").eq("status", "ativo");
-      const slugExists = (existing || []).some(op => slugify(op.nome) === newSlug);
-      if (slugExists) {
-        return new Response(JSON.stringify({ error: "Já existe um operador com este nome. Escolha um nome diferente." }), {
-          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
       const { hash, salt } = await hashPassword(senha);
       const senhaHash = `${salt}:${hash}`;
+      const codigoAcesso = await generateUniqueOperatorCode(supabase);
 
       const { data, error } = await supabase.from("operadores").insert({
         nome,
         email: "",
+        codigo_acesso: codigoAcesso,
         senha_hash: senhaHash,
         perfil: perfil || "operador",
         status: "ativo",
-      }).select("id, nome, email, perfil, status, created_at").single();
+      }).select("id, nome, email, codigo_acesso, perfil, status, created_at").single();
 
       if (error) throw error;
 
@@ -200,7 +219,7 @@ Deno.serve(async (req) => {
     if (action === "listar") {
       const { data, error } = await supabase
         .from("operadores")
-        .select("id, nome, email, perfil, status, ultimo_acesso, sessao_ativa, created_at")
+        .select("id, nome, email, codigo_acesso, perfil, status, ultimo_acesso, sessao_ativa, created_at")
         .order("created_at", { ascending: true });
 
       if (error) throw error;

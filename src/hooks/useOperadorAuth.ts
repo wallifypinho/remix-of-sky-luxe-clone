@@ -5,6 +5,7 @@ export interface Operador {
   id: string;
   nome: string;
   email: string;
+  codigo_acesso: string;
   perfil: "admin" | "operador";
   status: string;
 }
@@ -18,7 +19,7 @@ function getStoredSession(): { operador: Operador; sessionToken: string; loginAt
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed.loginAt || Date.now() - parsed.loginAt > SESSION_TTL_MS) {
+    if (!parsed?.operador?.codigo_acesso || !parsed.loginAt || Date.now() - parsed.loginAt > SESSION_TTL_MS) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
@@ -40,9 +41,9 @@ export function useOperadorAuth() {
     setLoading(false);
   }, []);
 
-  const login = useCallback(async (senha: string, slug?: string) => {
+  const login = useCallback(async (senha: string, identificador?: string) => {
     const { data, error } = await supabase.functions.invoke("operador-auth", {
-      body: { action: "login", senha, slug },
+      body: { action: "login", senha, identificador },
     });
 
     if (error) throw new Error("Erro de conexão");

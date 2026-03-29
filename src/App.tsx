@@ -21,8 +21,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<LoginOperador />} />
+          <Route path="/o/:slug" element={<LoginOperador />} />
           <Route path="/painel/:slug" element={<LoginOperador />} />
           <Route path="/painel" element={<PainelPagamentos />} />
+          <Route path="/c/:codigo" element={<ColetaDados />} />
           <Route path="/cadastro" element={<ColetaDados />} />
           <Route path="/pagamento" element={<BoardingPass />} />
           {/* Legacy redirects */}

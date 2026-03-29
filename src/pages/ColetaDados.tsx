@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepWelcome from "@/components/reserva/StepWelcome";
@@ -11,6 +11,7 @@ import StepResumo from "@/components/reserva/StepResumo";
 import StepSucesso from "@/components/reserva/StepSucesso";
 import StepProgress from "@/components/reserva/StepProgress";
 import { AnimatePresence, motion } from "framer-motion";
+import { isUuid, normalizeOperatorCode, slugifyOperatorName } from "@/lib/operatorAccess";
 
 const emptyPassageiro = (): PassageiroData => ({
   nomeCompleto: "",
@@ -22,9 +23,12 @@ const emptyPassageiro = (): PassageiroData => ({
 });
 
 const ColetaDados = () => {
+  const { codigo } = useParams<{ codigo?: string }>();
   const [searchParams] = useSearchParams();
+  const operatorCodeParam = codigo || searchParams.get("o") || null;
   const oidParam = searchParams.get("oid") || null;
   const [operadorId, setOperadorId] = useState<string | null>(null);
+  const [operadorWhatsApp, setOperadorWhatsApp] = useState("");
   const [step, setStep] = useState(0);
   const [counts, setCounts] = useState({ adultos: 1, criancas: 0, bebes: 0 });
   const [passageiros, setPassageiros] = useState<PassageiroData[]>([emptyPassageiro()]);
@@ -34,26 +38,61 @@ const ColetaDados = () => {
   const [codigoReserva, setCodigoReserva] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Resolve slug-based oid to UUID
+  // Resolve operator by short code first, with legacy fallback
   useEffect(() => {
-    if (!oidParam) return;
-    // If it's already a UUID, use directly
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(oidParam)) {
-      setOperadorId(oidParam);
+    const rawIdentifier = operatorCodeParam || oidParam;
+    if (!rawIdentifier) {
+      setOperadorId(null);
+      setOperadorWhatsApp("");
       return;
     }
-    // Otherwise resolve slug to UUID
+
     const resolve = async () => {
-      const { data } = await supabase.from("operadores").select("id, nome").limit(100);
-      if (data) {
-        const slugify = (s: string) =>
-          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-        const match = data.find(op => slugify(op.nome) === oidParam);
-        if (match) setOperadorId(match.id);
+      if (operatorCodeParam) {
+        const normalizedCode = normalizeOperatorCode(operatorCodeParam);
+        const { data } = await supabase
+          .from("operadores")
+          .select("id, whatsapp")
+          .eq("codigo_acesso", normalizedCode)
+          .eq("status", "ativo")
+          .maybeSingle();
+
+        if (data?.id) {
+          setOperadorId(data.id);
+          setOperadorWhatsApp((data.whatsapp || "").replace(/\D/g, ""));
+          return;
+        }
+      } else if (isUuid(rawIdentifier)) {
+        const { data } = await supabase
+          .from("operadores")
+          .select("id, whatsapp")
+          .eq("id", rawIdentifier)
+          .eq("status", "ativo")
+          .maybeSingle();
+
+        if (data?.id) {
+          setOperadorId(data.id);
+          setOperadorWhatsApp((data.whatsapp || "").replace(/\D/g, ""));
+          return;
+        }
       }
+
+      if (oidParam) {
+        const { data } = await supabase.from("operadores").select("id, nome, whatsapp").limit(100);
+        const match = data?.find(op => slugifyOperatorName(op.nome) === oidParam);
+        if (match?.id) {
+          setOperadorId(match.id);
+          setOperadorWhatsApp((match.whatsapp || "").replace(/\D/g, ""));
+          return;
+        }
+      }
+
+      setOperadorId(null);
+      setOperadorWhatsApp("");
     };
+
     resolve();
-  }, [oidParam]);
+  }, [codigo, oidParam, operatorCodeParam]);
 
   const totalPassageiros = counts.adultos + counts.criancas + counts.bebes;
 
@@ -70,6 +109,11 @@ const ColetaDados = () => {
   };
 
   const handleSubmit = async () => {
+    if ((operatorCodeParam || oidParam) && !operadorId) {
+      toast.error("Link do operador inválido. Peça um novo link.");
+      return;
+    }
+
     setLoading(true);
     try {
       const insertData: any = {
@@ -82,6 +126,7 @@ const ColetaDados = () => {
           status: "pendente",
         };
       if (operadorId) insertData.operador_id = operadorId;
+      if (operadorWhatsApp) insertData.whatsapp_operador = operadorWhatsApp;
       const { data, error } = await supabase
         .from("reservas")
         .insert(insertData)
@@ -107,24 +152,13 @@ const ColetaDados = () => {
         });
       } catch { }
 
-      // Fetch operator's WhatsApp number from DB
-      let operadorWhatsApp = "";
-      if (operadorId) {
-        const { data: opData } = await supabase
-          .from("operadores")
-          .select("whatsapp")
-          .eq("id", operadorId)
-          .single();
-        operadorWhatsApp = (opData as any)?.whatsapp || "";
-      }
-
       if (operadorWhatsApp) {
         const msg = encodeURIComponent(
           `Olá! Acabei de realizar meu cadastro. Meu número de pedido é: ${codigo}`
         );
         setTimeout(() => {
-          window.open(`https://wa.me/${operadorWhatsApp}?text=${msg}`, "_blank");
-        }, 3000);
+          window.location.href = `https://wa.me/${operadorWhatsApp}?text=${msg}`;
+        }, 1500);
       }
     } catch (err: any) {
       toast.error("Erro ao enviar: " + (err.message || "Tente novamente"));
