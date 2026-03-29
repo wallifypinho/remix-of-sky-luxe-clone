@@ -19,7 +19,7 @@ function getStoredSession(): { operador: Operador; sessionToken: string; loginAt
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed.loginAt || Date.now() - parsed.loginAt > SESSION_TTL_MS) {
+    if (!parsed?.operador?.codigo_acesso || !parsed.loginAt || Date.now() - parsed.loginAt > SESSION_TTL_MS) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }

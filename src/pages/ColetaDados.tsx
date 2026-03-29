@@ -48,9 +48,8 @@ const ColetaDados = () => {
     }
 
     const resolve = async () => {
-      const normalizedCode = normalizeOperatorCode(rawIdentifier);
-
-      if (normalizedCode) {
+      if (operatorCodeParam) {
+        const normalizedCode = normalizeOperatorCode(operatorCodeParam);
         const { data } = await supabase
           .from("operadores")
           .select("id, whatsapp")
@@ -63,9 +62,7 @@ const ColetaDados = () => {
           setOperadorWhatsApp((data.whatsapp || "").replace(/\D/g, ""));
           return;
         }
-      }
-
-      if (isUuid(rawIdentifier)) {
+      } else if (isUuid(rawIdentifier)) {
         const { data } = await supabase
           .from("operadores")
           .select("id, whatsapp")

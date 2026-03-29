@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       const { senha, identificador, slug } = params;
       const rawIdentifier = String(identificador || slug || "").trim();
       if (!senha || !rawIdentifier) {
-        return new Response(JSON.stringify({ error: "Senha obrigatória" }), {
+        return new Response(JSON.stringify({ error: "Código e senha são obrigatórios" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
