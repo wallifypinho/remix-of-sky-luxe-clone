@@ -138,10 +138,15 @@ const BoardingPass = () => {
   if (!data) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-4">
-        <div className="text-center text-foreground">
+        <div className="text-center text-foreground max-w-sm">
           <Plane className="h-12 w-12 mx-auto mb-4 opacity-60 text-primary" />
           <h2 className="text-xl font-bold mb-2">Pagamento não encontrado</h2>
-          <p className="text-sm opacity-70">Verifique o link e tente novamente.</p>
+          <p className="text-sm opacity-70 mb-3">Verifique o link e tente novamente.</p>
+          {rawToken && (
+            <p className="text-[10px] font-mono text-muted-foreground break-all bg-muted/30 rounded p-2">
+              Token: {rawToken}
+            </p>
+          )}
         </div>
       </div>
     );
