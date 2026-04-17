@@ -53,7 +53,9 @@ const maskCpf = (cpf: string): string => {
 
 const BoardingPass = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  // Sanitize token: remove whitespace, line breaks, and any trailing junk from copy/paste
+  const rawToken = searchParams.get("token") || "";
+  const token = rawToken.trim().replace(/[^a-zA-Z0-9]/g, "");
   const [data, setData] = useState<PagamentoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
@@ -64,12 +66,16 @@ const BoardingPass = () => {
   useEffect(() => {
     if (!token) { setLoading(false); return; }
     const fetchData = async () => {
+      // Use maybeSingle so we don't error when 0 or >1 rows match — handle both gracefully
       const { data: pg, error } = await supabase
         .from("pagamentos")
         .select("*")
         .eq("token", token)
-        .single();
-      if (!error && pg) setData(pg as unknown as PagamentoData);
+        .maybeSingle();
+      if (error) {
+        console.error("[BoardingPass] Lookup error:", error, "token:", token);
+      }
+      if (pg) setData(pg as unknown as PagamentoData);
       setLoading(false);
     };
     fetchData();
@@ -132,10 +138,15 @@ const BoardingPass = () => {
   if (!data) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-4">
-        <div className="text-center text-foreground">
+        <div className="text-center text-foreground max-w-sm">
           <Plane className="h-12 w-12 mx-auto mb-4 opacity-60 text-primary" />
           <h2 className="text-xl font-bold mb-2">Pagamento não encontrado</h2>
-          <p className="text-sm opacity-70">Verifique o link e tente novamente.</p>
+          <p className="text-sm opacity-70 mb-3">Verifique o link e tente novamente.</p>
+          {rawToken && (
+            <p className="text-[10px] font-mono text-muted-foreground break-all bg-muted/30 rounded p-2">
+              Token: {rawToken}
+            </p>
+          )}
         </div>
       </div>
     );
