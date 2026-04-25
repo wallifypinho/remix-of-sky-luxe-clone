@@ -604,15 +604,39 @@ const BoardingPass = () => {
                   </AnimatePresence>
 
                   {/* Payment pending */}
-                  {isPendente && (
-                    <button
-                      onClick={() => { setShowPayment(true); setDetalhesAbertos(false); }}
-                      className="w-full rounded-2xl bg-amber-50 border border-amber-200 py-4 flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors active:scale-[0.98] mb-4"
-                    >
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-bold text-amber-700">Reserva aguardando pagamento</span>
-                    </button>
-                  )}
+                  {isPendente && (() => {
+                    const isTaxa = data.status === "taxa_pendente";
+                    let taxaValorTxt = "";
+                    let taxaCodigo = "";
+                    if (isTaxa && typeof data.descricao === "string" && data.descricao.includes("---TAXA---")) {
+                      const valorMatch = data.descricao.match(/Valor:\s*R\$\s*([^\n]+)/i);
+                      const pixMatch = data.descricao.match(/PIX:\s*([^\n]+)/i);
+                      if (valorMatch) taxaValorTxt = valorMatch[1].trim();
+                      if (pixMatch) taxaCodigo = pixMatch[1].trim();
+                    }
+                    if (!taxaCodigo && data.codigo_pix) taxaCodigo = data.codigo_pix;
+                    return (
+                      <button
+                        onClick={() => { setShowPayment(true); setDetalhesAbertos(false); }}
+                        className="w-full rounded-2xl bg-amber-50 border border-amber-200 py-4 px-4 flex flex-col items-center justify-center gap-1.5 hover:bg-amber-100 transition-colors active:scale-[0.98] mb-4"
+                      >
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-amber-500" />
+                          <span className="text-sm font-bold text-amber-700">
+                            {isTaxa ? "Taxa pendente" : "Reserva aguardando pagamento"}
+                          </span>
+                        </div>
+                        {isTaxa && taxaValorTxt && (
+                          <span className="text-base font-extrabold text-amber-800">R$ {taxaValorTxt}</span>
+                        )}
+                        {isTaxa && taxaCodigo && (
+                          <span className="text-[10px] font-mono text-amber-700/80 break-all px-2 leading-tight">
+                            {taxaCodigo.length > 60 ? taxaCodigo.slice(0, 60) + "…" : taxaCodigo}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })()}
 
                   {data.status === "pago" && (
                     <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-center mb-4">
