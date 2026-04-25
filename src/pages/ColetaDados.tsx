@@ -26,6 +26,12 @@ type ResolvedOperador = { id: string; whatsapp: string };
 
 const cleanWhatsApp = (value?: string | null) => (value || "").replace(/\D/g, "");
 
+const uniqueIdentifiers = (...values: Array<string | null | undefined>) =>
+  values
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .filter((value, index, arr) => arr.indexOf(value) === index);
+
 const findOperadorByIdentifier = async (identifier?: string | null): Promise<ResolvedOperador | null> => {
   const rawIdentifier = String(identifier || "").trim();
   if (!rawIdentifier) return null;
@@ -37,7 +43,6 @@ const findOperadorByIdentifier = async (identifier?: string | null): Promise<Res
       .from("operadores")
       .select("id, whatsapp")
       .eq("id", rawIdentifier)
-      .eq("status", "ativo")
       .maybeSingle();
 
     if (data?.id) return { id: data.id, whatsapp: cleanWhatsApp(data.whatsapp) };
@@ -48,7 +53,6 @@ const findOperadorByIdentifier = async (identifier?: string | null): Promise<Res
       .from("operadores")
       .select("id, whatsapp")
       .eq("codigo_acesso", normalizedCode)
-      .eq("status", "ativo")
       .maybeSingle();
 
     if (data?.id) return { id: data.id, whatsapp: cleanWhatsApp(data.whatsapp) };
@@ -58,7 +62,6 @@ const findOperadorByIdentifier = async (identifier?: string | null): Promise<Res
   const { data: operadores } = await supabase
     .from("operadores")
     .select("id, nome, codigo_acesso, whatsapp")
-    .eq("status", "ativo")
     .limit(1000);
 
   const match = operadores?.find((op) =>
@@ -68,11 +71,21 @@ const findOperadorByIdentifier = async (identifier?: string | null): Promise<Res
   return match ? { id: match.id, whatsapp: cleanWhatsApp(match.whatsapp) } : null;
 };
 
+const findOperadorByIdentifiers = async (identifiers: string[]): Promise<ResolvedOperador | null> => {
+  for (const identifier of identifiers) {
+    const resolved = await findOperadorByIdentifier(identifier);
+    if (resolved) return resolved;
+  }
+  return null;
+};
+
 const ColetaDados = () => {
   const { codigo } = useParams<{ codigo?: string }>();
   const [searchParams] = useSearchParams();
-  const operatorCodeParam = codigo || searchParams.get("o") || null;
+  const operatorCodeParam = codigo || null;
   const oidParam = searchParams.get("oid") || null;
+  const oParam = searchParams.get("o") || null;
+  const operatorIdentifiers = uniqueIdentifiers(operatorCodeParam, oidParam, oParam);
   const [operadorId, setOperadorId] = useState<string | null>(null);
   const [operadorWhatsApp, setOperadorWhatsApp] = useState("");
   const [step, setStep] = useState(0);
@@ -86,17 +99,17 @@ const ColetaDados = () => {
 
   // Resolve operator by short code first, with legacy name/UUID fallback
   useEffect(() => {
-    const rawIdentifier = operatorCodeParam || oidParam;
+    const identifiers = uniqueIdentifiers(operatorCodeParam, oidParam, oParam);
     let cancelled = false;
 
-    if (!rawIdentifier) {
+    if (identifiers.length === 0) {
       setOperadorId(null);
       setOperadorWhatsApp("");
       return;
     }
 
     const resolve = async () => {
-      const resolved = await findOperadorByIdentifier(rawIdentifier);
+      const resolved = await findOperadorByIdentifiers(identifiers);
       if (cancelled) return;
       setOperadorId(resolved?.id ?? null);
       setOperadorWhatsApp(resolved?.whatsapp ?? "");
@@ -107,7 +120,7 @@ const ColetaDados = () => {
     return () => {
       cancelled = true;
     };
-  }, [oidParam, operatorCodeParam]);
+  }, [oidParam, operatorCodeParam, oParam]);
 
   const totalPassageiros = counts.adultos + counts.criancas + counts.bebes;
 
@@ -124,19 +137,18 @@ const ColetaDados = () => {
   };
 
   const handleSubmit = async () => {
-    const rawIdentifier = operatorCodeParam || oidParam;
     let finalOperadorId = operadorId;
     let finalOperadorWhatsApp = operadorWhatsApp;
 
-    if (rawIdentifier && !finalOperadorId) {
-      const resolved = await findOperadorByIdentifier(rawIdentifier);
+    if (operatorIdentifiers.length > 0 && !finalOperadorId) {
+      const resolved = await findOperadorByIdentifiers(operatorIdentifiers);
       finalOperadorId = resolved?.id ?? null;
       finalOperadorWhatsApp = resolved?.whatsapp ?? "";
       setOperadorId(finalOperadorId);
       setOperadorWhatsApp(finalOperadorWhatsApp);
     }
 
-    if (rawIdentifier && !finalOperadorId) {
+    if (operatorIdentifiers.length > 0 && !finalOperadorId) {
       toast.error("Link do operador inválido. Peça um novo link.");
       return;
     }
