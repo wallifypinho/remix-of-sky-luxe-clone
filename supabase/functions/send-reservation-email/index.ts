@@ -34,6 +34,10 @@ const getAirportName = (code: string): string => {
   return AIRPORT_NAMES[code.trim().toUpperCase()] || code;
 };
 
+const normalizeEmail = (email?: string | null): string => String(email || "").trim().toLowerCase();
+
+const isValidEmail = (email: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const airportDisplay = (code: string): string => {
   const name = getAirportName(code);
   return name === code ? code : `${name} (${code})`;
@@ -565,10 +569,14 @@ serve(async (req) => {
     }
 
     const mainPassenger = passageiros?.[0];
-    const recipientEmail = mainPassenger?.email;
+    const recipientEmail = normalizeEmail(mainPassenger?.email);
 
     if (!recipientEmail) {
       return new Response(JSON.stringify({ success: false, error: "No recipient email found in passenger data" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!isValidEmail(recipientEmail)) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid recipient email" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     let emailContent: { subject: string; html: string };
@@ -624,6 +632,7 @@ serve(async (req) => {
         idempotency_key: idempotencyKey,
         message_id: messageId,
         unsubscribe_token: unsubscribeToken,
+        queued_at: new Date().toISOString(),
       },
     });
 
