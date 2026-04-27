@@ -183,8 +183,13 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
             placeholder="email@exemplo.com"
             value={p.email}
             onChange={(e) => update("email", e.target.value)}
-            className="h-12 rounded-xl"
+            type="email"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            className={`h-12 rounded-xl ${p.email && !emailValid ? "border-destructive focus-visible:ring-destructive" : ""}`}
           />
+          {p.email && !emailValid && <p className="text-[11px] text-destructive font-medium">E-mail inválido</p>}
         </div>
       </div>
 
