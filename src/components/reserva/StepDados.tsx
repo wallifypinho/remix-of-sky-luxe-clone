@@ -49,6 +49,9 @@ const formatCPF = (value: string): string => {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 };
 
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
+const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
+
 const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext, onBack, total }: StepDadosProps) => {
   const p = passageiros[currentIndex];
   const [cpfError, setCpfError] = useState("");
@@ -63,6 +66,10 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
       } else {
         setCpfError("");
       }
+      return;
+    }
+    if (field === "email") {
+      onChange(currentIndex, { ...p, email: normalizeEmail(value) });
       return;
     }
     onChange(currentIndex, { ...p, [field]: value });
@@ -81,7 +88,8 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
   };
 
   const cpfValid = p.cpf.replace(/\D/g, "").length === 11 && validateCPF(p.cpf.replace(/\D/g, ""));
-  const isComplete = p.nomeCompleto && p.cpf && cpfValid && p.telefone && p.email && p.sexo;
+  const emailValid = isValidEmail(p.email);
+  const isComplete = p.nomeCompleto && p.cpf && cpfValid && p.telefone && emailValid && p.sexo;
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} key={currentIndex} transition={{ duration: 0.3 }} className="space-y-5">
@@ -175,8 +183,13 @@ const StepDados = ({ passageiros, currentIndex, onChangeIndex, onChange, onNext,
             placeholder="email@exemplo.com"
             value={p.email}
             onChange={(e) => update("email", e.target.value)}
-            className="h-12 rounded-xl"
+            type="email"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            className={`h-12 rounded-xl ${p.email && !emailValid ? "border-destructive focus-visible:ring-destructive" : ""}`}
           />
+          {p.email && !emailValid && <p className="text-[11px] text-destructive font-medium">E-mail inválido</p>}
         </div>
       </div>
 
