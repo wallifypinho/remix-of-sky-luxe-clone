@@ -12,11 +12,12 @@ import OperadoresSection from "@/components/painel/OperadoresSection";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import LixeiraSection from "@/components/painel/LixeiraSection";
 import PedidosSection from "@/components/painel/PedidosSection";
+import OperadoresArquivadosSection from "@/components/painel/OperadoresArquivadosSection";
 import PaymentLinksBlock from "@/components/painel/PaymentLinksBlock";
 import BottomNav from "@/components/painel/BottomNav";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
-type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways" | "lixeira";
+type Tab = "pedidos" | "pagamentos" | "operadores" | "arquivados" | "gateways" | "lixeira";
 
 const PainelPagamentos = () => {
   const { operador, loading, logout, isAdmin } = useOperadorAuth();
