@@ -24,7 +24,7 @@ interface OrfaoRow {
   pagamentos: number;
   reservas: number;
   ultima_atividade: string;
-  exemplo_codigo: string;
+  exemplos: string[];
 }
 
 const OperadoresArquivadosSection = () => {
@@ -165,18 +165,23 @@ const OperadoresArquivadosSection = () => {
           {excluidos.map((op) => (
             <div key={op.id} className="rounded-2xl border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground truncate">{op.nome}</span>
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border bg-muted text-muted-foreground border-border">
-                      excluído
-                    </span>
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-sm font-bold text-primary">
+                    {op.nome.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Código: <span className="font-mono">{op.codigo_acesso}</span></p>
-                  <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><CreditCard className="h-3 w-3" />{op.pagamentos} pag.</span>
-                    <span className="inline-flex items-center gap-1"><ClipboardList className="h-3 w-3" />{op.reservas} res.</span>
-                    <span>· {formatDate(op.ultima_atividade)}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground truncate">{op.nome}</span>
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border bg-muted text-muted-foreground border-border">
+                        excluído
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Código: <span className="font-mono">{op.codigo_acesso}</span></p>
+                    <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground flex-wrap">
+                      <span className="inline-flex items-center gap-1"><CreditCard className="h-3 w-3" />{op.pagamentos} pag.</span>
+                      <span className="inline-flex items-center gap-1"><ClipboardList className="h-3 w-3" />{op.reservas} res.</span>
+                      <span>· {formatDate(op.ultima_atividade)}</span>
+                    </div>
                   </div>
                 </div>
                 <Button size="sm" onClick={() => openRestore(op.id, op.nome, false)} className="h-9 rounded-xl text-xs font-semibold gap-1.5 shrink-0">
@@ -186,29 +191,44 @@ const OperadoresArquivadosSection = () => {
             </div>
           ))}
 
-          {orfaos.map((op) => (
-            <div key={op.operador_id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">Operador removido</span>
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border bg-amber-500/10 text-amber-700 border-amber-500/20">
-                      órfão
-                    </span>
+          {orfaos.map((op) => {
+            const inicial = op.operador_id.charAt(0).toUpperCase();
+            return (
+              <div key={op.operador_id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-sm font-bold text-amber-700 font-mono">
+                      {inicial}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">Operador removido</span>
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border bg-amber-500/10 text-amber-700 border-amber-500/20">
+                          órfão
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground font-mono mt-0.5 truncate" title={op.operador_id}>
+                        ID: {op.operador_id.slice(0, 8)}…
+                      </p>
+                      {op.exemplos && op.exemplos.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Reservas exemplo: <span className="font-mono font-medium text-foreground">{op.exemplos.join(", ")}</span>
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground flex-wrap">
+                        <span className="inline-flex items-center gap-1"><CreditCard className="h-3 w-3" />{op.pagamentos} pag.</span>
+                        <span className="inline-flex items-center gap-1"><ClipboardList className="h-3 w-3" />{op.reservas} res.</span>
+                        <span>· {formatDate(op.ultima_atividade)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground font-mono mt-0.5 truncate">{op.operador_id}</p>
-                  <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><CreditCard className="h-3 w-3" />{op.pagamentos} pag.</span>
-                    <span className="inline-flex items-center gap-1"><ClipboardList className="h-3 w-3" />{op.reservas} res.</span>
-                    <span>· {formatDate(op.ultima_atividade)}</span>
-                  </div>
+                  <Button size="sm" onClick={() => openRestore(op.operador_id, "", true)} className="h-9 rounded-xl text-xs font-semibold gap-1.5 shrink-0">
+                    <RotateCcw className="h-3.5 w-3.5" /> Recriar
+                  </Button>
                 </div>
-                <Button size="sm" onClick={() => openRestore(op.operador_id, "", true)} className="h-9 rounded-xl text-xs font-semibold gap-1.5 shrink-0">
-                  <RotateCcw className="h-3.5 w-3.5" /> Recriar
-                </Button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
