@@ -224,12 +224,15 @@ Deno.serve(async (req) => {
         .select("operador_id, codigo_reserva, created_at")
         .not("operador_id", "is", null);
 
-      const orphanMap: Record<string, { operador_id: string; pagamentos: number; reservas: number; ultima_atividade: string; exemplo_codigo: string }> = {};
+      const orphanMap: Record<string, { operador_id: string; pagamentos: number; reservas: number; ultima_atividade: string; exemplos: string[] }> = {};
       const bump = (id: string, key: "pagamentos" | "reservas", created_at: string, codigo: string) => {
         if (!id || ativosSet.has(id)) return;
-        if (!orphanMap[id]) orphanMap[id] = { operador_id: id, pagamentos: 0, reservas: 0, ultima_atividade: created_at, exemplo_codigo: codigo };
+        if (!orphanMap[id]) orphanMap[id] = { operador_id: id, pagamentos: 0, reservas: 0, ultima_atividade: created_at, exemplos: [] };
         orphanMap[id][key] += 1;
         if (created_at > orphanMap[id].ultima_atividade) orphanMap[id].ultima_atividade = created_at;
+        if (codigo && orphanMap[id].exemplos.length < 3 && !orphanMap[id].exemplos.includes(codigo)) {
+          orphanMap[id].exemplos.push(codigo);
+        }
       };
       for (const p of pgs || []) bump(p.operador_id as string, "pagamentos", p.created_at as string, p.codigo_reserva as string);
       for (const r of rsv || []) bump(r.operador_id as string, "reservas", r.created_at as string, r.codigo_reserva as string);
