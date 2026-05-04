@@ -15,9 +15,9 @@ const BottomNav = ({ activeTab, onChange, isAdmin, pedidosCount = 0 }: BottomNav
     { id: "pedidos", icon: ClipboardList, label: "Pedidos" },
     { id: "pagamentos", icon: CreditCard, label: "Pagamentos" },
     ...(isAdmin ? [{ id: "operadores" as Tab, icon: Users, label: "Operadores" }] : []),
-    ...(isAdmin ? [{ id: "arquivados" as Tab, icon: Archive, label: "Arquivados" }] : []),
     { id: "gateways", icon: Zap, label: "Gateway" },
     { id: "lixeira", icon: Trash2, label: "Lixeira" },
+    ...(isAdmin ? [{ id: "arquivados" as Tab, icon: Archive, label: "Restaurar" }] : []),
   ];
 
   return (
