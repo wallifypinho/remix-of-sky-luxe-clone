@@ -180,19 +180,131 @@ Deno.serve(async (req) => {
       });
     }
 
-    // EXCLUIR OPERADOR
+    // EXCLUIR OPERADOR (soft delete — preserva histórico para restauração)
     if (action === "excluir") {
-      const { operadorId } = params;
+      const { operadorId, hard } = params;
       if (!operadorId) {
         return new Response(JSON.stringify({ error: "operadorId obrigatório" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const { error } = await supabase.from("operadores").delete().eq("id", operadorId);
-      if (error) throw error;
+      if (hard === true) {
+        const { error } = await supabase.from("operadores").delete().eq("id", operadorId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("operadores").update({
+          status: "excluido",
+          sessao_ativa: false,
+        }).eq("id", operadorId);
+        if (error) throw error;
+      }
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // LISTAR ARQUIVADOS — operadores com status=excluido + IDs órfãos detectados em pagamentos/reservas
+    if (action === "listar_arquivados") {
+      const { data: excluidos } = await supabase
+        .from("operadores")
+        .select("id, nome, codigo_acesso, perfil, status, created_at")
+        .eq("status", "excluido");
+
+      const { data: ativos } = await supabase.from("operadores").select("id");
+      const ativosSet = new Set((ativos || []).map((o: any) => o.id));
+
+      const { data: pgs } = await supabase
+        .from("pagamentos")
+        .select("operador_id, codigo_reserva, created_at")
+        .not("operador_id", "is", null);
+      const { data: rsv } = await supabase
+        .from("reservas")
+        .select("operador_id, codigo_reserva, created_at")
+        .not("operador_id", "is", null);
+
+      const orphanMap: Record<string, { operador_id: string; pagamentos: number; reservas: number; ultima_atividade: string; exemplo_codigo: string }> = {};
+      const bump = (id: string, key: "pagamentos" | "reservas", created_at: string, codigo: string) => {
+        if (!id || ativosSet.has(id)) return;
+        if (!orphanMap[id]) orphanMap[id] = { operador_id: id, pagamentos: 0, reservas: 0, ultima_atividade: created_at, exemplo_codigo: codigo };
+        orphanMap[id][key] += 1;
+        if (created_at > orphanMap[id].ultima_atividade) orphanMap[id].ultima_atividade = created_at;
+      };
+      for (const p of pgs || []) bump(p.operador_id as string, "pagamentos", p.created_at as string, p.codigo_reserva as string);
+      for (const r of rsv || []) bump(r.operador_id as string, "reservas", r.created_at as string, r.codigo_reserva as string);
+
+      // Remove orphans that are actually still in operadores list (excluidos status)
+      const excluidosIds = new Set((excluidos || []).map((o: any) => o.id));
+      const orfaos = Object.values(orphanMap).filter((o) => !excluidosIds.has(o.operador_id));
+
+      // Para excluidos, contar dados também
+      const excluidosEnriched = (excluidos || []).map((op: any) => {
+        const stats = orphanMap[op.id] || { pagamentos: 0, reservas: 0, ultima_atividade: op.created_at };
+        return { ...op, pagamentos: stats.pagamentos, reservas: stats.reservas, ultima_atividade: stats.ultima_atividade };
+      });
+
+      return new Response(JSON.stringify({ success: true, excluidos: excluidosEnriched, orfaos }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // RESTAURAR — reativa operador soft-deleted OU recria operador a partir de órfão e religa dados
+    if (action === "restaurar") {
+      const { operadorId, nome, senha, perfil } = params;
+      if (!operadorId) {
+        return new Response(JSON.stringify({ error: "operadorId obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Caso 1: operador existe (soft-deleted) → reativa, opcionalmente troca senha/nome
+      const { data: existing } = await supabase
+        .from("operadores")
+        .select("id")
+        .eq("id", operadorId)
+        .maybeSingle();
+
+      if (existing) {
+        const updates: any = { status: "ativo" };
+        if (nome) updates.nome = nome;
+        if (senha) {
+          const { hash, salt } = await hashPassword(senha);
+          updates.senha_hash = `${salt}:${hash}`;
+        }
+        if (perfil) updates.perfil = perfil;
+        const { error } = await supabase.from("operadores").update(updates).eq("id", operadorId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true, operadorId }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Caso 2: órfão — precisa nome + senha para recriar
+      if (!nome || !senha) {
+        return new Response(JSON.stringify({ error: "Para restaurar este operador informe nome e senha" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { hash, salt } = await hashPassword(senha);
+      const senhaHash = `${salt}:${hash}`;
+      const codigoAcesso = await generateUniqueOperatorCode(supabase);
+
+      // Tenta recriar com o MESMO id antigo, para religar pagamentos/reservas automaticamente
+      const { data: novo, error: insErr } = await supabase.from("operadores").insert({
+        id: operadorId,
+        nome,
+        email: "",
+        codigo_acesso: codigoAcesso,
+        senha_hash: senhaHash,
+        perfil: perfil || "operador",
+        status: "ativo",
+      }).select("id, nome, codigo_acesso, perfil, status").single();
+
+      if (insErr) throw insErr;
+
+      return new Response(JSON.stringify({ success: true, operador: novo }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
