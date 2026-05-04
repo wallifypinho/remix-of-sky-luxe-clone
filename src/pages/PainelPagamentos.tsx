@@ -60,6 +60,7 @@ const PainelPagamentos = () => {
     { id: "pedidos", label: "Pedidos", icon: ClipboardList, count: pedidosCount },
     { id: "pagamentos", label: "Pagamentos", icon: CreditCard },
     ...(isAdmin ? [{ id: "operadores" as Tab, label: "Operadores", icon: Users }] : []),
+    ...(isAdmin ? [{ id: "arquivados" as Tab, label: "Arquivados", icon: Archive }] : []),
     { id: "gateways", label: "Gateways", icon: Zap },
     { id: "lixeira", label: "Lixeira", icon: Trash2 },
   ];
