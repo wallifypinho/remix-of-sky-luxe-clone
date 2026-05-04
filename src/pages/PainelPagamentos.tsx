@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap, Trash2 } from "lucide-react";
+import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap, Trash2, Archive } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,12 @@ import OperadoresSection from "@/components/painel/OperadoresSection";
 import GatewaysSection from "@/components/painel/GatewaysSection";
 import LixeiraSection from "@/components/painel/LixeiraSection";
 import PedidosSection from "@/components/painel/PedidosSection";
+import OperadoresArquivadosSection from "@/components/painel/OperadoresArquivadosSection";
 import PaymentLinksBlock from "@/components/painel/PaymentLinksBlock";
 import BottomNav from "@/components/painel/BottomNav";
 import { useOperadorAuth } from "@/hooks/useOperadorAuth";
 
-type Tab = "pedidos" | "pagamentos" | "operadores" | "gateways" | "lixeira";
+type Tab = "pedidos" | "pagamentos" | "operadores" | "arquivados" | "gateways" | "lixeira";
 
 const PainelPagamentos = () => {
   const { operador, loading, logout, isAdmin } = useOperadorAuth();
@@ -59,6 +60,7 @@ const PainelPagamentos = () => {
     { id: "pedidos", label: "Pedidos", icon: ClipboardList, count: pedidosCount },
     { id: "pagamentos", label: "Pagamentos", icon: CreditCard },
     ...(isAdmin ? [{ id: "operadores" as Tab, label: "Operadores", icon: Users }] : []),
+    ...(isAdmin ? [{ id: "arquivados" as Tab, label: "Arquivados", icon: Archive }] : []),
     { id: "gateways", label: "Gateways", icon: Zap },
     { id: "lixeira", label: "Lixeira", icon: Trash2 },
   ];
@@ -163,6 +165,7 @@ const PainelPagamentos = () => {
           )}
 
           {activeTab === "operadores" && isAdmin && <OperadoresSection />}
+          {activeTab === "arquivados" && isAdmin && <OperadoresArquivadosSection />}
           {activeTab === "gateways" && <GatewaysSection />}
           {activeTab === "lixeira" && <LixeiraSection operadorId={operador.id} isAdmin={isAdmin} />}
         </motion.div>
