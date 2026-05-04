@@ -24,7 +24,7 @@ interface OrfaoRow {
   pagamentos: number;
   reservas: number;
   ultima_atividade: string;
-  exemplo_codigo: string;
+  exemplos: string[];
 }
 
 const OperadoresArquivadosSection = () => {
