@@ -165,6 +165,7 @@ const PainelPagamentos = () => {
           )}
 
           {activeTab === "operadores" && isAdmin && <OperadoresSection />}
+          {activeTab === "arquivados" && isAdmin && <OperadoresArquivadosSection />}
           {activeTab === "gateways" && <GatewaysSection />}
           {activeTab === "lixeira" && <LixeiraSection operadorId={operador.id} isAdmin={isAdmin} />}
         </motion.div>
