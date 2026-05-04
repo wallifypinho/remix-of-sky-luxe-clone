@@ -336,6 +336,7 @@ Deno.serve(async (req) => {
       const { data, error } = await supabase
         .from("operadores")
         .select("id, nome, email, codigo_acesso, perfil, status, ultimo_acesso, sessao_ativa, created_at")
+        .neq("status", "excluido")
         .order("created_at", { ascending: true });
 
       if (error) throw error;
