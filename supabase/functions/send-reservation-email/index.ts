@@ -142,7 +142,7 @@ const buildConfirmationEmail = (body: any) => {
     </tr>
   `).join("");
 
-  const subject = `✅ Reserva Confirmada - ${codigoReserva} | ${companhia || "Azul"}`;
+  const subject = `Confirmação da reserva ${codigoReserva} - ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
     ${emailHeader("Reserva Confirmada", "Sua solicitação foi recebida com sucesso", "✅")}
@@ -233,7 +233,7 @@ const buildTripDetailsEmail = (body: any) => {
     </div>`;
   }).join("");
 
-  const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "Azul"}`;
+  const subject = `Detalhes da sua viagem - reserva ${codigoReserva} (${companhia || "Azul"})`;
 
   const html = emailWrapper(`
     ${emailHeader(companhia || "Azul", "Detalhes completos da sua viagem", "✈")}
@@ -503,7 +503,7 @@ const buildBoardingPassEmail = (body: any) => {
     }
   }
 
-  const subject = `✈ Cartão de Embarque - ${codigoReserva} | ${companhia || "Azul"}`;
+  const subject = `Cartão de embarque - reserva ${codigoReserva} (${companhia || "Azul"})`;
 
   const html = emailWrapper(`
     ${emailHeader(companhia || "Azul", "Seu cartão de embarque digital", "✈")}
@@ -612,13 +612,29 @@ serve(async (req) => {
 
     console.log(`Enqueuing email [${type}] to ${recipientEmail} via ${SENDER_DOMAIN}`);
 
+    // Gera versão texto a partir do HTML (melhora reputação anti-spam)
+    const plainText = emailContent.html
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|tr|h[1-6]|li)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
     const payload = {
       to: recipientEmail,
       from: `${companhia} Linhas Aéreas <noreply@${SENDER_DOMAIN}>`,
+      reply_to: `atendimento@${SENDER_DOMAIN}`,
       sender_domain: SENDER_DOMAIN,
       subject: emailContent.subject,
       html: emailContent.html,
-      text: emailContent.subject,
+      text: plainText,
       purpose: "transactional",
       label: `reservation-${type}`,
       idempotency_key: idempotencyKey,
