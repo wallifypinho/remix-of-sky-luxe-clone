@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SENDER_DOMAIN = "notify.centralazul.site";
+const FROM_DOMAIN = "centralazul.site";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -629,8 +630,7 @@ serve(async (req) => {
 
     const payload = {
       to: recipientEmail,
-      from: `${companhia} Linhas Aéreas <noreply@${SENDER_DOMAIN}>`,
-      reply_to: `atendimento@${SENDER_DOMAIN}`,
+      from: `Azul Linhas Aéreas <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
       subject: emailContent.subject,
       html: emailContent.html,
