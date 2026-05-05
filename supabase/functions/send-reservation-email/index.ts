@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SENDER_DOMAIN = "notify.centralazul.site";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -556,12 +558,9 @@ serve(async (req) => {
     const body = await req.json();
     const { type, passageiros } = body;
 
-    const gmailUser = Deno.env.get("GMAIL_USER");
-    const gmailPass = Deno.env.get("GMAIL_APP_PASSWORD");
-
-    if (!gmailUser || !gmailPass) {
-      return new Response(JSON.stringify({ success: false, error: "Missing Gmail credentials" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const mainPassenger = passageiros?.[0];
     const recipientEmail = normalizeEmail(mainPassenger?.email);
@@ -588,31 +587,45 @@ serve(async (req) => {
 
     const companhia = body.companhia || "Azul";
     const messageId = crypto.randomUUID();
+    const idempotencyKey = body.idempotencyKey || `${type}-${messageId}`;
 
-    console.log(`Sending email [${type}] to ${recipientEmail} via Gmail SMTP`);
+    console.log(`Enqueuing email [${type}] to ${recipientEmail} via ${SENDER_DOMAIN}`);
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: { username: gmailUser, password: gmailPass },
-      },
+    const payload = {
+      to: recipientEmail,
+      from: `${companhia} Linhas Aéreas <noreply@${SENDER_DOMAIN}>`,
+      sender_domain: SENDER_DOMAIN,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.subject,
+      purpose: "transactional",
+      label: `reservation-${type}`,
+      idempotency_key: idempotencyKey,
+      message_id: messageId,
+      queued_at: new Date().toISOString(),
+    };
+
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload,
     });
 
-    try {
-      await client.send({
-        from: `${companhia} Linhas Aéreas <${gmailUser}>`,
-        to: recipientEmail,
-        subject: emailContent.subject,
-        content: emailContent.subject,
-        html: emailContent.html,
-      });
-    } finally {
-      await client.close();
+    if (enqueueError) {
+      console.error("Enqueue failed:", enqueueError);
+      return new Response(
+        JSON.stringify({ success: false, error: enqueueError.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    console.log("Email sent successfully:", messageId);
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: `reservation-${type}`,
+      recipient_email: recipientEmail,
+      status: "pending",
+    });
+
+    console.log("Email enqueued successfully:", messageId);
 
     return new Response(
       JSON.stringify({ success: true, emailSent: true, messageId }),
