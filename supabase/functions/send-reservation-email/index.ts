@@ -142,7 +142,7 @@ const buildConfirmationEmail = (body: any) => {
     </tr>
   `).join("");
 
-  const subject = `✅ Reserva Confirmada - ${codigoReserva} | ${companhia || "Azul"}`;
+  const subject = `Confirmação da reserva ${codigoReserva} - ${companhia || "Azul"}`;
 
   const html = emailWrapper(`
     ${emailHeader("Reserva Confirmada", "Sua solicitação foi recebida com sucesso", "✅")}
@@ -233,7 +233,7 @@ const buildTripDetailsEmail = (body: any) => {
     </div>`;
   }).join("");
 
-  const subject = `✈ Detalhes da Viagem - ${codigoReserva} | ${companhia || "Azul"}`;
+  const subject = `Detalhes da sua viagem - reserva ${codigoReserva} (${companhia || "Azul"})`;
 
   const html = emailWrapper(`
     ${emailHeader(companhia || "Azul", "Detalhes completos da sua viagem", "✈")}
@@ -503,7 +503,7 @@ const buildBoardingPassEmail = (body: any) => {
     }
   }
 
-  const subject = `✈ Cartão de Embarque - ${codigoReserva} | ${companhia || "Azul"}`;
+  const subject = `Cartão de embarque - reserva ${codigoReserva} (${companhia || "Azul"})`;
 
   const html = emailWrapper(`
     ${emailHeader(companhia || "Azul", "Seu cartão de embarque digital", "✈")}
