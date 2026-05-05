@@ -589,6 +589,27 @@ serve(async (req) => {
     const messageId = crypto.randomUUID();
     const idempotencyKey = body.idempotencyKey || `${type}-${messageId}`;
 
+    // Get or create unsubscribe token (one per recipient email)
+    let unsubscribeToken: string | null = null;
+    {
+      const { data: existing } = await supabase
+        .from("email_unsubscribe_tokens")
+        .select("token")
+        .eq("email", recipientEmail)
+        .maybeSingle();
+      if (existing?.token) {
+        unsubscribeToken = existing.token;
+      } else {
+        const newToken = crypto.randomUUID();
+        const { data: inserted } = await supabase
+          .from("email_unsubscribe_tokens")
+          .insert({ email: recipientEmail, token: newToken })
+          .select("token")
+          .maybeSingle();
+        unsubscribeToken = inserted?.token || newToken;
+      }
+    }
+
     console.log(`Enqueuing email [${type}] to ${recipientEmail} via ${SENDER_DOMAIN}`);
 
     const payload = {
@@ -601,6 +622,7 @@ serve(async (req) => {
       purpose: "transactional",
       label: `reservation-${type}`,
       idempotency_key: idempotencyKey,
+      unsubscribe_token: unsubscribeToken,
       message_id: messageId,
       queued_at: new Date().toISOString(),
     };
