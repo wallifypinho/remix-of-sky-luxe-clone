@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap, Trash2, Archive } from "lucide-react";
+import { Plane, ArrowLeft, LogOut, CreditCard, ClipboardList, Users, Zap, Trash2, Archive, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,34 @@ const PainelPagamentos = () => {
   const [activeTab, setActiveTab] = useState<Tab>("pedidos");
   const [whatsappAdmin, setWhatsappAdmin] = useState("");
   const [pedidosCount, setPedidosCount] = useState(0);
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const handleSendTestEmail = async () => {
+    const email = testEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Informe um email válido");
+      return;
+    }
+    setSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-reservation-email", {
+        body: {
+          type: "confirmation",
+          companhia: "Azul",
+          codigoReserva: "TESTE123",
+          passageiros: [{ nome: "Teste de Envio", email, cpf: "00000000000" }],
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Falha ao enviar");
+      toast.success(`Email enfileirado para ${email}. Verifique a caixa de entrada em alguns segundos.`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao enviar email de teste");
+    } finally {
+      setSendingTest(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !operador) navigate("/login");
@@ -158,6 +186,28 @@ const PainelPagamentos = () => {
                     Salvar
                   </Button>
                 </div>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail className="h-3.5 w-3.5 text-primary" />
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Teste de Email · notify.centralazul.site</div>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    className="flex-1 h-10"
+                    placeholder="seu@email.com"
+                    disabled={sendingTest}
+                  />
+                  <Button onClick={handleSendTestEmail} disabled={sendingTest} className="shrink-0 h-10 rounded-xl font-semibold text-xs">
+                    {sendingTest ? "Enviando..." : "Enviar teste"}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
+                  Dispara um email de confirmação fictício para validar se o domínio já está liberado.
+                </p>
               </div>
               <NovoPagamentoForm operadorId={operador.id} />
               <PaymentLinksBlock operadorId={operador.id} isAdmin={isAdmin} />
